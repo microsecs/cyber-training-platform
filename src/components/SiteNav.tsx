@@ -13,9 +13,7 @@ export default function SiteNav() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="group">
-          <div className="text-lg font-bold tracking-tight group-hover:text-cyan-300">
-            CyberAware
-          </div>
+          <div className="text-lg font-bold tracking-tight group-hover:text-cyan-300">CyberAware</div>
           <div className="text-[11px] text-slate-500">Employee Security Training</div>
         </Link>
 
@@ -27,12 +25,14 @@ export default function SiteNav() {
           ))}
         </nav>
 
-        <Link
-          href="/employee"
-          className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium hover:bg-white/5"
-        >
-          Sign In
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/account" className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5">
+            Account
+          </Link>
+          <Link href="/login" className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
+            Sign In
+          </Link>
+        </div>
       </div>
     </header>
   );
