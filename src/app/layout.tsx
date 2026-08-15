@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "CyberAware | Employee Security Training",
-  description: "Simple cybersecurity awareness training for businesses and employees.",
+  description: "Cybersecurity awareness training for businesses and employees.",
 };
 
 export default function RootLayout({
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <SiteNav />
+        {children}
+      </body>
     </html>
   );
 }
