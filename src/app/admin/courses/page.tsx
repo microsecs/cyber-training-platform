@@ -17,11 +17,7 @@ type Course = {
 };
 
 const blankQuiz = [
-  {
-    question: "",
-    choices: ["", "", ""],
-    answer: 0,
-  },
+  { question: "", choices: ["", "", ""], answer: 0 },
 ];
 
 export default function CourseAdminPage() {
@@ -57,7 +53,6 @@ export default function CourseAdminPage() {
   useEffect(() => {
     async function initialize() {
       const { data: userData } = await supabase.auth.getUser();
-
       if (!userData.user) {
         setAuthorized(false);
         return;
@@ -89,13 +84,7 @@ export default function CourseAdminPage() {
     setVideoUrl("");
     setPassingScore(80);
     setIsActive(true);
-    setQuiz([
-      {
-        question: "",
-        choices: ["", "", ""],
-        answer: 0,
-      },
-    ]);
+    setQuiz([{ question: "", choices: ["", "", ""], answer: 0 }]);
     setMessage("");
   }
 
@@ -113,9 +102,7 @@ export default function CourseAdminPage() {
 
   function updateQuestion(index: number, field: string, value: any) {
     setQuiz((current) =>
-      current.map((q, i) =>
-        i === index ? { ...q, [field]: value } : q
-      )
+      current.map((q, i) => (i === index ? { ...q, [field]: value } : q))
     );
   }
 
@@ -137,11 +124,7 @@ export default function CourseAdminPage() {
   function addQuestion() {
     setQuiz((current) => [
       ...current,
-      {
-        question: "",
-        choices: ["", "", ""],
-        answer: 0,
-      },
+      { question: "", choices: ["", "", ""], answer: 0 },
     ]);
   }
 
@@ -176,16 +159,9 @@ export default function CourseAdminPage() {
     let result;
 
     if (selectedId) {
-      result = await supabase
-        .from("courses")
-        .update(payload)
-        .eq("id", selectedId);
+      result = await supabase.from("courses").update(payload).eq("id", selectedId);
     } else {
-      result = await supabase
-        .from("courses")
-        .insert(payload)
-        .select("id")
-        .single();
+      result = await supabase.from("courses").insert(payload).select("id").single();
     }
 
     if (result.error) {
@@ -197,10 +173,37 @@ export default function CourseAdminPage() {
     setMessage(selectedId ? "Course updated." : "Course created.");
     await loadCourses();
 
-    if (!selectedId && result.data?.id) {
-      setSelectedId(result.data.id);
+    if (!selectedId && result.data?.id) setSelectedId(result.data.id);
+    setBusy(false);
+  }
+
+  async function deleteCourse() {
+    if (!selectedId) return;
+
+    const selectedCourse = courses.find((c) => c.id === selectedId);
+    const confirmed = window.confirm(
+      `Delete "${selectedCourse?.title || title}"?\n\nThis cannot be undone. Existing assignments linked to this course may also be removed because of database cascading relationships.`
+    );
+
+    if (!confirmed) return;
+
+    setBusy(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("courses")
+      .delete()
+      .eq("id", selectedId);
+
+    if (error) {
+      setMessage(error.message);
+      setBusy(false);
+      return;
     }
 
+    setMessage("Course deleted.");
+    newCourse();
+    await loadCourses();
     setBusy(false);
   }
 
@@ -212,9 +215,6 @@ export default function CourseAdminPage() {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <h1 className="text-3xl font-bold">Platform Admin Required</h1>
-        <p className="mt-3 text-slate-400">
-          Company owners and administrators cannot edit the master course library.
-        </p>
       </main>
     );
   }
@@ -225,25 +225,15 @@ export default function CourseAdminPage() {
         <div>
           <div className="text-sm text-cyan-300">Platform Administration</div>
           <h1 className="mt-1 text-4xl font-bold">Master Course Library</h1>
-          <p className="mt-2 text-slate-400">
-            Create and edit the training content available to all customer companies.
-          </p>
         </div>
-
-        <Link
-          href="/platform-admin"
-          className="rounded-lg border border-white/15 px-4 py-2.5 text-sm hover:bg-white/5"
-        >
+        <Link href="/platform-admin" className="rounded-lg border border-white/15 px-4 py-2.5 text-sm">
           Back to Platform Admin
         </Link>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[.7fr_1.5fr]">
         <aside className="rounded-2xl border border-white/10 bg-slate-900 p-5">
-          <button
-            onClick={newCourse}
-            className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950"
-          >
+          <button onClick={newCourse} className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950">
             + New Course
           </button>
 
@@ -271,63 +261,32 @@ export default function CourseAdminPage() {
           <div className="grid gap-5 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm">Title</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-lg bg-slate-950 px-4 py-3"
-              />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full rounded-lg bg-slate-950 px-4 py-3"
-              />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
             </div>
 
             <div>
               <label className="mb-2 block text-sm">Duration (minutes)</label>
-              <input
-                type="number"
-                min={1}
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full rounded-lg bg-slate-950 px-4 py-3"
-              />
+              <input type="number" min={1} value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
             </div>
 
             <div>
               <label className="mb-2 block text-sm">Default Passing Score (%)</label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={passingScore}
-                onChange={(e) => setPassingScore(Number(e.target.value))}
-                className="w-full rounded-lg bg-slate-950 px-4 py-3"
-              />
+              <input type="number" min={0} max={100} value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm">Video URL</label>
-              <input
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full rounded-lg bg-slate-950 px-4 py-3"
-              />
+              <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://..." className="w-full rounded-lg bg-slate-950 px-4 py-3" />
             </div>
 
             <div className="md:col-span-2">
               <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
+                <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
                 <span>Course is active</span>
               </label>
             </div>
@@ -336,39 +295,21 @@ export default function CourseAdminPage() {
           <div className="mt-8">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-semibold">Quiz Questions</h2>
-              <button
-                onClick={addQuestion}
-                className="rounded-lg border border-white/15 px-4 py-2 text-sm"
-              >
+              <button onClick={addQuestion} className="rounded-lg border border-white/15 px-4 py-2 text-sm">
                 + Add Question
               </button>
             </div>
 
             <div className="mt-5 space-y-6">
               {quiz.map((q, qIndex) => (
-                <div
-                  key={qIndex}
-                  className="rounded-xl border border-white/10 bg-slate-950 p-5"
-                >
+                <div key={qIndex} className="rounded-xl border border-white/10 bg-slate-950 p-5">
                   <div className="flex items-start gap-3">
                     <div className="flex-1">
-                      <label className="mb-2 block text-sm">
-                        Question {qIndex + 1}
-                      </label>
-                      <input
-                        value={q.question}
-                        onChange={(e) =>
-                          updateQuestion(qIndex, "question", e.target.value)
-                        }
-                        className="w-full rounded-lg bg-slate-900 px-4 py-3"
-                      />
+                      <label className="mb-2 block text-sm">Question {qIndex + 1}</label>
+                      <input value={q.question} onChange={(e) => updateQuestion(qIndex, "question", e.target.value)} className="w-full rounded-lg bg-slate-900 px-4 py-3" />
                     </div>
-
                     {quiz.length > 1 ? (
-                      <button
-                        onClick={() => removeQuestion(qIndex)}
-                        className="mt-7 text-sm text-rose-300"
-                      >
+                      <button onClick={() => removeQuestion(qIndex)} className="mt-7 text-sm text-rose-300">
                         Remove
                       </button>
                     ) : null}
@@ -381,15 +322,11 @@ export default function CourseAdminPage() {
                           type="radio"
                           name={`correct-${qIndex}`}
                           checked={Number(q.answer) === cIndex}
-                          onChange={() =>
-                            updateQuestion(qIndex, "answer", cIndex)
-                          }
+                          onChange={() => updateQuestion(qIndex, "answer", cIndex)}
                         />
                         <input
                           value={choice}
-                          onChange={(e) =>
-                            updateChoice(qIndex, cIndex, e.target.value)
-                          }
+                          onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
                           placeholder={`Choice ${cIndex + 1}`}
                           className="flex-1 rounded-lg bg-slate-900 px-4 py-3"
                         />
@@ -401,7 +338,7 @@ export default function CourseAdminPage() {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <button
               onClick={saveCourse}
               disabled={!title.trim() || busy}
@@ -410,9 +347,17 @@ export default function CourseAdminPage() {
               {busy ? "Saving..." : selectedId ? "Save Changes" : "Create Course"}
             </button>
 
-            {message && (
-              <span className="text-sm text-slate-300">{message}</span>
-            )}
+            {selectedId ? (
+              <button
+                onClick={deleteCourse}
+                disabled={busy}
+                className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-5 py-3 font-semibold text-rose-300 disabled:opacity-40"
+              >
+                Delete Course
+              </button>
+            ) : null}
+
+            {message && <span className="text-sm text-slate-300">{message}</span>}
           </div>
         </section>
       </div>
