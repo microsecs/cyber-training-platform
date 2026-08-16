@@ -8,45 +8,97 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get("authorization")?.replace("Bearer ", "");
     const assignmentId = request.nextUrl.searchParams.get("assignmentId");
+
     if (!token || !assignmentId) {
-      return NextResponse.json({ error: "Missing authentication or assignment" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing authentication or assignment" },
+        { status: 400 }
+      );
     }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } }
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      }
     );
 
-    const { data: userData } = await supabase.auth.getUser(token);
-    if (!userData.user) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    const { data: userData, error: userError } =
+      await supabase.auth.getUser(token);
 
-    const { data: assignment } = await supabase
+    if (userError || !userData.user) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const { data: assignment, error: assignmentError } = await supabase
       .from("assignments")
       .select("id,user_id,courses(video_key,video_url)")
       .eq("id", assignmentId)
       .eq("user_id", userData.user.id)
       .single();
 
-    if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+    if (assignmentError) {
+      return NextResponse.json(
+        {
+          error: `Assignment lookup failed: ${assignmentError.message}`,
+        },
+        { status: 404 }
+      );
+    }
 
-    const course: any = Array.isArray(assignment.courses) ? assignment.courses[0] : assignment.courses;
+    if (!assignment) {
+      return NextResponse.json(
+        { error: "Assignment not found" },
+        { status: 404 }
+      );
+    }
+
+    const course: any = Array.isArray(assignment.courses)
+      ? assignment.courses[0]
+      : assignment.courses;
 
     if (course?.video_key) {
       const videoUrl = await getSignedUrl(
         createR2Client(),
-        new GetObjectCommand({ Bucket: getR2BucketName(), Key: course.video_key }),
+        new GetObjectCommand({
+          Bucket: getR2BucketName(),
+          Key: course.video_key,
+        }),
         { expiresIn: 3600 }
       );
-      return NextResponse.json({ ok: true, videoUrl, source: "r2" });
+
+      return NextResponse.json({
+        ok: true,
+        videoUrl,
+        source: "r2",
+      });
     }
 
     if (course?.video_url) {
-      return NextResponse.json({ ok: true, videoUrl: course.video_url, source: "external" });
+      return NextResponse.json({
+        ok: true,
+        videoUrl: course.video_url,
+        source: "external",
+      });
     }
 
-    return NextResponse.json({ error: "No video configured" }, { status: 404 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Playback setup failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "No video is configured for this course" },
+      { status: 404 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Could not create playback URL" },
+      { status: 500 }
+    );
   }
 }
