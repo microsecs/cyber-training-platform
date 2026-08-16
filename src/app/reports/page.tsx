@@ -4,16 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
 
-type Membership = {
-  user_id: string;
-  role: string;
-};
-
-type Profile = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-};
+type Membership = { user_id: string; role: string };
+type Profile = { id: string; email: string | null; full_name: string | null };
 
 type Assignment = {
   id: string;
@@ -21,25 +13,11 @@ type Assignment = {
   status: "not_started" | "in_progress" | "completed";
   due_date: string | null;
   created_at: string;
-  courses:
-    | {
-        id: string;
-        title: string;
-      }
-    | {
-        id: string;
-        title: string;
-      }[]
-    | null;
+  quiz_required: boolean;
+  courses: { id: string; title: string } | { id: string; title: string }[] | null;
   completions:
-    | {
-        score: number | null;
-        completed_at: string;
-      }
-    | {
-        score: number | null;
-        completed_at: string;
-      }[]
+    | { score: number | null; completed_at: string }
+    | { score: number | null; completed_at: string }[]
     | null;
 };
 
@@ -51,6 +29,7 @@ type ReportRow = {
   courseTitle: string;
   status: string;
   dueDate: string | null;
+  quizRequired: boolean;
   score: number | null;
   completedAt: string | null;
   overdue: boolean;
@@ -65,7 +44,6 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (!company) return;
-
     const supabase = createClient();
 
     async function loadReport() {
@@ -85,22 +63,16 @@ export default function ReportsPage() {
       const memberships = (membershipResult.data as Membership[]) ?? [];
       const userIds = memberships.map((m) => m.user_id);
 
-      if (userIds.length === 0) {
+      if (!userIds.length) {
         setRows([]);
         return;
       }
 
       const [profileResult, assignmentResult] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id,email,full_name")
-          .in("id", userIds),
-
+        supabase.from("profiles").select("id,email,full_name").in("id", userIds),
         supabase
           .from("assignments")
-          .select(
-            "id,user_id,status,due_date,created_at,courses(id,title),completions(score,completed_at)"
-          )
+          .select("id,user_id,status,due_date,created_at,quiz_required,courses(id,title),completions(score,completed_at)")
           .eq("company_id", company!.companyId)
           .in("user_id", userIds)
           .order("created_at", { ascending: false }),
@@ -120,53 +92,40 @@ export default function ReportsPage() {
       const assignments = (assignmentResult.data as Assignment[]) ?? [];
 
       const profileMap = new Map(
-        profiles.map((p) => [
-          p.id,
-          {
-            email: p.email ?? "",
-            fullName: p.full_name ?? "",
-          },
-        ])
+        profiles.map((p) => [p.id, { email: p.email ?? "", fullName: p.full_name ?? "" }])
       );
 
-      const reportRows: ReportRow[] = assignments.map((assignment) => {
-        const course = Array.isArray(assignment.courses)
-          ? assignment.courses[0]
-          : assignment.courses;
+      setRows(
+        assignments.map((assignment) => {
+          const course = Array.isArray(assignment.courses) ? assignment.courses[0] : assignment.courses;
+          const completion = Array.isArray(assignment.completions) ? assignment.completions[0] : assignment.completions;
+          const profile = profileMap.get(assignment.user_id);
 
-        const completion = Array.isArray(assignment.completions)
-          ? assignment.completions[0]
-          : assignment.completions;
+          const overdue =
+            !!assignment.due_date &&
+            assignment.status !== "completed" &&
+            new Date(assignment.due_date + "T23:59:59") < new Date();
 
-        const profile = profileMap.get(assignment.user_id);
-        const overdue =
-          !!assignment.due_date &&
-          assignment.status !== "completed" &&
-          new Date(assignment.due_date + "T23:59:59") < new Date();
+          let displayStatus = "Not Started";
+          if (assignment.status === "completed") displayStatus = "Completed";
+          else if (overdue) displayStatus = "Overdue";
+          else if (assignment.status === "in_progress") displayStatus = "In Progress";
 
-        let displayStatus = "Not Started";
-        if (assignment.status === "completed") displayStatus = "Completed";
-        else if (overdue) displayStatus = "Overdue";
-        else if (assignment.status === "in_progress") displayStatus = "In Progress";
-
-        return {
-          assignmentId: assignment.id,
-          employeeId: assignment.user_id,
-          employeeName:
-            profile?.fullName ||
-            profile?.email ||
-            assignment.user_id,
-          email: profile?.email || "",
-          courseTitle: course?.title || "Training Course",
-          status: displayStatus,
-          dueDate: assignment.due_date,
-          score: completion?.score ?? null,
-          completedAt: completion?.completed_at ?? null,
-          overdue,
-        };
-      });
-
-      setRows(reportRows);
+          return {
+            assignmentId: assignment.id,
+            employeeId: assignment.user_id,
+            employeeName: profile?.fullName || profile?.email || assignment.user_id,
+            email: profile?.email || "",
+            courseTitle: course?.title || "Training Course",
+            status: displayStatus,
+            dueDate: assignment.due_date,
+            quizRequired: assignment.quiz_required,
+            score: completion?.score ?? null,
+            completedAt: completion?.completed_at ?? null,
+            overdue,
+          };
+        })
+      );
     }
 
     loadReport();
@@ -174,9 +133,7 @@ export default function ReportsPage() {
 
   const employeeOptions = useMemo(() => {
     const map = new Map<string, string>();
-    rows.forEach((row) => {
-      map.set(row.employeeId, row.employeeName);
-    });
+    rows.forEach((row) => map.set(row.employeeId, row.employeeName));
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [rows]);
 
@@ -185,11 +142,8 @@ export default function ReportsPage() {
       const statusMatch =
         statusFilter === "all" ||
         row.status.toLowerCase().replace(" ", "_") === statusFilter;
-
       const employeeMatch =
-        employeeFilter === "all" ||
-        row.employeeId === employeeFilter;
-
+        employeeFilter === "all" || row.employeeId === employeeFilter;
       return statusMatch && employeeMatch;
     });
   }, [rows, statusFilter, employeeFilter]);
@@ -199,42 +153,91 @@ export default function ReportsPage() {
     const completed = rows.filter((r) => r.status === "Completed").length;
     const overdue = rows.filter((r) => r.status === "Overdue").length;
     const inProgress = rows.filter((r) => r.status === "In Progress").length;
-
-    const scores = rows
-      .map((r) => r.score)
-      .filter((score): score is number => score !== null);
-
-    const averageScore =
-      scores.length > 0
-        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-        : null;
-
+    const scores = rows.map((r) => r.score).filter((s): s is number => s !== null);
+    const averageScore = scores.length
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : null;
     return { total, completed, overdue, inProgress, averageScore };
   }, [rows]);
 
+  function csvEscape(value: string | number | null | undefined) {
+    const text = value == null ? "" : String(value);
+    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function exportCsv() {
+    const headers = [
+      "Employee Name",
+      "Employee Email",
+      "Course",
+      "Status",
+      "Due Date",
+      "Quiz Required",
+      "Quiz Score",
+      "Completed At",
+    ];
+
+    const bodyRows = filteredRows.map((row) => [
+      row.employeeName,
+      row.email,
+      row.courseTitle,
+      row.status,
+      row.dueDate || "",
+      row.quizRequired ? "Yes" : "No",
+      row.score != null ? `${row.score}%` : "",
+      row.completedAt ? new Date(row.completedAt).toLocaleString() : "",
+    ]);
+
+    const csv = [
+      headers.map(csvEscape).join(","),
+      ...bodyRows.map((r) => r.map(csvEscape).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    const companyPart = (company?.companyName || "company")
+      .replace(/[^a-z0-9]+/gi, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase();
+
+    link.href = url;
+    link.download = `${companyPart}-training-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   if (loading) {
-    return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
-        Loading reports...
-      </main>
-    );
+    return <main className="mx-auto max-w-7xl px-6 py-12">Loading reports...</main>;
   }
 
   if (!company || company.role === "employee") {
-    return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
-        Admin access required.
-      </main>
-    );
+    return <main className="mx-auto max-w-7xl px-6 py-12">Admin access required.</main>;
   }
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10">
-      <div className="text-sm text-cyan-300">{company.companyName}</div>
-      <h1 className="mt-1 text-4xl font-bold">Training Reports</h1>
-      <p className="mt-2 text-slate-400">
-        Review training status, due dates, scores, and completions across your company.
-      </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="text-sm text-cyan-300">{company.companyName}</div>
+          <h1 className="mt-1 text-4xl font-bold">Training Reports</h1>
+          <p className="mt-2 text-slate-400">
+            Review training status, due dates, scores, and completions across your company.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={!filteredRows.length}
+          className="rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950 disabled:opacity-40"
+        >
+          Export CSV
+        </button>
+      </div>
 
       {loadError && (
         <div className="mt-6 rounded-lg border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">
@@ -247,22 +250,18 @@ export default function ReportsPage() {
           <div className="text-sm text-slate-400">Assignments</div>
           <div className="mt-2 text-3xl font-bold">{summary.total}</div>
         </div>
-
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
           <div className="text-sm text-slate-400">Completed</div>
           <div className="mt-2 text-3xl font-bold">{summary.completed}</div>
         </div>
-
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
           <div className="text-sm text-slate-400">In Progress</div>
           <div className="mt-2 text-3xl font-bold">{summary.inProgress}</div>
         </div>
-
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
           <div className="text-sm text-slate-400">Overdue</div>
           <div className="mt-2 text-3xl font-bold">{summary.overdue}</div>
         </div>
-
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
           <div className="text-sm text-slate-400">Avg. Score</div>
           <div className="mt-2 text-3xl font-bold">
@@ -282,9 +281,7 @@ export default function ReportsPage() {
             >
               <option value="all">All Employees</option>
               {employeeOptions.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name}
-                </option>
+                <option key={employee.id} value={employee.id}>{employee.name}</option>
               ))}
             </select>
           </div>
@@ -304,14 +301,19 @@ export default function ReportsPage() {
             </select>
           </div>
         </div>
+
+        <div className="mt-4 text-xs text-slate-500">
+          CSV export uses the currently selected employee and status filters.
+        </div>
       </section>
 
       <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-        <div className="hidden grid-cols-[1.3fr_1.3fr_.8fr_.8fr_.7fr_1fr] gap-4 border-b border-white/10 bg-white/5 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400 lg:grid">
+        <div className="hidden grid-cols-[1.2fr_1.2fr_.75fr_.7fr_.65fr_.65fr_1fr] gap-4 border-b border-white/10 bg-white/5 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400 lg:grid">
           <div>Employee</div>
           <div>Course</div>
           <div>Status</div>
           <div>Due</div>
+          <div>Quiz</div>
           <div>Score</div>
           <div>Completed</div>
         </div>
@@ -324,19 +326,15 @@ export default function ReportsPage() {
           filteredRows.map((row) => (
             <div
               key={row.assignmentId}
-              className="grid gap-3 border-b border-white/10 px-5 py-5 text-sm last:border-0 lg:grid-cols-[1.3fr_1.3fr_.8fr_.8fr_.7fr_1fr]"
+              className="grid gap-3 border-b border-white/10 px-5 py-5 text-sm last:border-0 lg:grid-cols-[1.2fr_1.2fr_.75fr_.7fr_.65fr_.65fr_1fr]"
             >
               <div>
                 <div className="font-medium">{row.employeeName}</div>
                 {row.email && row.employeeName !== row.email ? (
-                  <div className="mt-1 text-xs text-slate-500">
-                    {row.email}
-                  </div>
+                  <div className="mt-1 text-xs text-slate-500">{row.email}</div>
                 ) : null}
               </div>
-
               <div>{row.courseTitle}</div>
-
               <div>
                 <span
                   className={`rounded-full px-2.5 py-1 text-xs ${
@@ -352,21 +350,15 @@ export default function ReportsPage() {
                   {row.status}
                 </span>
               </div>
-
               <div className={row.overdue ? "text-rose-300" : "text-slate-300"}>
                 {row.dueDate
                   ? new Date(row.dueDate + "T00:00:00").toLocaleDateString()
                   : "—"}
               </div>
-
-              <div>
-                {row.score !== null ? `${row.score}%` : "—"}
-              </div>
-
+              <div>{row.quizRequired ? "Required" : "No Quiz"}</div>
+              <div>{row.score !== null ? `${row.score}%` : "—"}</div>
               <div className="text-slate-400">
-                {row.completedAt
-                  ? new Date(row.completedAt).toLocaleString()
-                  : "—"}
+                {row.completedAt ? new Date(row.completedAt).toLocaleString() : "—"}
               </div>
             </div>
           ))
