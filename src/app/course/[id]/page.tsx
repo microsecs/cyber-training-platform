@@ -36,7 +36,7 @@ export default function CoursePage() {
       const { data, error } = await supabase
         .from("assignments")
         .select(
-          "id,status,due_date,courses(id,title,description,duration_minutes,quiz),completions(score,completed_at)"
+          "id,status,due_date,courses(id,title,description,duration_minutes,quiz,video_url,passing_score),completions(score,completed_at)"
         )
         .eq("id", assignmentId)
         .eq("user_id", userData.user.id)
@@ -64,11 +64,7 @@ export default function CoursePage() {
   }, [assignmentId]);
 
   if (loading) {
-    return (
-      <main className="mx-auto max-w-4xl px-6 py-10">
-        Loading course...
-      </main>
-    );
+    return <main className="mx-auto max-w-4xl px-6 py-10">Loading course...</main>;
   }
 
   if (!assignment) {
@@ -90,6 +86,7 @@ export default function CoursePage() {
     : assignment.completions;
 
   const quiz: QuizQuestion[] = course?.quiz || [];
+  const passingScore = course?.passing_score ?? 80;
 
   async function submitQuiz() {
     if (quiz.length === 0) {
@@ -105,9 +102,7 @@ export default function CoursePage() {
     let correct = 0;
 
     quiz.forEach((question, index) => {
-      if (answers[index] === question.answer) {
-        correct += 1;
-      }
+      if (answers[index] === question.answer) correct += 1;
     });
 
     const score = Math.round((correct / quiz.length) * 100);
@@ -134,6 +129,7 @@ export default function CoursePage() {
       body: JSON.stringify({
         assignmentId,
         score,
+        passingScore,
       }),
     });
 
@@ -151,15 +147,12 @@ export default function CoursePage() {
         ...current,
         status: "completed",
         completions: [
-          {
-            score,
-            completed_at: new Date().toISOString(),
-          },
+          { score, completed_at: new Date().toISOString() },
         ],
       }));
     } else {
       setMessage(
-        `Score: ${score}%. You need 80% to pass. Review the lesson and try again.`
+        `Score: ${score}%. You need ${passingScore}% to pass. Please review and try again.`
       );
     }
 
@@ -171,9 +164,7 @@ export default function CoursePage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="text-sm text-cyan-300">Training Course</div>
-          <h1 className="mt-1 text-4xl font-bold">
-            {course?.title}
-          </h1>
+          <h1 className="mt-1 text-4xl font-bold">{course?.title}</h1>
         </div>
 
         <Link
@@ -184,49 +175,44 @@ export default function CoursePage() {
         </Link>
       </div>
 
-      <p className="mt-4 text-slate-400">
-        {course?.description}
-      </p>
+      <p className="mt-4 text-slate-400">{course?.description}</p>
 
       <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
-        <div className="flex aspect-video items-center justify-center rounded-xl bg-slate-950">
-          <div className="text-center">
-            <div className="text-6xl">▶</div>
-            <div className="mt-4 text-slate-400">
-              Training video placeholder
-            </div>
-            <div className="mt-1 text-sm text-slate-500">
-              {course?.duration_minutes} minute lesson
+        {course?.video_url ? (
+          <video
+            controls
+            className="aspect-video w-full rounded-xl bg-black"
+            src={course.video_url}
+          >
+            Your browser does not support HTML5 video.
+          </video>
+        ) : (
+          <div className="flex aspect-video items-center justify-center rounded-xl bg-slate-950">
+            <div className="text-center">
+              <div className="text-6xl">▶</div>
+              <div className="mt-4 text-slate-400">No training video has been added yet.</div>
             </div>
           </div>
-        </div>
+        )}
 
-        <p className="mt-4 text-sm text-slate-500">
-          The video area is still a placeholder. The assignment, quiz, and completion tracking are live.
-        </p>
+        <div className="mt-4 text-sm text-slate-500">
+          Estimated duration: {course?.duration_minutes} minutes
+        </div>
       </section>
 
       {assignment.status === "completed" && completion ? (
         <section className="mt-8 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-6">
-          <div className="text-sm text-emerald-300">
-            Training Completed
-          </div>
-          <div className="mt-2 text-2xl font-bold">
-            Score: {completion.score}%
-          </div>
+          <div className="text-sm text-emerald-300">Training Completed</div>
+          <div className="mt-2 text-2xl font-bold">Score: {completion.score}%</div>
           <div className="mt-2 text-sm text-slate-300">
-            Completed{" "}
-            {new Date(completion.completed_at).toLocaleString()}
+            Completed {new Date(completion.completed_at).toLocaleString()}
           </div>
         </section>
       ) : (
         <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
-          <h2 className="text-2xl font-semibold">
-            Knowledge Check
-          </h2>
-
+          <h2 className="text-2xl font-semibold">Knowledge Check</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Score 80% or higher to complete this course.
+            Score {passingScore}% or higher to complete this course.
           </p>
 
           <div className="mt-7 space-y-8">
@@ -253,7 +239,6 @@ export default function CoursePage() {
                           }))
                         }
                       />
-
                       <span>{choice}</span>
                     </label>
                   ))}
