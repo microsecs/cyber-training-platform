@@ -13,7 +13,7 @@ export default function AcceptInvitePage() {
   useEffect(() => {
     const supabase = createClient();
 
-    async function checkSession() {
+    async function detectSession() {
       const { data } = await supabase.auth.getSession();
 
       if (data.session) {
@@ -22,29 +22,31 @@ export default function AcceptInvitePage() {
         return;
       }
 
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session) {
-          setReady(true);
-          setMessage("");
+      const { data: listener } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          if (session) {
+            setReady(true);
+            setMessage("");
+          }
         }
-      });
+      );
 
-      window.setTimeout(async () => {
+      setTimeout(async () => {
         const { data: retry } = await supabase.auth.getSession();
         if (!retry.session) {
           setMessage(
-            "The invitation session was not detected. Open this page using the link in the invitation email."
+            "No invitation session was detected. Please open this page from the invitation email."
           );
         }
-      }, 1500);
+      }, 1800);
 
       return () => listener.subscription.unsubscribe();
     }
 
-    checkSession();
+    detectSession();
   }, []);
 
-  async function setNewPassword(event: FormEvent) {
+  async function activate(event: FormEvent) {
     event.preventDefault();
 
     if (password.length < 8) {
@@ -61,16 +63,42 @@ export default function AcceptInvitePage() {
     setMessage("");
 
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
 
-    if (error) {
-      setMessage(error.message);
+    const { error: passwordError } =
+      await supabase.auth.updateUser({ password });
+
+    if (passwordError) {
+      setMessage(passwordError.message);
       setBusy(false);
       return;
     }
 
-    setMessage("Account activated. Taking you to your training...");
-    window.setTimeout(() => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (!accessToken) {
+      setMessage("Your invitation session expired. Please reopen the invite link.");
+      setBusy(false);
+      return;
+    }
+
+    const response = await fetch("/api/accept-invite", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setMessage(result.error || "Could not finish company enrollment.");
+      setBusy(false);
+      return;
+    }
+
+    setMessage("Account activated. Opening your training dashboard...");
+    setTimeout(() => {
       window.location.href = "/employee";
     }, 700);
   }
@@ -81,7 +109,7 @@ export default function AcceptInvitePage() {
         <div className="text-sm text-cyan-300">Employee Invitation</div>
         <h1 className="mt-2 text-3xl font-bold">Activate your account</h1>
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Choose a password for your employee training account.
+          Choose a password to join your employer&apos;s CyberAware account.
         </p>
 
         {!ready ? (
@@ -89,9 +117,11 @@ export default function AcceptInvitePage() {
             {message}
           </div>
         ) : (
-          <form onSubmit={setNewPassword} className="mt-7 space-y-4">
+          <form onSubmit={activate} className="mt-7 space-y-4">
             <div>
-              <label className="mb-2 block text-sm text-slate-300">New password</label>
+              <label className="mb-2 block text-sm text-slate-300">
+                New password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -103,7 +133,9 @@ export default function AcceptInvitePage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-slate-300">Confirm password</label>
+              <label className="mb-2 block text-sm text-slate-300">
+                Confirm password
+              </label>
               <input
                 type="password"
                 value={confirmPassword}
