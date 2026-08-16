@@ -1,16 +1,45 @@
-import Link from "next/link";
+"use client";
 
-const links = [
-  { href: "/", label: "Home" },
-  { href: "/admin", label: "Admin" },
-  { href: "/employees", label: "Employees" },
-  { href: "/training", label: "Training" },
-  { href: "/assign-training", label: "Assign Training" },
-  { href: "/reports", label: "Reports" },
-  { href: "/employee", label: "Employee View" },
-];
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SiteNav() {
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkPlatformAdmin() {
+      const { data: userData } = await supabase.auth.getUser();
+
+      if (!userData.user) {
+        setIsPlatformAdmin(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("platform_admins")
+        .select("user_id")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+      setIsPlatformAdmin(!!data);
+    }
+
+    checkPlatformAdmin();
+  }, []);
+
+  const links = [
+    { href: "/", label: "Home" },
+    { href: "/admin", label: "Admin" },
+    { href: "/employees", label: "Employees" },
+    { href: "/training", label: "Training" },
+    { href: "/assign-training", label: "Assign Training" },
+    { href: "/reports", label: "Reports" },
+    { href: "/employee", label: "Employee View" },
+  ];
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -23,12 +52,21 @@ export default function SiteNav() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
+        <nav className="hidden items-center gap-5 text-sm text-slate-300 md:flex">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-white">
               {link.label}
             </Link>
           ))}
+
+          {isPlatformAdmin ? (
+            <Link
+              href="/platform-admin"
+              className="rounded-lg bg-amber-400/10 px-3 py-2 text-amber-300 hover:bg-amber-400/20"
+            >
+              Platform Admin
+            </Link>
+          ) : null}
         </nav>
 
         <div className="flex gap-2">
@@ -38,7 +76,6 @@ export default function SiteNav() {
           >
             Account
           </Link>
-
           <Link
             href="/login"
             className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
