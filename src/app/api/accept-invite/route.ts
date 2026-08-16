@@ -23,45 +23,45 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Use getUser(token) so the identity is verified by Supabase Auth.
     const { data: userData, error: userError } =
       await userClient.auth.getUser(token);
 
-    if (userError || !userData.user) {
-      return NextResponse.json({ error: "Invalid invitation session" }, { status: 401 });
-    }
-
-    const metadata = userData.user.user_metadata || {};
-    const invitationId = metadata.invitation_id;
-    const companyId = metadata.invited_company_id;
-    const invitedRole = metadata.invited_role || "employee";
-
-    if (!invitationId || !companyId) {
+    if (userError || !userData.user || !userData.user.email) {
       return NextResponse.json(
-        { error: "This account does not contain a valid company invitation." },
-        { status: 400 }
+        { error: "Invalid invitation session" },
+        { status: 401 }
       );
     }
 
+    const email = userData.user.email.trim().toLowerCase();
     const admin = createAdminClient();
 
+    // Primary lookup: pending invite by the authenticated employee's email.
+    // This avoids depending on user_metadata being present in the session.
     const { data: invite, error: inviteError } = await admin
       .from("invitations")
       .select("id, company_id, email, role, status")
-      .eq("id", invitationId)
-      .eq("company_id", companyId)
+      .eq("status", "pending")
+      .ilike("email", email)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (inviteError || !invite) {
-      return NextResponse.json({ error: "Invitation record not found." }, { status: 404 });
+    if (inviteError) {
+      return NextResponse.json(
+        { error: inviteError.message },
+        { status: 500 }
+      );
     }
 
-    if (
-      invite.email.toLowerCase() !==
-      (userData.user.email || "").toLowerCase()
-    ) {
+    if (!invite) {
       return NextResponse.json(
-        { error: "This invitation belongs to a different email address." },
-        { status: 403 }
+        {
+          error:
+            "No pending company invitation was found for this email address. Ask the administrator to send a fresh invitation.",
+        },
+        { status: 404 }
       );
     }
 
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
       .from("memberships")
       .upsert(
         {
-          company_id: companyId,
+          company_id: invite.company_id,
           user_id: userData.user.id,
-          role: invitedRole,
+          role: invite.role || "employee",
         },
         {
           onConflict: "company_id,user_id",
@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await admin
       .from("invitations")
       .update({ status: "accepted" })
-      .eq("id", invitationId);
+      .eq("id", invite.id)
+      .eq("status", "pending");
 
     if (updateError) {
       return NextResponse.json(
@@ -97,7 +98,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      companyId: invite.company_id,
+    });
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || "Unexpected server error" },
