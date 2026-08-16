@@ -1,366 +1,161 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { ChangeEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Course = {
-  id: string;
-  title: string;
-  description: string | null;
-  duration_minutes: number;
-  quiz_question_count: number;
-  is_active: boolean;
-  video_url: string | null;
-  passing_score: number;
-  quiz: any[] | null;
-};
-
-const blankQuiz = [
-  { question: "", choices: ["", "", ""], answer: 0 },
-];
-
 export default function CourseAdminPage() {
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [duration, setDuration] = useState(5);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [passingScore, setPassingScore] = useState(80);
-  const [isActive, setIsActive] = useState(true);
-  const [quiz, setQuiz] = useState<any[]>(blankQuiz);
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-
   const supabase = createClient();
+  const [authorized,setAuthorized]=useState<boolean|null>(null);
+  const [courses,setCourses]=useState<any[]>([]);
+  const [selectedId,setSelectedId]=useState("");
+  const [title,setTitle]=useState("");
+  const [description,setDescription]=useState("");
+  const [duration,setDuration]=useState(5);
+  const [passingScore,setPassingScore]=useState(80);
+  const [isActive,setIsActive]=useState(true);
+  const [videoKey,setVideoKey]=useState("");
+  const [videoUrl,setVideoUrl]=useState("");
+  const [quiz,setQuiz]=useState<any[]>([{question:"",choices:["","",""],answer:0}]);
+  const [message,setMessage]=useState("");
+  const [uploading,setUploading]=useState(false);
+  const [uploadPercent,setUploadPercent]=useState(0);
 
-  async function loadCourses() {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("id,title,description,duration_minutes,quiz_question_count,is_active,video_url,passing_score,quiz")
+  async function loadCourses(){
+    const {data,error}=await supabase.from("courses")
+      .select("id,title,description,duration_minutes,passing_score,is_active,video_key,video_url,quiz")
       .order("title");
-
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-
-    setCourses((data as Course[]) ?? []);
+    if(error){setMessage(error.message);return;}
+    setCourses(data??[]);
   }
 
-  useEffect(() => {
-    async function initialize() {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        setAuthorized(false);
-        return;
-      }
+  useEffect(()=>{
+    (async()=>{
+      const {data:u}=await supabase.auth.getUser();
+      if(!u.user){setAuthorized(false);return;}
+      const {data:a}=await supabase.from("platform_admins").select("user_id").eq("user_id",u.user.id).maybeSingle();
+      setAuthorized(!!a);
+      if(a) await loadCourses();
+    })();
+  },[]);
 
-      const { data } = await supabase
-        .from("platform_admins")
-        .select("user_id")
-        .eq("user_id", userData.user.id)
-        .maybeSingle();
-
-      if (!data) {
-        setAuthorized(false);
-        return;
-      }
-
-      setAuthorized(true);
-      await loadCourses();
-    }
-
-    initialize();
-  }, []);
-
-  function newCourse() {
-    setSelectedId("");
-    setTitle("");
-    setDescription("");
-    setDuration(5);
-    setVideoUrl("");
-    setPassingScore(80);
-    setIsActive(true);
-    setQuiz([{ question: "", choices: ["", "", ""], answer: 0 }]);
-    setMessage("");
+  function newCourse(){
+    setSelectedId("");setTitle("");setDescription("");setDuration(5);setPassingScore(80);
+    setIsActive(true);setVideoKey("");setVideoUrl("");
+    setQuiz([{question:"",choices:["","",""],answer:0}]);setMessage("");
   }
 
-  function loadCourse(course: Course) {
-    setSelectedId(course.id);
-    setTitle(course.title);
-    setDescription(course.description ?? "");
-    setDuration(course.duration_minutes);
-    setVideoUrl(course.video_url ?? "");
-    setPassingScore(course.passing_score ?? 80);
-    setIsActive(course.is_active);
-    setQuiz(course.quiz?.length ? course.quiz : blankQuiz);
-    setMessage("");
+  function chooseCourse(c:any){
+    setSelectedId(c.id);setTitle(c.title);setDescription(c.description??"");
+    setDuration(c.duration_minutes??5);setPassingScore(c.passing_score??80);
+    setIsActive(c.is_active);setVideoKey(c.video_key??"");setVideoUrl(c.video_url??"");
+    setQuiz(c.quiz?.length?c.quiz:[{question:"",choices:["","",""],answer:0}]);setMessage("");
   }
 
-  function updateQuestion(index: number, field: string, value: any) {
-    setQuiz((current) =>
-      current.map((q, i) => (i === index ? { ...q, [field]: value } : q))
-    );
-  }
+  async function uploadVideo(e:ChangeEvent<HTMLInputElement>){
+    const file=e.target.files?.[0]; if(!file)return;
+    setUploading(true);setUploadPercent(0);setMessage("");
+    const {data:sess}=await supabase.auth.getSession();
+    const r=await fetch("/api/r2/upload-url",{method:"POST",headers:{
+      "Content-Type":"application/json",Authorization:`Bearer ${sess.session?.access_token}`
+    },body:JSON.stringify({fileName:file.name,contentType:file.type||"video/mp4",size:file.size})});
+    const x=await r.json();
+    if(!r.ok){setMessage(x.error||"Could not prepare upload.");setUploading(false);return;}
 
-  function updateChoice(qIndex: number, cIndex: number, value: string) {
-    setQuiz((current) =>
-      current.map((q, i) =>
-        i === qIndex
-          ? {
-              ...q,
-              choices: q.choices.map((choice: string, j: number) =>
-                j === cIndex ? value : choice
-              ),
-            }
-          : q
-      )
-    );
-  }
-
-  function addQuestion() {
-    setQuiz((current) => [
-      ...current,
-      { question: "", choices: ["", "", ""], answer: 0 },
-    ]);
-  }
-
-  function removeQuestion(index: number) {
-    setQuiz((current) => current.filter((_, i) => i !== index));
-  }
-
-  async function saveCourse() {
-    setBusy(true);
-    setMessage("");
-
-    const cleanQuiz = quiz
-      .filter((q) => q.question.trim())
-      .map((q) => ({
-        question: q.question.trim(),
-        choices: q.choices.map((c: string) => c.trim()),
-        answer: Number(q.answer),
-      }));
-
-    const payload = {
-      title: title.trim(),
-      description: description.trim() || null,
-      duration_minutes: Number(duration),
-      quiz_question_count: cleanQuiz.length,
-      is_active: isActive,
-      video_url: videoUrl.trim() || null,
-      passing_score: Number(passingScore),
-      quiz: cleanQuiz,
-      updated_at: new Date().toISOString(),
+    const xhr=new XMLHttpRequest();
+    xhr.open("PUT",x.uploadUrl);
+    xhr.setRequestHeader("Content-Type",file.type||"video/mp4");
+    xhr.upload.onprogress=(ev)=>{if(ev.lengthComputable)setUploadPercent(Math.round(ev.loaded/ev.total*100));};
+    xhr.onload=()=>{
+      if(xhr.status>=200&&xhr.status<300){
+        setVideoKey(x.key);setVideoUrl("");
+        setMessage("Video uploaded. Click Save Changes/Create Course to attach it.");
+      } else setMessage(`R2 upload failed (${xhr.status}). Check CORS.`);
+      setUploading(false);
     };
+    xhr.onerror=()=>{setMessage("R2 upload failed. Check CORS.");setUploading(false);};
+    xhr.send(file);
+  }
 
-    let result;
+  function updateQ(i:number,field:string,value:any){
+    setQuiz(q=>q.map((z,j)=>j===i?{...z,[field]:value}:z));
+  }
+  function updateChoice(i:number,j:number,value:string){
+    setQuiz(q=>q.map((z,k)=>k===i?{...z,choices:z.choices.map((c:string,n:number)=>n===j?value:c)}:z));
+  }
 
-    if (selectedId) {
-      result = await supabase.from("courses").update(payload).eq("id", selectedId);
-    } else {
-      result = await supabase.from("courses").insert(payload).select("id").single();
-    }
-
-    if (result.error) {
-      setMessage(result.error.message);
-      setBusy(false);
-      return;
-    }
-
-    setMessage(selectedId ? "Course updated." : "Course created.");
+  async function save(){
+    const cleanQuiz=quiz.filter(q=>q.question.trim()).map(q=>({
+      question:q.question.trim(),choices:q.choices.map((c:string)=>c.trim()),answer:Number(q.answer)
+    }));
+    const payload={
+      title:title.trim(),description:description.trim()||null,duration_minutes:Number(duration),
+      passing_score:Number(passingScore),is_active:isActive,
+      video_key:videoKey||null,video_url:videoKey?null:(videoUrl.trim()||null),
+      quiz:cleanQuiz,quiz_question_count:cleanQuiz.length,updated_at:new Date().toISOString()
+    };
+    const result=selectedId
+      ? await supabase.from("courses").update(payload).eq("id",selectedId)
+      : await supabase.from("courses").insert(payload).select("id").single();
+    if(result.error){setMessage(result.error.message);return;}
+    setMessage(selectedId?"Course updated.":"Course created.");
+    if(!selectedId&&result.data?.id)setSelectedId(result.data.id);
     await loadCourses();
-
-    if (!selectedId && result.data?.id) setSelectedId(result.data.id);
-    setBusy(false);
   }
 
-  async function deleteCourse() {
-    if (!selectedId) return;
+  if(authorized===null)return <main className="p-10">Checking access...</main>;
+  if(!authorized)return <main className="p-10">Platform admin required.</main>;
 
-    const selectedCourse = courses.find((c) => c.id === selectedId);
-    const confirmed = window.confirm(
-      `Delete "${selectedCourse?.title || title}"?\n\nThis cannot be undone. Existing assignments linked to this course may also be removed because of database cascading relationships.`
-    );
+  return <main className="mx-auto max-w-7xl px-6 py-10">
+    <div className="text-sm text-cyan-300">Platform Administration</div>
+    <h1 className="mt-1 text-4xl font-bold">Master Course Library</h1>
 
-    if (!confirmed) return;
+    <div className="mt-8 grid gap-6 lg:grid-cols-[.7fr_1.5fr]">
+      <aside className="rounded-2xl border border-white/10 bg-slate-900 p-5">
+        <button onClick={newCourse} className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950">+ New Course</button>
+        <div className="mt-5 space-y-2">{courses.map(c=>
+          <button key={c.id} onClick={()=>chooseCourse(c)}
+            className={`w-full rounded-lg border p-4 text-left ${selectedId===c.id?"border-cyan-400":"border-white/10 bg-slate-950"}`}>
+            <div className="font-medium">{c.title}</div>
+            <div className="mt-1 text-xs text-slate-500">{c.video_key?"R2 video":c.video_url?"External video":"No video"}</div>
+          </button>)}</div>
+      </aside>
 
-    setBusy(true);
-    setMessage("");
-
-    const { error } = await supabase
-      .from("courses")
-      .delete()
-      .eq("id", selectedId);
-
-    if (error) {
-      setMessage(error.message);
-      setBusy(false);
-      return;
-    }
-
-    setMessage("Course deleted.");
-    newCourse();
-    await loadCourses();
-    setBusy(false);
-  }
-
-  if (authorized === null) {
-    return <main className="mx-auto max-w-7xl px-6 py-12">Checking platform access...</main>;
-  }
-
-  if (!authorized) {
-    return (
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-3xl font-bold">Platform Admin Required</h1>
-      </main>
-    );
-  }
-
-  return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <div className="text-sm text-cyan-300">Platform Administration</div>
-          <h1 className="mt-1 text-4xl font-bold">Master Course Library</h1>
+      <section className="space-y-5 rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Course title" className="w-full rounded-lg bg-slate-950 px-4 py-3"/>
+        <textarea value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description" rows={4} className="w-full rounded-lg bg-slate-950 px-4 py-3"/>
+        <div className="grid gap-4 md:grid-cols-2">
+          <input type="number" min={1} value={duration} onChange={e=>setDuration(Number(e.target.value))} className="rounded-lg bg-slate-950 px-4 py-3"/>
+          <input type="number" min={0} max={100} value={passingScore} onChange={e=>setPassingScore(Number(e.target.value))} className="rounded-lg bg-slate-950 px-4 py-3"/>
         </div>
-        <Link href="/platform-admin" className="rounded-lg border border-white/15 px-4 py-2.5 text-sm">
-          Back to Platform Admin
-        </Link>
-      </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[.7fr_1.5fr]">
-        <aside className="rounded-2xl border border-white/10 bg-slate-900 p-5">
-          <button onClick={newCourse} className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950">
-            + New Course
-          </button>
+        <div className="rounded-xl border border-white/10 bg-slate-950 p-5">
+          <div className="font-medium">Upload Training Video to Cloudflare R2</div>
+          <input type="file" accept="video/*" onChange={uploadVideo} disabled={uploading} className="mt-3 block w-full text-sm"/>
+          {uploading&&<div className="mt-3 text-sm text-slate-400">Uploading {uploadPercent}%</div>}
+          {videoKey&&<div className="mt-3 break-all text-xs text-emerald-300">{videoKey}</div>}
+          <input value={videoUrl} onChange={e=>{setVideoUrl(e.target.value);if(e.target.value)setVideoKey("");}}
+            placeholder="Or external video URL" className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-3"/>
+        </div>
 
-          <div className="mt-5 space-y-2">
-            {courses.map((course) => (
-              <button
-                key={course.id}
-                onClick={() => loadCourse(course)}
-                className={`w-full rounded-lg border p-4 text-left ${
-                  selectedId === course.id
-                    ? "border-cyan-400 bg-cyan-400/5"
-                    : "border-white/10 bg-slate-950"
-                }`}
-              >
-                <div className="font-medium">{course.title}</div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {course.is_active ? "Active" : "Inactive"} • {course.duration_minutes} min
-                </div>
-              </button>
-            ))}
-          </div>
-        </aside>
+        <label className="flex gap-3"><input type="checkbox" checked={isActive} onChange={e=>setIsActive(e.target.checked)}/>Course is active</label>
 
-        <section className="rounded-2xl border border-white/10 bg-slate-900 p-6">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm">Title</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
-            </div>
+        <div>
+          <div className="flex justify-between"><h2 className="text-xl font-semibold">Quiz Questions</h2>
+            <button onClick={()=>setQuiz([...quiz,{question:"",choices:["","",""],answer:0}])} className="text-sm text-cyan-300">+ Add Question</button></div>
+          <div className="mt-4 space-y-4">{quiz.map((q,i)=><div key={i} className="rounded-lg bg-slate-950 p-4">
+            <input value={q.question} onChange={e=>updateQ(i,"question",e.target.value)} placeholder={`Question ${i+1}`} className="w-full rounded-lg bg-slate-900 px-3 py-2"/>
+            <div className="mt-3 space-y-2">{q.choices.map((c:string,j:number)=><label key={j} className="flex gap-3">
+              <input type="radio" name={`correct-${i}`} checked={Number(q.answer)===j} onChange={()=>updateQ(i,"answer",j)}/>
+              <input value={c} onChange={e=>updateChoice(i,j,e.target.value)} placeholder={`Choice ${j+1}`} className="flex-1 rounded-lg bg-slate-900 px-3 py-2"/>
+            </label>)}</div>
+          </div>)}</div>
+        </div>
 
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm">Description</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm">Duration (minutes)</label>
-              <input type="number" min={1} value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm">Default Passing Score (%)</label>
-              <input type="number" min={0} max={100} value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} className="w-full rounded-lg bg-slate-950 px-4 py-3" />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm">Video URL</label>
-              <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://..." className="w-full rounded-lg bg-slate-950 px-4 py-3" />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="flex items-center gap-3">
-                <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                <span>Course is active</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Quiz Questions</h2>
-              <button onClick={addQuestion} className="rounded-lg border border-white/15 px-4 py-2 text-sm">
-                + Add Question
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-6">
-              {quiz.map((q, qIndex) => (
-                <div key={qIndex} className="rounded-xl border border-white/10 bg-slate-950 p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <label className="mb-2 block text-sm">Question {qIndex + 1}</label>
-                      <input value={q.question} onChange={(e) => updateQuestion(qIndex, "question", e.target.value)} className="w-full rounded-lg bg-slate-900 px-4 py-3" />
-                    </div>
-                    {quiz.length > 1 ? (
-                      <button onClick={() => removeQuestion(qIndex)} className="mt-7 text-sm text-rose-300">
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    {q.choices.map((choice: string, cIndex: number) => (
-                      <label key={cIndex} className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name={`correct-${qIndex}`}
-                          checked={Number(q.answer) === cIndex}
-                          onChange={() => updateQuestion(qIndex, "answer", cIndex)}
-                        />
-                        <input
-                          value={choice}
-                          onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
-                          placeholder={`Choice ${cIndex + 1}`}
-                          className="flex-1 rounded-lg bg-slate-900 px-4 py-3"
-                        />
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <button
-              onClick={saveCourse}
-              disabled={!title.trim() || busy}
-              className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-40"
-            >
-              {busy ? "Saving..." : selectedId ? "Save Changes" : "Create Course"}
-            </button>
-
-            {selectedId ? (
-              <button
-                onClick={deleteCourse}
-                disabled={busy}
-                className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-5 py-3 font-semibold text-rose-300 disabled:opacity-40"
-              >
-                Delete Course
-              </button>
-            ) : null}
-
-            {message && <span className="text-sm text-slate-300">{message}</span>}
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+        <button onClick={save} disabled={!title.trim()||uploading} className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-40">
+          {selectedId?"Save Changes":"Create Course"}
+        </button>
+        {message&&<div className="text-sm text-slate-300">{message}</div>}
+      </section>
+    </div>
+  </main>;
 }
