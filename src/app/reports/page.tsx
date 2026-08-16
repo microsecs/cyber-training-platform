@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
+import SendTrainingReminder from "@/components/SendTrainingReminder";
 
 type Membership = { user_id: string; role: string };
 type Profile = { id: string; email: string | null; full_name: string | null };
@@ -420,7 +421,7 @@ export default function ReportsPage() {
 
       <section className="mt-8 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900">
         <div className="min-w-[1180px]">
-          <div className="grid grid-cols-[1.2fr_1.2fr_.9fr_.75fr_.75fr_.65fr_.65fr_.7fr_1fr] gap-4 border-b border-white/10 bg-white/5 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="grid grid-cols-[1.15fr_1.15fr_.85fr_.75fr_.7fr_.6fr_.65fr_.65fr_1fr_.9fr] gap-4 border-b border-white/10 bg-white/5 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
             <div>Employee</div>
             <div>Course</div>
             <div>Assigned</div>
@@ -430,6 +431,7 @@ export default function ReportsPage() {
             <div>Quiz</div>
             <div>Score</div>
             <div>Completed</div>
+            <div>Actions</div>
           </div>
 
           {filteredRows.length === 0 ? (
@@ -440,7 +442,7 @@ export default function ReportsPage() {
             filteredRows.map((row) => (
               <div
                 key={row.assignmentId}
-                className="grid grid-cols-[1.2fr_1.2fr_.9fr_.75fr_.75fr_.65fr_.65fr_.7fr_1fr] gap-4 border-b border-white/10 px-5 py-5 text-sm last:border-0"
+                className="grid grid-cols-[1.15fr_1.15fr_.85fr_.75fr_.7fr_.6fr_.65fr_.65fr_1fr_.9fr] gap-4 border-b border-white/10 px-5 py-5 text-sm last:border-0"
               >
                 <div>
                   <div className="font-medium">
@@ -521,6 +523,13 @@ export default function ReportsPage() {
                         row.completedAt
                       ).toLocaleString()
                     : "—"}
+                </div>
+
+                <div>
+                  <SendTrainingReminder
+                    assignmentId={row.assignmentId}
+                    disabled={row.status === "Completed"}
+                  />
                 </div>
               </div>
             ))
