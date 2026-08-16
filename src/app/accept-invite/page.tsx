@@ -14,79 +14,43 @@ export default function AcceptInvitePage() {
     const supabase = createClient();
 
     async function initializeInvite() {
-      // Read any error returned in the URL.
-      const searchParams = new URLSearchParams(window.location.search);
-      const urlError = searchParams.get("error");
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type");
 
-      if (urlError) {
-        setMessage(decodeURIComponent(urlError));
+      if (!tokenHash || type !== "invite") {
+        setMessage(
+          "This invitation link is missing its verification token. Ask the administrator to send a fresh invitation."
+        );
         return;
       }
 
-      // Support Supabase implicit invite links where tokens arrive in the URL hash.
-      const hash = window.location.hash;
+      // Prevent a previously logged-in owner/admin session from contaminating
+      // the employee invite flow.
+      await supabase.auth.signOut({ scope: "local" });
 
-      if (hash.includes("access_token=")) {
-        const hashParams = new URLSearchParams(hash.substring(1));
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "invite",
+      });
 
-        if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (error) {
-            setMessage(error.message);
-            return;
-          }
-
-          // Remove tokens from the browser address bar.
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-        }
-      }
-
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        setMessage(error.message);
+      if (error || !data.session) {
+        setMessage(
+          error?.message ||
+            "This invitation could not be verified. Ask the administrator to send a fresh invitation."
+        );
         return;
       }
 
-      if (data.session) {
-        setReady(true);
-        setMessage("");
-        return;
-      }
+      setReady(true);
+      setMessage("");
 
-      // Give Supabase a moment in case the session is still being established.
-      const { data: listener } = supabase.auth.onAuthStateChange(
-        (_event, session) => {
-          if (session) {
-            setReady(true);
-            setMessage("");
-          }
-        }
+      // Remove token from address bar after verification.
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
       );
-
-      window.setTimeout(async () => {
-        const { data: retry } = await supabase.auth.getSession();
-
-        if (!retry.session) {
-          setMessage(
-            "No invitation session was detected. Please open this page using a fresh invitation email."
-          );
-        }
-      }, 1500);
-
-      return () => {
-        listener.subscription.unsubscribe();
-      };
     }
 
     initializeInvite();
@@ -110,7 +74,6 @@ export default function AcceptInvitePage() {
 
     const supabase = createClient();
 
-    // Set the invited employee's password.
     const { error: passwordError } = await supabase.auth.updateUser({
       password,
     });
@@ -132,7 +95,6 @@ export default function AcceptInvitePage() {
       return;
     }
 
-    // Attach the employee to the company using the pending invitation.
     const response = await fetch("/api/accept-invite", {
       method: "POST",
       headers: {
@@ -167,8 +129,7 @@ export default function AcceptInvitePage() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Choose a password to join your employer&apos;s CyberAware training
-          account.
+          Choose a password to join your employer&apos;s CyberAware training account.
         </p>
 
         {!ready ? (
@@ -176,10 +137,7 @@ export default function AcceptInvitePage() {
             {message}
           </div>
         ) : (
-          <form
-            onSubmit={activateAccount}
-            className="mt-7 space-y-4"
-          >
+          <form onSubmit={activateAccount} className="mt-7 space-y-4">
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 New password
@@ -203,9 +161,7 @@ export default function AcceptInvitePage() {
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={(event) =>
-                  setConfirmPassword(event.target.value)
-                }
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 minLength={8}
                 required
                 className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400/50"
