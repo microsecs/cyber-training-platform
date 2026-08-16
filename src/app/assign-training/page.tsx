@@ -4,24 +4,19 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
 
-type Course = {
-  id: string;
-  title: string;
-};
+type Course = { id: string; title: string };
 
-type Member = {
+type Employee = {
   user_id: string;
   role: string;
-  profiles:
-    | { email: string | null; full_name: string | null }
-    | { email: string | null; full_name: string | null }[]
-    | null;
+  email: string | null;
+  full_name: string | null;
 };
 
 export default function AssignTrainingPage() {
   const { company, loading } = useCompany();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [courseId, setCourseId] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
@@ -31,21 +26,20 @@ export default function AssignTrainingPage() {
 
   useEffect(() => {
     if (!company) return;
-
-    const s = createClient();
+    const supabase = createClient();
 
     async function loadData() {
       setLoadError("");
 
-      const courseResult = await s
+      const courseResult = await supabase
         .from("courses")
         .select("id,title")
         .eq("is_active", true)
         .order("title");
 
-      const memberResult = await s
+      const membershipResult = await supabase
         .from("memberships")
-        .select("user_id,role,profiles!memberships_user_id_fkey(email,full_name)")
+        .select("user_id,role,created_at")
         .eq("company_id", company!.companyId)
         .eq("role", "employee")
         .order("created_at");
@@ -54,16 +48,59 @@ export default function AssignTrainingPage() {
         setLoadError(`Courses: ${courseResult.error.message}`);
       }
 
-      if (memberResult.error) {
+      if (membershipResult.error) {
         setLoadError((current) =>
           current
-            ? `${current} | Employees: ${memberResult.error!.message}`
-            : `Employees: ${memberResult.error!.message}`
+            ? `${current} | Employees: ${membershipResult.error!.message}`
+            : `Employees: ${membershipResult.error!.message}`
         );
+        setCourses((courseResult.data as Course[]) ?? []);
+        setEmployees([]);
+        return;
       }
 
+      const memberships = membershipResult.data ?? [];
+      const userIds = memberships.map((m) => m.user_id);
+
+      let profileMap = new Map<
+        string,
+        { email: string | null; full_name: string | null }
+      >();
+
+      if (userIds.length > 0) {
+        const profileResult = await supabase
+          .from("profiles")
+          .select("id,email,full_name")
+          .in("id", userIds);
+
+        if (profileResult.error) {
+          setLoadError((current) =>
+            current
+              ? `${current} | Profiles: ${profileResult.error!.message}`
+              : `Profiles: ${profileResult.error!.message}`
+          );
+        } else {
+          profileMap = new Map(
+            (profileResult.data ?? []).map((profile) => [
+              profile.id,
+              { email: profile.email, full_name: profile.full_name },
+            ])
+          );
+        }
+      }
+
+      const employeeRows: Employee[] = memberships.map((membership) => {
+        const profile = profileMap.get(membership.user_id);
+        return {
+          user_id: membership.user_id,
+          role: membership.role,
+          email: profile?.email ?? null,
+          full_name: profile?.full_name ?? null,
+        };
+      });
+
       setCourses((courseResult.data as Course[]) ?? []);
-      setMembers((memberResult.data as Member[]) ?? []);
+      setEmployees(employeeRows);
     }
 
     loadData();
@@ -74,11 +111,7 @@ export default function AssignTrainingPage() {
   }
 
   if (!company || company.role === "employee") {
-    return (
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        Admin access required.
-      </main>
-    );
+    return <main className="mx-auto max-w-5xl px-6 py-10">Admin access required.</main>;
   }
 
   function toggleUser(userId: string, checked: boolean) {
@@ -93,8 +126,8 @@ export default function AssignTrainingPage() {
     setBusy(true);
     setMessage("");
 
-    const s = createClient();
-    const { data } = await s.auth.getSession();
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
 
     if (!token) {
@@ -109,11 +142,7 @@ export default function AssignTrainingPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        courseId,
-        userIds: selected,
-        dueDate,
-      }),
+      body: JSON.stringify({ courseId, userIds: selected, dueDate }),
     });
 
     const result = await response.json();
@@ -144,9 +173,7 @@ export default function AssignTrainingPage() {
 
       <section className="mt-8 space-y-7 rounded-2xl border border-white/10 bg-slate-900 p-6">
         <div>
-          <label className="mb-2 block text-sm text-slate-300">
-            Training Course
-          </label>
+          <label className="mb-2 block text-sm text-slate-300">Training Course</label>
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
@@ -154,9 +181,7 @@ export default function AssignTrainingPage() {
           >
             <option value="">Choose a course</option>
             {courses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.title}
-              </option>
+              <option key={course.id} value={course.id}>{course.title}</option>
             ))}
           </select>
         </div>
@@ -167,7 +192,7 @@ export default function AssignTrainingPage() {
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => setSelected(members.map((m) => m.user_id))}
+                onClick={() => setSelected(employees.map((e) => e.user_id))}
                 className="text-sm text-cyan-300 hover:text-cyan-200"
               >
                 Select All
@@ -182,42 +207,28 @@ export default function AssignTrainingPage() {
             </div>
           </div>
 
-          {members.length === 0 ? (
+          {employees.length === 0 ? (
             <div className="rounded-lg bg-slate-950 p-4 text-sm text-slate-500">
-              No employee accounts were returned. If employees exist in Supabase,
-              run the V6.7 profile RLS SQL patch included with this update.
+              No employee memberships were found for this company.
             </div>
           ) : (
             <div className="space-y-2">
-              {members.map((member) => {
-                const profile = Array.isArray(member.profiles)
-                  ? member.profiles[0]
-                  : member.profiles;
-
-                const label =
-                  profile?.full_name ||
-                  profile?.email ||
-                  member.user_id;
-
+              {employees.map((employee) => {
+                const label = employee.full_name || employee.email || employee.user_id;
                 return (
                   <label
-                    key={member.user_id}
+                    key={employee.user_id}
                     className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/5 bg-slate-950 p-4 hover:border-white/15"
                   >
                     <input
                       type="checkbox"
-                      checked={selected.includes(member.user_id)}
-                      onChange={(e) =>
-                        toggleUser(member.user_id, e.target.checked)
-                      }
+                      checked={selected.includes(employee.user_id)}
+                      onChange={(e) => toggleUser(employee.user_id, e.target.checked)}
                     />
-
                     <div>
                       <div className="font-medium">{label}</div>
-                      {profile?.full_name && profile?.email ? (
-                        <div className="text-xs text-slate-500">
-                          {profile.email}
-                        </div>
+                      {employee.full_name && employee.email ? (
+                        <div className="text-xs text-slate-500">{employee.email}</div>
                       ) : null}
                     </div>
                   </label>
