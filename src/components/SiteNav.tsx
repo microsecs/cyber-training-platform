@@ -5,6 +5,7 @@ const links = [
   { href: "/admin", label: "Admin" },
   { href: "/employees", label: "Employees" },
   { href: "/training", label: "Training" },
+  { href: "/assign-training", label: "Assign Training" },
   { href: "/employee", label: "Employee View" },
 ];
 

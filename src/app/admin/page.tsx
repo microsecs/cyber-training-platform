@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import StatCard from "@/components/StatCard";
@@ -14,28 +15,50 @@ export default function AdminPage() {
   useEffect(() => {
     if (!company) return;
     const s = createClient();
+
     Promise.all([
-      s.from("memberships").select("id",{count:"exact",head:true}).eq("company_id",company.companyId),
-      s.from("invitations").select("id",{count:"exact",head:true}).eq("company_id",company.companyId).eq("status","pending"),
-      s.from("assignments").select("id",{count:"exact",head:true}).eq("company_id",company.companyId),
-    ]).then(([m,i,a]) => {
-      setMembers(m.count ?? 0); setInvites(i.count ?? 0); setAssignments(a.count ?? 0);
+      s.from("memberships").select("id", { count: "exact", head: true }).eq("company_id", company.companyId),
+      s.from("invitations").select("id", { count: "exact", head: true }).eq("company_id", company.companyId).eq("status", "pending"),
+      s.from("assignments").select("id", { count: "exact", head: true }).eq("company_id", company.companyId),
+    ]).then(([m, i, a]) => {
+      setMembers(m.count ?? 0);
+      setInvites(i.count ?? 0);
+      setAssignments(a.count ?? 0);
     });
   }, [company]);
 
   if (loading) return <main className="mx-auto max-w-7xl px-6 py-12">Loading company...</main>;
   if (error || !company) return <main className="mx-auto max-w-7xl px-6 py-12">Please sign in first.</main>;
-  if (company.role === "employee") return <main className="mx-auto max-w-7xl px-6 py-12">Admin access required.</main>;
+
+  if (company.role === "employee") {
+    return (
+      <main className="mx-auto max-w-4xl px-6 py-12">
+        <h1 className="text-3xl font-bold">Employee account</h1>
+        <p className="mt-3 text-slate-400">You do not have company administration access.</p>
+        <Link href="/employee" className="mt-6 inline-block rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950">
+          Open My Training
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="text-sm text-cyan-300">{company.companyName}</div>
           <h1 className="mt-1 text-4xl font-bold">Company Admin Dashboard</h1>
-          <p className="mt-2 text-slate-400">Real company data from Supabase.</p>
+          <p className="mt-2 text-slate-400">Manage employees, invitations, and training assignments.</p>
         </div>
-        <Link href="/employees" className="rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950">Manage Employees</Link>
+
+        <div className="flex flex-wrap gap-3">
+          <Link href="/employees" className="rounded-lg border border-white/15 px-4 py-3 font-semibold hover:bg-white/5">
+            Manage Employees
+          </Link>
+          <Link href="/assign-training" className="rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950 hover:bg-cyan-300">
+            Assign Training
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-5 md:grid-cols-3">
@@ -44,10 +67,22 @@ export default function AdminPage() {
         <StatCard label="Training Assignments" value={String(assignments)} detail="Company assignments" />
       </div>
 
-      <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
-        <div className="text-sm text-emerald-300">✓ Multi-company database connected</div>
-        <h2 className="mt-2 text-xl font-semibold">Company records are protected by Row Level Security</h2>
-      </section>
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <Link href="/employees" className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40">
+          <div className="text-lg font-semibold">Employees</div>
+          <p className="mt-2 text-sm text-slate-400">Invite users and manage company memberships.</p>
+        </Link>
+
+        <Link href="/assign-training" className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40">
+          <div className="text-lg font-semibold">Assign Training</div>
+          <p className="mt-2 text-sm text-slate-400">Select a course, choose employees, and set an optional due date.</p>
+        </Link>
+
+        <Link href="/training" className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40">
+          <div className="text-lg font-semibold">Training Library</div>
+          <p className="mt-2 text-sm text-slate-400">Review the cybersecurity courses currently available.</p>
+        </Link>
+      </div>
     </main>
   );
 }
