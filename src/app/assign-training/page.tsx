@@ -5,10 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
 
 type Course = { id: string; title: string };
-
 type Employee = {
   user_id: string;
-  role: string;
   email: string | null;
   full_name: string | null;
 };
@@ -20,121 +18,71 @@ export default function AssignTrainingPage() {
   const [courseId, setCourseId] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
+  const [quizRequired, setQuizRequired] = useState(true);
   const [message, setMessage] = useState("");
-  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!company) return;
-    const supabase = createClient();
+    const s = createClient();
 
-    async function loadData() {
-      setLoadError("");
-
-      const courseResult = await supabase
+    async function load() {
+      const courseResult = await s
         .from("courses")
         .select("id,title")
         .eq("is_active", true)
         .order("title");
 
-      const membershipResult = await supabase
+      const memberResult = await s
         .from("memberships")
-        .select("user_id,role,created_at")
+        .select("user_id")
         .eq("company_id", company!.companyId)
-        .eq("role", "employee")
-        .order("created_at");
+        .eq("role", "employee");
 
-      if (courseResult.error) {
-        setLoadError(`Courses: ${courseResult.error.message}`);
-      }
+      const userIds = (memberResult.data ?? []).map((m) => m.user_id);
 
-      if (membershipResult.error) {
-        setLoadError((current) =>
-          current
-            ? `${current} | Employees: ${membershipResult.error!.message}`
-            : `Employees: ${membershipResult.error!.message}`
-        );
-        setCourses((courseResult.data as Course[]) ?? []);
-        setEmployees([]);
-        return;
-      }
-
-      const memberships = membershipResult.data ?? [];
-      const userIds = memberships.map((m) => m.user_id);
-
-      let profileMap = new Map<
-        string,
-        { email: string | null; full_name: string | null }
-      >();
-
-      if (userIds.length > 0) {
-        const profileResult = await supabase
+      let profiles: any[] = [];
+      if (userIds.length) {
+        const profileResult = await s
           .from("profiles")
           .select("id,email,full_name")
           .in("id", userIds);
 
-        if (profileResult.error) {
-          setLoadError((current) =>
-            current
-              ? `${current} | Profiles: ${profileResult.error!.message}`
-              : `Profiles: ${profileResult.error!.message}`
-          );
-        } else {
-          profileMap = new Map(
-            (profileResult.data ?? []).map((profile) => [
-              profile.id,
-              { email: profile.email, full_name: profile.full_name },
-            ])
-          );
-        }
+        profiles = profileResult.data ?? [];
       }
 
-      const employeeRows: Employee[] = memberships.map((membership) => {
-        const profile = profileMap.get(membership.user_id);
-        return {
-          user_id: membership.user_id,
-          role: membership.role,
-          email: profile?.email ?? null,
-          full_name: profile?.full_name ?? null,
-        };
-      });
+      const profileMap = new Map(
+        profiles.map((p) => [p.id, p])
+      );
 
       setCourses((courseResult.data as Course[]) ?? []);
-      setEmployees(employeeRows);
+      setEmployees(
+        userIds.map((id) => {
+          const p = profileMap.get(id);
+          return {
+            user_id: id,
+            email: p?.email ?? null,
+            full_name: p?.full_name ?? null,
+          };
+        })
+      );
     }
 
-    loadData();
+    load();
   }, [company]);
 
-  if (loading) {
-    return <main className="mx-auto max-w-5xl px-6 py-10">Loading...</main>;
-  }
-
+  if (loading) return <main className="p-10">Loading...</main>;
   if (!company || company.role === "employee") {
-    return <main className="mx-auto max-w-5xl px-6 py-10">Admin access required.</main>;
-  }
-
-  function toggleUser(userId: string, checked: boolean) {
-    setSelected((current) =>
-      checked
-        ? Array.from(new Set([...current, userId]))
-        : current.filter((id) => id !== userId)
-    );
+    return <main className="p-10">Admin access required.</main>;
   }
 
   async function assignTraining() {
     setBusy(true);
     setMessage("");
 
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
+    const s = createClient();
+    const { data } = await s.auth.getSession();
     const token = data.session?.access_token;
-
-    if (!token) {
-      setMessage("Your session expired. Please sign in again.");
-      setBusy(false);
-      return;
-    }
 
     const response = await fetch("/api/assign", {
       method: "POST",
@@ -142,18 +90,22 @@ export default function AssignTrainingPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ courseId, userIds: selected, dueDate }),
+      body: JSON.stringify({
+        courseId,
+        userIds: selected,
+        dueDate,
+        quizRequired,
+      }),
     });
 
     const result = await response.json();
 
-    if (!response.ok) {
-      setMessage(result.error || "Could not assign training.");
-      setBusy(false);
-      return;
-    }
+    setMessage(
+      response.ok
+        ? `Assigned training to ${result.count} employee(s).`
+        : result.error || "Could not assign training."
+    );
 
-    setMessage(`Assigned training to ${result.count} employee(s).`);
     setBusy(false);
   }
 
@@ -161,98 +113,107 @@ export default function AssignTrainingPage() {
     <main className="mx-auto max-w-5xl px-6 py-10">
       <div className="text-sm text-cyan-300">{company.companyName}</div>
       <h1 className="mt-1 text-4xl font-bold">Assign Training</h1>
-      <p className="mt-2 text-slate-400">
-        Choose a course and assign it to one or more employees.
-      </p>
-
-      {loadError && (
-        <div className="mt-6 rounded-lg border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">
-          {loadError}
-        </div>
-      )}
 
       <section className="mt-8 space-y-7 rounded-2xl border border-white/10 bg-slate-900 p-6">
         <div>
-          <label className="mb-2 block text-sm text-slate-300">Training Course</label>
+          <label className="mb-2 block text-sm">Course</label>
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-slate-950 p-3"
+            className="w-full rounded-lg bg-slate-950 p-3"
           >
             <option value="">Choose a course</option>
             {courses.map((course) => (
-              <option key={course.id} value={course.id}>{course.title}</option>
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
             ))}
           </select>
         </div>
 
         <div>
-          <div className="mb-3 flex items-center justify-between">
-            <label className="text-sm text-slate-300">Employees</label>
+          <div className="mb-3 flex justify-between">
+            <label className="text-sm">Employees</label>
             <div className="flex gap-4">
               <button
                 type="button"
                 onClick={() => setSelected(employees.map((e) => e.user_id))}
-                className="text-sm text-cyan-300 hover:text-cyan-200"
+                className="text-sm text-cyan-300"
               >
                 Select All
               </button>
               <button
                 type="button"
                 onClick={() => setSelected([])}
-                className="text-sm text-slate-400 hover:text-white"
+                className="text-sm text-slate-400"
               >
                 Clear
               </button>
             </div>
           </div>
 
-          {employees.length === 0 ? (
-            <div className="rounded-lg bg-slate-950 p-4 text-sm text-slate-500">
-              No employee memberships were found for this company.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {employees.map((employee) => {
-                const label = employee.full_name || employee.email || employee.user_id;
-                return (
-                  <label
-                    key={employee.user_id}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/5 bg-slate-950 p-4 hover:border-white/15"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(employee.user_id)}
-                      onChange={(e) => toggleUser(employee.user_id, e.target.checked)}
-                    />
-                    <div>
-                      <div className="font-medium">{label}</div>
-                      {employee.full_name && employee.email ? (
-                        <div className="text-xs text-slate-500">{employee.email}</div>
-                      ) : null}
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          )}
+          <div className="space-y-2">
+            {employees.map((employee) => {
+              const label =
+                employee.full_name ||
+                employee.email ||
+                employee.user_id;
+
+              return (
+                <label
+                  key={employee.user_id}
+                  className="flex gap-3 rounded-lg bg-slate-950 p-3"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(employee.user_id)}
+                    onChange={(e) =>
+                      setSelected(
+                        e.target.checked
+                          ? [...selected, employee.user_id]
+                          : selected.filter((x) => x !== employee.user_id)
+                      )
+                    }
+                  />
+                  <span>{label}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-slate-300">
+          <label className="mb-2 block text-sm">
             Due Date <span className="text-slate-500">(optional)</span>
           </label>
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="rounded-lg border border-white/10 bg-slate-950 p-3"
+            className="rounded-lg bg-slate-950 p-3"
           />
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-slate-950 p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={quizRequired}
+              onChange={(e) => setQuizRequired(e.target.checked)}
+              className="mt-1"
+            />
+            <div>
+              <div className="font-medium">Require Quiz</div>
+              <div className="mt-1 text-sm text-slate-400">
+                Turn this off if the employee only needs to review the training content.
+              </div>
+            </div>
+          </label>
         </div>
 
         <button
           type="button"
-          disabled={!courseId || selected.length === 0 || busy}
+          disabled={!courseId || !selected.length || busy}
           onClick={assignTraining}
           className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-40"
         >
@@ -260,7 +221,7 @@ export default function AssignTrainingPage() {
         </button>
 
         {message && (
-          <div className="rounded-lg border border-white/10 bg-slate-950 p-4 text-sm text-slate-300">
+          <div className="rounded-lg bg-slate-950 p-4 text-sm">
             {message}
           </div>
         )}
