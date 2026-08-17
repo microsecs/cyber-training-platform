@@ -49,10 +49,21 @@ export async function POST(request: NextRequest) {
 
     const { data: existingMembership } = await admin
       .from("memberships")
-      .select("id")
+      .select("id,is_active")
       .eq("company_id", invite.company_id)
       .eq("user_id", userData.user.id)
       .maybeSingle();
+
+    if (existingMembership && existingMembership.is_active === false) {
+      const { error: reactivateError } = await admin
+        .from("memberships")
+        .update({ is_active: true })
+        .eq("id", existingMembership.id);
+
+      if (reactivateError) {
+        return NextResponse.json({ error: reactivateError.message }, { status: 500 });
+      }
+    }
 
     if (!existingMembership) {
       const { error: membershipError } = await admin
@@ -62,6 +73,7 @@ export async function POST(request: NextRequest) {
             company_id: invite.company_id,
             user_id: userData.user.id,
             role: invite.role || "employee",
+            is_active: true,
           },
           { onConflict: "company_id,user_id" }
         );

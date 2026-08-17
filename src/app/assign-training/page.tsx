@@ -34,7 +34,8 @@ export default function AssignTrainingPage() {
         .from("memberships")
         .select("user_id")
         .eq("company_id", company.companyId)
-        .eq("role", "employee");
+        .eq("role", "employee")
+        .eq("is_active", true);
 
       const userIds = (memberResult.data ?? []).map((m) => m.user_id);
       let profiles: any[] = [];
