@@ -77,7 +77,7 @@ export default function UnassignTrainingButton({
         type="button"
         onClick={unassign}
         disabled={disabled || busy}
-        className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-300 disabled:opacity-40"
+        className="w-full rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-300 disabled:opacity-40"
       >
         {busy ? "Removing..." : "Unassign"}
       </button>

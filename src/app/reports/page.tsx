@@ -526,7 +526,7 @@ export default function ReportsPage() {
                     : "—"}
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex w-full min-w-[140px] flex-col gap-2">
                   <SendTrainingReminder
                     assignmentId={row.assignmentId}
                     disabled={row.status === "Completed"}
