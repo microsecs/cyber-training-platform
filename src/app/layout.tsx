@@ -3,7 +3,7 @@ import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
-  title: "CyberAware | Employee Security Training",
+  title: "MicroSECONDS | Employee Security Training",
   description: "Cybersecurity awareness training for businesses and employees.",
 };
 

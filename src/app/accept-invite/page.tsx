@@ -129,7 +129,7 @@ export default function AcceptInvitePage() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Choose a password to join your employer&apos;s CyberAware training account.
+          Choose a password to join your employer&apos;s MicroSECONDS training account.
         </p>
 
         {!ready ? (

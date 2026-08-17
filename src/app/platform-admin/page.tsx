@@ -47,7 +47,7 @@ export default function PlatformAdminPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="text-sm text-cyan-300">CyberAware Platform</div>
+      <div className="text-sm text-cyan-300">MicroSECONDS Platform</div>
       <h1 className="mt-1 text-4xl font-bold">Platform Admin</h1>
       <p className="mt-2 text-slate-400">
         Manage the master course library and platform-level settings.

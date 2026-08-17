@@ -78,7 +78,7 @@ export default function AuthForm() {
       </h1>
       <p className="mt-2 text-sm text-slate-400">
         {mode === "signin"
-          ? "Sign in to your CyberAware account."
+          ? "Sign in to your MicroSECONDS account."
           : "This will become the primary administrator account for your company."}
       </p>
 

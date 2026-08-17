@@ -45,7 +45,7 @@ export default function SiteNav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="group">
           <div className="text-lg font-bold tracking-tight group-hover:text-cyan-300">
-            CyberAware
+            MicroSECONDS
           </div>
           <div className="text-[11px] text-slate-500">
             Employee Security Training
