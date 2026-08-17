@@ -83,6 +83,75 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Convert any training assigned while this employee was still pending
+    // into normal user-ID-based assignments.
+    const { data: pendingAssignments, error: pendingError } = await admin
+      .from("pending_assignments")
+      .select("id,company_id,course_id,due_date,quiz_required,reminders_enabled,assigned_by")
+      .eq("invitation_id", invite.id);
+
+    if (pendingError) {
+      return NextResponse.json({ error: pendingError.message }, { status: 500 });
+    }
+
+    if (pendingAssignments && pendingAssignments.length > 0) {
+      const courseIds = pendingAssignments.map((row) => row.course_id);
+
+      const { data: activeAssignments, error: activeError } = await admin
+        .from("assignments")
+        .select("course_id,status")
+        .eq("company_id", invite.company_id)
+        .eq("user_id", userData.user.id)
+        .in("course_id", courseIds)
+        .neq("status", "completed");
+
+      if (activeError) {
+        return NextResponse.json({ error: activeError.message }, { status: 500 });
+      }
+
+      const activeCourseIds = new Set(
+        (activeAssignments ?? []).map((row) => row.course_id)
+      );
+
+      const rowsToInsert = pendingAssignments
+        .filter((row) => !activeCourseIds.has(row.course_id))
+        .map((row) => ({
+          company_id: row.company_id,
+          course_id: row.course_id,
+          user_id: userData.user!.id,
+          due_date: row.due_date,
+          assigned_by: row.assigned_by,
+          status: "not_started",
+          quiz_required: row.quiz_required,
+          reminders_enabled: row.reminders_enabled,
+        }));
+
+      if (rowsToInsert.length > 0) {
+        const { error: assignmentInsertError } = await admin
+          .from("assignments")
+          .insert(rowsToInsert);
+
+        if (assignmentInsertError) {
+          return NextResponse.json(
+            { error: assignmentInsertError.message },
+            { status: 500 }
+          );
+        }
+      }
+
+      const { error: deletePendingError } = await admin
+        .from("pending_assignments")
+        .delete()
+        .eq("invitation_id", invite.id);
+
+      if (deletePendingError) {
+        return NextResponse.json(
+          { error: deletePendingError.message },
+          { status: 500 }
+        );
+      }
+    }
+
     if (invite.status !== "accepted") {
       const { error: updateError } = await admin
         .from("invitations")

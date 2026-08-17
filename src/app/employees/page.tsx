@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
+import BulkEmployeeInvite from "@/components/BulkEmployeeInvite";
 
 type Member = {
   id: string;
@@ -483,6 +484,10 @@ export default function EmployeesPage() {
           {message}
         </div>
       )}
+
+      <div className="mt-6">
+        <BulkEmployeeInvite onComplete={refresh} />
+      </div>
 
       <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
         <div className="border-b border-white/10 px-5 py-4 font-semibold">
