@@ -162,6 +162,14 @@ export default function BulkEmployeeInvite({
         Upload a CSV containing employee email addresses. The file can contain an Email column, additional columns, or simply one email address per line.
       </p>
 
+      <a
+        href="/sample-employee-import.csv"
+        download="sample-employee-import.csv"
+        className="mt-3 inline-block text-sm font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
+      >
+        Download Sample CSV
+      </a>
+
       <input
         type="file"
         accept=".csv,text/csv"
