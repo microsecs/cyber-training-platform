@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
 import SendTrainingReminder from "@/components/SendTrainingReminder";
+import UnassignTrainingButton from "@/components/UnassignTrainingButton";
 
 type Membership = { user_id: string; role: string };
 type Profile = { id: string; email: string | null; full_name: string | null };
@@ -525,9 +526,16 @@ export default function ReportsPage() {
                     : "—"}
                 </div>
 
-                <div>
+                <div className="flex flex-col gap-2">
                   <SendTrainingReminder
                     assignmentId={row.assignmentId}
+                    disabled={row.status === "Completed"}
+                  />
+
+                  <UnassignTrainingButton
+                    assignmentId={row.assignmentId}
+                    courseTitle={row.courseTitle}
+                    employeeName={row.employeeName}
                     disabled={row.status === "Completed"}
                   />
                 </div>
