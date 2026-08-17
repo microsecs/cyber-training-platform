@@ -55,9 +55,9 @@ export default function SiteNav() {
             width={835}
             height={109}
             priority
-            className="h-5 w-auto max-w-[155px] object-contain sm:h-6 sm:max-w-[190px] lg:h-7 lg:max-w-[215px]"
+            className="h-7 w-auto max-w-[190px] object-contain sm:h-8 sm:max-w-[235px] lg:h-9 lg:max-w-[270px]"
           />
-          <div className="mt-1 hidden text-[10px] tracking-wide text-slate-500 sm:block">
+          <div className="mt-1 hidden text-xs font-medium tracking-wide text-slate-400 sm:block lg:text-sm">
             Employee Security Training
           </div>
         </Link>
