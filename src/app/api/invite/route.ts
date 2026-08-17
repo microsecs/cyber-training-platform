@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { Resend } from "resend";
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
     if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -17,15 +16,8 @@ export async function POST(request: NextRequest) {
     const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
     const userClient = createClient(url, publishableKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const { data: userData, error: userError } = await userClient.auth.getUser(token);
@@ -41,7 +33,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
     }
 
-    // Determine the requester's company and verify admin/owner role using their own RLS session.
     const { data: membership, error: membershipError } = await userClient
       .from("memberships")
       .select("company_id, role, companies(name)")
@@ -60,17 +51,19 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient();
 
-    // Avoid duplicate pending invites.
     const { data: existingInvite } = await admin
       .from("invitations")
-      .select("id, status")
+      .select("id,status")
       .eq("company_id", membership.company_id)
       .eq("email", email)
       .eq("status", "pending")
       .maybeSingle();
 
     if (existingInvite) {
-      return NextResponse.json({ error: "A pending invitation already exists for this email." }, { status: 409 });
+      return NextResponse.json(
+        { error: "A pending invitation already exists for this email." },
+        { status: 409 }
+      );
     }
 
     const { data: inviteRow, error: inviteRowError } = await admin
@@ -92,22 +85,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const origin = request.nextUrl.origin;
+    const origin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
 
-    const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${origin}/accept-invite`,
-      data: {
-        invited_company_id: membership.company_id,
-        invitation_id: inviteRow.id,
-        invited_role: "employee",
-        invited_company_name: companyRow?.name ?? "Company",
+    const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: {
+        redirectTo: `${origin}/accept-invite`,
+        data: {
+          invited_company_id: membership.company_id,
+          invitation_id: inviteRow.id,
+          invited_role: "employee",
+          invited_company_name: companyRow?.name ?? "Company",
+        },
       },
     });
 
-    if (inviteError) {
-      // Keep the database tidy if the Auth invite could not be sent.
+    if (linkError || !linkData?.properties?.action_link) {
       await admin.from("invitations").delete().eq("id", inviteRow.id);
-      return NextResponse.json({ error: inviteError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: linkError?.message || "Could not generate invitation link" },
+        { status: 500 }
+      );
+    }
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      await admin.from("invitations").delete().eq("id", inviteRow.id);
+      return NextResponse.json({ error: "Server is missing RESEND_API_KEY" }, { status: 500 });
+    }
+
+    const resend = new Resend(apiKey);
+    const fromAddress =
+      process.env.RESEND_FROM_EMAIL ||
+      "MicroSECONDS Training <training@microseconds.com>";
+    const companyName = companyRow?.name ?? "your company";
+
+    const { error: emailError } = await resend.emails.send({
+      from: fromAddress,
+      to: email,
+      subject: `${companyName} invited you to MicroSECONDS Training`,
+      html: `
+        <div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:0 auto;padding:24px;color:#172033">
+          <div style="font-size:13px;font-weight:bold;letter-spacing:.08em;color:#0891b2;text-transform:uppercase">
+            MicroSECONDS Training
+          </div>
+          <h1 style="font-size:28px;line-height:1.2;margin:10px 0 18px">
+            You're invited to cybersecurity training
+          </h1>
+          <p style="font-size:16px;line-height:1.6">
+            ${companyName} has invited you to join its MicroSECONDS cybersecurity training account.
+          </p>
+          <p style="font-size:16px;line-height:1.6">
+            Use the button below to accept your invitation and finish setting up your account.
+          </p>
+          <p style="margin:28px 0">
+            <a href="${linkData.properties.action_link}"
+               style="display:inline-block;background:#22d3ee;color:#082f49;text-decoration:none;padding:13px 20px;border-radius:8px;font-weight:bold">
+              Accept Invitation
+            </a>
+          </p>
+          <p style="font-size:13px;line-height:1.5;color:#64748b">
+            If you were not expecting this invitation, you can ignore this email.
+          </p>
+          <p style="margin-top:28px;font-size:13px;color:#64748b">
+            MicroSECONDS Training<br />
+            Cybersecurity Awareness Training
+          </p>
+        </div>
+      `,
+    });
+
+    if (emailError) {
+      await admin.from("invitations").delete().eq("id", inviteRow.id);
+      return NextResponse.json({ error: emailError.message }, { status: 500 });
     }
 
     return NextResponse.json({
