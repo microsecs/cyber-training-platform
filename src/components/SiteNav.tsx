@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -42,12 +43,21 @@ export default function SiteNav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="group">
-          <div className="text-lg font-bold tracking-tight group-hover:text-cyan-300">
-            MicroSECONDS
-          </div>
-          <div className="text-[11px] text-slate-500">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <Link
+          href="/"
+          className="group min-w-0 shrink"
+          aria-label="MicroSECONDS Training home"
+        >
+          <Image
+            src="/microseconds-logo.png"
+            alt="MicroSECONDS"
+            width={835}
+            height={109}
+            priority
+            className="h-5 w-auto max-w-[155px] object-contain sm:h-6 sm:max-w-[190px] lg:h-7 lg:max-w-[215px]"
+          />
+          <div className="mt-1 hidden text-[10px] tracking-wide text-slate-500 sm:block">
             Employee Security Training
           </div>
         </Link>
@@ -69,13 +79,14 @@ export default function SiteNav() {
           ) : null}
         </nav>
 
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <Link
             href="/account"
             className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
           >
             Account
           </Link>
+
           <Link
             href="/login"
             className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
