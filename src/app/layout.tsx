@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
+import RoleAccessGate from "@/components/RoleAccessGate";
 
 export const metadata: Metadata = {
   title: "MicroSECONDS | Employee Security Training",
@@ -16,7 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SiteNav />
-        {children}
+        <RoleAccessGate>{children}</RoleAccessGate>
       </body>
     </html>
   );

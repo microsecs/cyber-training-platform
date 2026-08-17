@@ -4,51 +4,57 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { AppRole, resolveUserAccess } from "@/lib/supabase/access";
 
 export default function SiteNav() {
-  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [role, setRole] = useState<AppRole>("guest");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
 
-    async function checkPlatformAdmin() {
-      const { data: userData } = await supabase.auth.getUser();
-
-      if (!userData.user) {
-        setIsPlatformAdmin(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("platform_admins")
-        .select("user_id")
-        .eq("user_id", userData.user.id)
-        .maybeSingle();
-
-      setIsPlatformAdmin(!!data);
+    async function refreshAccess() {
+      const access = await resolveUserAccess();
+      setRole(access.role);
+      setLoading(false);
     }
 
-    checkPlatformAdmin();
+    refreshAccess();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      refreshAccess();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const links = [
-    { href: "/", label: "Home" },
-    { href: "/admin", label: "Admin" },
-    { href: "/employees", label: "Employees" },
-    { href: "/training", label: "Training" },
-    { href: "/assign-training", label: "Assign Training" },
-    { href: "/reports", label: "Reports" },
-    { href: "/employee", label: "Employee View" },
-  ];
+  async function signOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }
+
+  const links =
+    role === "owner" || role === "admin"
+      ? [
+          { href: "/admin", label: "Dashboard" },
+          { href: "/employees", label: "Employees" },
+          { href: "/training", label: "Training" },
+          { href: "/assign-training", label: "Assign Training" },
+          { href: "/reports", label: "Reports" },
+        ]
+      : role === "employee"
+      ? [{ href: "/employee", label: "My Training" }]
+      : role === "platform_admin"
+      ? [{ href: "/platform-admin", label: "Platform Admin" }]
+      : [];
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link
-          href="/"
-          className="group min-w-0 shrink"
-          aria-label="MicroSECONDS Training home"
-        >
+        <Link href="/" className="group min-w-0 shrink" aria-label="MicroSECONDS Training home">
           <Image
             src="/microseconds-logo.png"
             alt="MicroSECONDS"
@@ -62,37 +68,52 @@ export default function SiteNav() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-5 text-sm text-slate-300 md:flex">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-white">
-              {link.label}
-            </Link>
-          ))}
-
-          {isPlatformAdmin ? (
-            <Link
-              href="/platform-admin"
-              className="rounded-lg bg-amber-400/10 px-3 py-2 text-amber-300 hover:bg-amber-400/20"
-            >
-              Platform Admin
-            </Link>
-          ) : null}
-        </nav>
+        {!loading && links.length > 0 ? (
+          <nav className="hidden items-center gap-5 text-sm text-slate-300 md:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={
+                  link.href === "/platform-admin"
+                    ? "rounded-lg bg-amber-400/10 px-3 py-2 text-amber-300 hover:bg-amber-400/20"
+                    : "hover:text-white"
+                }
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
 
         <div className="flex shrink-0 gap-2">
-          <Link
-            href="/account"
-            className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
-          >
-            Account
-          </Link>
+          {!loading && role !== "guest" ? (
+            <>
+              <Link
+                href="/account"
+                className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
+              >
+                Account
+              </Link>
 
-          <Link
-            href="/login"
-            className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-          >
-            Sign In
-          </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : null}
+
+          {!loading && role === "guest" ? (
+            <Link
+              href="/login"
+              className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+            >
+              Sign In
+            </Link>
+          ) : null}
         </div>
       </div>
     </header>

@@ -2,9 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
 
 export default function AuthForm() {
-  const supabase = createClient();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,31 +17,35 @@ export default function AuthForm() {
     setBusy(true);
     setMessage("");
 
+    const supabase = createClient();
+
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            company_name: company,
-          },
+          data: { company_name: company },
           emailRedirectTo: `${window.location.origin}/account`,
         },
       });
 
       if (error) setMessage(error.message);
       else setMessage("Account created. Check your email if confirmation is enabled.");
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
 
-      if (error) setMessage(error.message);
-      else window.location.href = "/account";
+      setBusy(false);
+      return;
     }
 
-    setBusy(false);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setMessage(error.message);
+      setBusy(false);
+      return;
+    }
+
+    const access = await resolveUserAccess();
+    window.location.href = defaultPathForRole(access.role);
   }
 
   return (
@@ -59,6 +63,7 @@ export default function AuthForm() {
         >
           Sign In
         </button>
+
         <button
           type="button"
           onClick={() => {
@@ -76,14 +81,15 @@ export default function AuthForm() {
       <h1 className="text-2xl font-bold">
         {mode === "signin" ? "Welcome back" : "Create your account"}
       </h1>
+
       <p className="mt-2 text-sm text-slate-400">
         {mode === "signin"
-          ? "Sign in to your MicroSECONDS account."
+          ? "Sign in to your MicroSECONDS Training account."
           : "This will become the primary administrator account for your company."}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        {mode === "signup" && (
+        {mode === "signup" ? (
           <div>
             <label className="mb-2 block text-sm text-slate-300">Company name</label>
             <input
@@ -94,7 +100,7 @@ export default function AuthForm() {
               placeholder="ABC Plumbing"
             />
           </div>
-        )}
+        ) : null}
 
         <div>
           <label className="mb-2 block text-sm text-slate-300">Email</label>
@@ -129,11 +135,19 @@ export default function AuthForm() {
         </button>
       </form>
 
-      {message && (
+      {mode === "signin" ? (
+        <div className="mt-4 text-center">
+          <a href="/forgot-password" className="text-sm text-cyan-300 hover:text-cyan-200">
+            Forgot Password?
+          </a>
+        </div>
+      ) : null}
+
+      {message ? (
         <div className="mt-4 rounded-lg border border-white/10 bg-slate-950 p-3 text-sm text-slate-300">
           {message}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
