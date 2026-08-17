@@ -23,8 +23,18 @@ export async function POST(req:NextRequest){
   const c:any=Array.isArray(a.courses)?a.courses[0]:a.courses;
   const co:any=Array.isArray(a.companies)?a.companies[0]:a.companies;
   const due=a.due_date?` Due date: ${new Date(a.due_date+"T00:00:00").toLocaleDateString("en-US")}.`:"";
-console.log("RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
-  const resend=new Resend(process.env.RESEND_API_KEY);
+  
+const apiKey = process.env.RESEND_API_KEY;
+
+if (!apiKey) {
+  return NextResponse.json(
+    { error: "Server is missing RESEND_API_KEY" },
+    { status: 500 }
+  );
+}
+
+const resend = new Resend(apiKey);
+
   const {error}=await resend.emails.send({
    from:process.env.RESEND_FROM_EMAIL!,
    to:p.email,
