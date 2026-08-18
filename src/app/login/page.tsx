@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="px-6 py-16">
+    <main className="px-6 pt-6 pb-16">
       {!showReset ? (
         <div>
           <AuthForm />
