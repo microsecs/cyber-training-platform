@@ -95,14 +95,14 @@ export default function EmployeeDashboard() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-6 pt-6 pb-12">
         Loading your training...
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 pt-6 pb-10">
       <div className="rounded-2xl border border-white/10 bg-slate-900 p-7">
         <div className="text-sm text-cyan-300">Employee Training Portal</div>
         <h1 className="mt-1 text-4xl font-bold">My Training</h1>

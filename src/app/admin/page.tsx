@@ -27,12 +27,12 @@ export default function AdminPage() {
     });
   }, [company]);
 
-  if (loading) return <main className="mx-auto max-w-7xl px-6 py-12">Loading company...</main>;
-  if (error || !company) return <main className="mx-auto max-w-7xl px-6 py-12">Please sign in first.</main>;
+  if (loading) return <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">Loading company...</main>;
+  if (error || !company) return <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">Please sign in first.</main>;
 
   if (company.role === "employee") {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-12">
+      <main className="mx-auto max-w-4xl px-6 pt-6 pb-12">
         <h1 className="text-3xl font-bold">Employee account</h1>
         <p className="mt-3 text-slate-400">You do not have company administration access.</p>
         <Link href="/employee" className="mt-6 inline-block rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950">
@@ -43,7 +43,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
       <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="text-sm text-cyan-300">{company.companyName}</div>

@@ -323,7 +323,7 @@ export default function EmployeesPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
+      <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">
         Loading...
       </main>
     );
@@ -334,7 +334,7 @@ export default function EmployeesPage() {
     !company
   ) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
+      <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">
         Please sign in first.
       </main>
     );
@@ -345,7 +345,7 @@ export default function EmployeesPage() {
     "employee"
   ) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
+      <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">
         Admin access required.
       </main>
     );
@@ -365,7 +365,7 @@ export default function EmployeesPage() {
     );
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
       <div>
         <div className="text-sm text-cyan-300">
           {company.companyName}

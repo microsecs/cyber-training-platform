@@ -281,7 +281,7 @@ export default function CourseAdminPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
       <div className="text-sm text-cyan-300">
         Platform Administration
       </div>

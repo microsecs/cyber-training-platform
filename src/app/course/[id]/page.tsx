@@ -78,7 +78,7 @@ export default function CoursePage() {
 
   if (!assignment) {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-6 pt-6 pb-10">
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-6">
           {message || "Loading course..."}
         </div>
@@ -185,7 +185,7 @@ export default function CoursePage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-4xl px-6 pt-6 pb-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="text-sm text-cyan-300">Training Course</div>

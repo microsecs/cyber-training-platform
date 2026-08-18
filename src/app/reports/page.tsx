@@ -277,7 +277,7 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
+      <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">
         Loading reports...
       </main>
     );
@@ -285,14 +285,14 @@ export default function ReportsPage() {
 
   if (!company || company.role === "employee") {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-12">
+      <main className="mx-auto max-w-7xl px-6 pt-6 pb-12">
         Admin access required.
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="text-sm text-cyan-300">

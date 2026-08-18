@@ -23,11 +23,11 @@ export default function AccountPage() {
   }
 
   if (!access) {
-    return <main className="mx-auto max-w-4xl px-6 py-16">Loading account...</main>;
+    return <main className="mx-auto max-w-4xl px-6 pt-6 pb-16">Loading account...</main>;
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
+    <main className="mx-auto max-w-4xl px-6 pt-6 pb-12">
       <div className="rounded-2xl border border-white/10 bg-slate-900 p-8">
         <div className="text-sm text-cyan-300">MicroSECONDS Training</div>
         <h1 className="mt-2 text-3xl font-bold">Account</h1>

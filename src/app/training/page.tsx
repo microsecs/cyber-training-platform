@@ -17,7 +17,7 @@ export default function TrainingPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
       <div className="text-sm text-cyan-300">Training Library</div>
       <h1 className="mt-1 text-4xl font-bold">Security Awareness Courses</h1>
       <p className="mt-2 text-slate-400">
