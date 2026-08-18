@@ -35,14 +35,6 @@ export default function LoginPage() {
       {!showReset ? (
         <div>
           <AuthForm />
-          <div className="mx-auto mt-4 max-w-md text-center">
-            <button
-              onClick={() => setShowReset(true)}
-              className="text-sm text-cyan-300 hover:text-cyan-200"
-            >
-              Forgot password?
-            </button>
-          </div>
         </div>
       ) : (
         <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-slate-900 p-7">
