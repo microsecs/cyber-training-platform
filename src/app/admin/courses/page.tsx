@@ -314,6 +314,38 @@ export default function CourseAdminPage() {
     );
   }
 
+  function addChoice(questionIndex: number) {
+    setQuiz((current) =>
+      current.map((q, i) =>
+        i === questionIndex
+          ? { ...q, choices: [...q.choices, ""] }
+          : q
+      )
+    );
+  }
+
+  function removeChoice(questionIndex: number, choiceIndex: number) {
+    setQuiz((current) =>
+      current.map((q, i) => {
+        if (i !== questionIndex || q.choices.length <= 2) return q;
+
+        const nextChoices = q.choices.filter(
+          (_choice: string, j: number) => j !== choiceIndex
+        );
+        let nextAnswer = Number(q.answer);
+
+        if (nextAnswer === choiceIndex) nextAnswer = 0;
+        else if (nextAnswer > choiceIndex) nextAnswer -= 1;
+
+        return { ...q, choices: nextChoices, answer: nextAnswer };
+      })
+    );
+  }
+
+  function removeQuestion(questionIndex: number) {
+    setQuiz((current) => current.filter((_q, i) => i !== questionIndex));
+  }
+
   async function toggleCourseActive() {
     if (!selectedId) return;
 
@@ -389,13 +421,28 @@ export default function CourseAdminPage() {
   }
 
   async function saveCourse() {
-    const cleanQuiz = quiz
-      .filter((q) => q.question.trim())
-      .map((q) => ({
-        question: q.question.trim(),
-        choices: q.choices.map((c: string) => c.trim()),
-        answer: Number(q.answer),
-      }));
+    const quizWithText = quiz.filter((q) => q.question.trim());
+
+    for (let i = 0; i < quizWithText.length; i++) {
+      const q = quizWithText[i];
+      const choices = q.choices.map((c: string) => c.trim());
+
+      if (choices.length < 2 || choices.some((choice: string) => !choice)) {
+        setMessage(`Quiz question ${i + 1} needs at least two completed answer choices.`);
+        return;
+      }
+
+      if (Number(q.answer) < 0 || Number(q.answer) >= choices.length) {
+        setMessage(`Choose the correct answer for quiz question ${i + 1}.`);
+        return;
+      }
+    }
+
+    const cleanQuiz = quizWithText.map((q) => ({
+      question: q.question.trim(),
+      choices: q.choices.map((c: string) => c.trim()),
+      answer: Number(q.answer),
+    }));
 
     const payload = {
       title: title.trim(),
@@ -679,68 +726,123 @@ export default function CourseAdminPage() {
           </div>
 
           <div>
-            <div className="flex justify-between">
-              <h2 className="text-xl font-semibold">
-                Quiz Questions
-              </h2>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Quiz Questions</h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Add answers below and select the radio button next to the correct answer.
+                </p>
+              </div>
 
               <button
+                type="button"
                 onClick={() =>
                   setQuiz([
                     ...quiz,
-                    {
-                      question: "",
-                      choices: ["", "", ""],
-                      answer: 0,
-                    },
+                    { question: "", choices: ["", "", ""], answer: 0 },
                   ])
                 }
-                className="text-sm text-cyan-300"
+                className="shrink-0 rounded-lg border border-cyan-400/30 px-3 py-2 text-sm text-cyan-300 hover:bg-cyan-400/10"
               >
                 + Add Question
               </button>
             </div>
 
             <div className="mt-4 space-y-4">
+              {quiz.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-white/10 bg-slate-950 p-5 text-sm text-slate-500">
+                  No quiz questions yet. Click Add Question to create one.
+                </div>
+              ) : null}
+
               {quiz.map((q, i) => (
                 <div
                   key={i}
-                  className="rounded-lg bg-slate-950 p-4"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-4"
                 >
-                  <input
-                    value={q.question}
-                    onChange={(e) =>
-                      updateQuestion(i, "question", e.target.value)
-                    }
-                    placeholder={`Question ${i + 1}`}
-                    className="w-full rounded-lg bg-slate-900 px-3 py-2"
-                  />
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Question {i + 1}
+                      </div>
+                      <input
+                        value={q.question}
+                        onChange={(e) =>
+                          updateQuestion(i, "question", e.target.value)
+                        }
+                        placeholder={`Question ${i + 1}`}
+                        className="w-full rounded-lg bg-slate-900 px-3 py-2"
+                      />
+                    </div>
 
-                  <div className="mt-3 space-y-2">
-                    {q.choices.map(
-                      (choice: string, j: number) => (
-                        <label key={j} className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(i)}
+                      className="mt-6 rounded-lg border border-red-400/20 px-3 py-2 text-xs text-red-300 hover:bg-red-400/10"
+                    >
+                      Remove Question
+                    </button>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    {q.choices.map((choice: string, j: number) => (
+                      <div
+                        key={j}
+                        className={`flex items-center gap-3 rounded-lg border p-2 ${
+                          Number(q.answer) === j
+                            ? "border-emerald-400/40 bg-emerald-400/5"
+                            : "border-white/5 bg-slate-900/60"
+                        }`}
+                      >
+                        <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm">
                           <input
                             type="radio"
                             name={`correct-${i}`}
                             checked={Number(q.answer) === j}
-                            onChange={() =>
-                              updateQuestion(i, "answer", j)
-                            }
+                            onChange={() => updateQuestion(i, "answer", j)}
                           />
-
-                          <input
-                            value={choice}
-                            onChange={(e) =>
-                              updateChoice(i, j, e.target.value)
+                          <span
+                            className={
+                              Number(q.answer) === j
+                                ? "font-medium text-emerald-300"
+                                : "text-slate-400"
                             }
-                            placeholder={`Choice ${j + 1}`}
-                            className="flex-1 rounded-lg bg-slate-900 px-3 py-2"
-                          />
+                          >
+                            {Number(q.answer) === j ? "Correct" : "Mark correct"}
+                          </span>
                         </label>
-                      )
-                    )}
+
+                        <input
+                          value={choice}
+                          onChange={(e) => updateChoice(i, j, e.target.value)}
+                          placeholder={`Answer ${j + 1}`}
+                          className="min-w-0 flex-1 rounded-lg bg-slate-950 px-3 py-2"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => removeChoice(i, j)}
+                          disabled={q.choices.length <= 2}
+                          title={
+                            q.choices.length <= 2
+                              ? "A question must have at least two answers"
+                              : "Remove answer"
+                          }
+                          className="rounded-lg px-2 py-2 text-xs text-red-300 hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-30"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => addChoice(i)}
+                    className="mt-3 rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
+                  >
+                    + Add Answer
+                  </button>
                 </div>
               ))}
             </div>
