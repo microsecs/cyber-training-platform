@@ -31,12 +31,12 @@ export default function PlatformAdminPage() {
   }, []);
 
   if (authorized === null) {
-    return <main className="mx-auto max-w-6xl px-6 pt-6 pb-12">Checking platform access...</main>;
+    return <main className="mx-auto max-w-6xl px-6 py-12">Checking platform access...</main>;
   }
 
   if (!authorized) {
     return (
-      <main className="mx-auto max-w-4xl px-6 pt-6 pb-12">
+      <main className="mx-auto max-w-4xl px-6 py-12">
         <h1 className="text-3xl font-bold">Platform Admin Required</h1>
         <p className="mt-3 text-slate-400">
           This account does not have platform administration access.
@@ -46,7 +46,7 @@ export default function PlatformAdminPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 pt-6 pb-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="text-sm text-cyan-300">MicroSECONDS Platform</div>
       <h1 className="mt-1 text-4xl font-bold">Platform Admin</h1>
       <p className="mt-2 text-slate-400">
@@ -61,6 +61,16 @@ export default function PlatformAdminPage() {
           <div className="text-xl font-semibold">Master Course Library</div>
           <p className="mt-2 text-sm text-slate-400">
             Create, edit, activate, and manage all training courses.
+          </p>
+        </Link>
+
+        <Link
+          href="/platform-admin/homepage"
+          className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40"
+        >
+          <div className="text-xl font-semibold">Homepage Settings</div>
+          <p className="mt-2 text-sm text-slate-400">
+            Change the homepage video, messaging, cybersecurity statistics, sources, and visibility.
           </p>
         </Link>
 
