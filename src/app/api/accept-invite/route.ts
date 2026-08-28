@@ -40,7 +40,10 @@ export async function POST(request: NextRequest) {
 
     if (!invites || invites.length === 0) {
       return NextResponse.json(
-        { error: "No company invitation was found for this email address. Ask the administrator to send a fresh invitation." },
+        {
+          error:
+            "No company invitation was found for this email address. Ask the administrator to send a fresh invitation.",
+        },
         { status: 404 }
       );
     }
@@ -49,55 +52,49 @@ export async function POST(request: NextRequest) {
 
     const { data: existingMembership } = await admin
       .from("memberships")
-      .select("id,is_active")
+      .select("id")
       .eq("company_id", invite.company_id)
       .eq("user_id", userData.user.id)
       .maybeSingle();
 
-    if (existingMembership && existingMembership.is_active === false) {
-      const { error: reactivateError } = await admin
-        .from("memberships")
-        .update({ is_active: true })
-        .eq("id", existingMembership.id);
-
-      if (reactivateError) {
-        return NextResponse.json({ error: reactivateError.message }, { status: 500 });
-      }
-    }
-
     if (!existingMembership) {
-      const { error: membershipError } = await admin
-        .from("memberships")
-        .upsert(
-          {
-            company_id: invite.company_id,
-            user_id: userData.user.id,
-            role: invite.role || "employee",
-            is_active: true,
-          },
-          { onConflict: "company_id,user_id" }
-        );
+      const { error: membershipError } = await admin.from("memberships").upsert(
+        {
+          company_id: invite.company_id,
+          user_id: userData.user.id,
+          role: invite.role || "employee",
+        },
+        { onConflict: "company_id,user_id" }
+      );
 
       if (membershipError) {
         return NextResponse.json({ error: membershipError.message }, { status: 500 });
       }
     }
 
-    // Convert any training assigned while this employee was still pending
-    // into normal user-ID-based assignments.
+    // Convert any training that was assigned while this invitation was pending
+    // into normal user assignments now that a real user_id exists.
     const { data: pendingAssignments, error: pendingError } = await admin
-      .from("pending_assignments")
-      .select("id,company_id,course_id,due_date,quiz_required,reminders_enabled,assigned_by")
-      .eq("invitation_id", invite.id);
+      .from("pending_training_assignments")
+      .select(
+        "id,company_id,course_id,due_date,quiz_required,reminders_enabled,assigned_by,created_at"
+      )
+      .eq("invitation_id", invite.id)
+      .eq("company_id", invite.company_id)
+      .order("created_at", { ascending: true });
 
     if (pendingError) {
       return NextResponse.json({ error: pendingError.message }, { status: 500 });
     }
 
-    if (pendingAssignments && pendingAssignments.length > 0) {
-      const courseIds = pendingAssignments.map((row) => row.course_id);
+    let activatedAssignments = 0;
 
-      const { data: activeAssignments, error: activeError } = await admin
+    if (pendingAssignments && pendingAssignments.length > 0) {
+      const courseIds = Array.from(
+        new Set(pendingAssignments.map((assignment) => assignment.course_id))
+      );
+
+      const { data: existingActive, error: activeLookupError } = await admin
         .from("assignments")
         .select("course_id,status")
         .eq("company_id", invite.company_id)
@@ -105,50 +102,55 @@ export async function POST(request: NextRequest) {
         .in("course_id", courseIds)
         .neq("status", "completed");
 
-      if (activeError) {
-        return NextResponse.json({ error: activeError.message }, { status: 500 });
+      if (activeLookupError) {
+        return NextResponse.json({ error: activeLookupError.message }, { status: 500 });
       }
 
       const activeCourseIds = new Set(
-        (activeAssignments ?? []).map((row) => row.course_id)
+        (existingActive ?? []).map((assignment) => assignment.course_id)
       );
 
       const rowsToInsert = pendingAssignments
-        .filter((row) => !activeCourseIds.has(row.course_id))
-        .map((row) => ({
-          company_id: row.company_id,
-          course_id: row.course_id,
+        .filter((assignment) => !activeCourseIds.has(assignment.course_id))
+        .map((assignment) => ({
+          company_id: assignment.company_id,
+          course_id: assignment.course_id,
           user_id: userData.user!.id,
-          due_date: row.due_date,
-          assigned_by: row.assigned_by,
+          due_date: assignment.due_date,
+          assigned_by: assignment.assigned_by,
           status: "not_started",
-          quiz_required: row.quiz_required,
-          reminders_enabled: row.reminders_enabled,
+          quiz_required: assignment.quiz_required,
+          reminders_enabled: assignment.reminders_enabled,
+          created_at: assignment.created_at,
         }));
 
       if (rowsToInsert.length > 0) {
-        const { error: assignmentInsertError } = await admin
+        const { data: insertedAssignments, error: assignmentInsertError } = await admin
           .from("assignments")
-          .insert(rowsToInsert);
+          .insert(rowsToInsert)
+          .select("id");
 
         if (assignmentInsertError) {
           return NextResponse.json(
-            { error: assignmentInsertError.message },
+            { error: `Could not activate pending training: ${assignmentInsertError.message}` },
             { status: 500 }
           );
         }
+
+        activatedAssignments = insertedAssignments?.length ?? 0;
       }
 
-      const { error: deletePendingError } = await admin
-        .from("pending_assignments")
+      // Safe to clear the pending rows after successful conversion. If an active
+      // assignment already existed for a course, that pending duplicate is also
+      // discarded here.
+      const { error: pendingDeleteError } = await admin
+        .from("pending_training_assignments")
         .delete()
-        .eq("invitation_id", invite.id);
+        .eq("invitation_id", invite.id)
+        .eq("company_id", invite.company_id);
 
-      if (deletePendingError) {
-        return NextResponse.json(
-          { error: deletePendingError.message },
-          { status: 500 }
-        );
+      if (pendingDeleteError) {
+        return NextResponse.json({ error: pendingDeleteError.message }, { status: 500 });
       }
     }
 
@@ -167,6 +169,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       companyId: invite.company_id,
       recovered: invite.status === "accepted",
+      activatedAssignments,
     });
   } catch (error: any) {
     return NextResponse.json(
