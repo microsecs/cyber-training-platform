@@ -12,62 +12,58 @@ export default async function Home() {
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(59,130,246,0.10),transparent_30%)]" />
-        <div className="relative mx-auto grid max-w-7xl gap-5 px-4 py-7 md:px-5 md:py-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:py-9">
-          <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-6">
-            <div className="mb-3 inline-flex w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300">
+        <div className="relative mx-auto grid max-w-7xl gap-4 px-4 py-5 md:px-5 md:py-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:py-7">
+          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:p-5">
+            <div className="mb-2 inline-flex w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-xs font-medium text-cyan-300">
               {settings.heroBadge}
             </div>
-            <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl lg:text-[3.35rem]">
+            <h1 className="max-w-3xl text-3xl font-bold leading-[1.06] tracking-tight md:text-4xl lg:text-[2.65rem]">
               {settings.heroTitle}
             </h1>
-            <p className="mt-3 max-w-2xl text-base leading-6 text-slate-300 md:text-lg">
+            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
               {settings.heroBody}
             </p>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               <a
                 href={settings.ctaUrl}
                 target={ctaIsExternal ? "_blank" : undefined}
                 rel={ctaIsExternal ? "noreferrer" : undefined}
-                className="rounded-lg bg-cyan-400 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-300"
+                className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
               >
                 {settings.ctaLabel}
               </a>
               <Link
                 href="/login"
-                className="rounded-lg border border-white/15 px-5 py-2.5 font-semibold hover:bg-white/5"
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5"
               >
                 Existing Customer Sign In
               </Link>
             </div>
 
-            <div className="mt-5 grid max-w-2xl grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
-                <div className="text-xl font-black tracking-tight text-cyan-300 md:text-2xl">{settings.experienceValue}</div>
-                <div className="mt-1 text-sm text-slate-300">{settings.experienceLabel}</div>
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-white/10 pt-3.5">
+              <div>
+                <div className="text-lg font-black tracking-tight text-cyan-300">{settings.experienceValue}</div>
+                <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.experienceLabel}</div>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
-                <div className="text-xl font-black tracking-tight text-cyan-300 md:text-2xl">{settings.subscriptionValue}</div>
-                <div className="mt-1 text-sm text-slate-300">{settings.subscriptionLabel}</div>
+              <div>
+                <div className="text-lg font-black tracking-tight text-cyan-300">{settings.subscriptionValue}</div>
+                <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.subscriptionLabel}</div>
               </div>
-            </div>
-
-            <div className="mt-auto pt-5">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-white/10 pt-4">
-                <span className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">One simple price</span>
-                <span className="text-2xl font-black tracking-tight text-cyan-300">{settings.subscriptionPrice}</span>
-                <span className="text-sm text-slate-400">{settings.subscriptionPeriod}</span>
+              <div>
+                <div className="text-lg font-black tracking-tight text-cyan-300">{settings.subscriptionPrice}</div>
+                <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.subscriptionPeriod}</div>
               </div>
             </div>
           </div>
 
-          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
             {settings.playbackUrl ? (
               <video
                 key={settings.playbackUrl}
                 controls
                 playsInline
                 preload="metadata"
-                className="aspect-video w-full flex-1 bg-black object-contain"
+                className="aspect-video w-full bg-black object-contain"
               >
                 <source src={settings.playbackUrl} />
                 Your browser does not support HTML5 video.
@@ -81,9 +77,9 @@ export default async function Home() {
                 </div>
               </div>
             )}
-            <div className="border-t border-white/10 px-5 py-3">
+            <div className="border-t border-white/10 px-4 py-2.5 md:px-5">
               <div className="font-semibold">{settings.videoTitle}</div>
-              <div className="mt-1 text-sm text-slate-400">A short introduction to practical employee cybersecurity awareness.</div>
+              <div className="mt-0.5 text-xs text-slate-400 md:text-sm">A short introduction to practical employee cybersecurity awareness.</div>
             </div>
           </div>
         </div>
