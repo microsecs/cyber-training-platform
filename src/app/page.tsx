@@ -12,8 +12,8 @@ export default async function Home() {
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(59,130,246,0.10),transparent_30%)]" />
-        <div className="relative mx-auto grid max-w-7xl gap-4 px-4 py-5 md:px-5 md:py-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:py-7">
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:p-5">
+        <div className="relative mx-auto grid max-w-7xl gap-4 px-4 py-5 md:px-5 md:py-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:py-7">
+          <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:p-5">
             <div className="mb-2 inline-flex w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-xs font-medium text-cyan-300">
               {settings.heroBadge}
             </div>
@@ -40,7 +40,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-white/10 pt-3.5">
+            <div className="mt-auto grid grid-cols-3 gap-2 border-t border-white/10 pt-3.5">
               <div>
                 <div className="text-lg font-black tracking-tight text-cyan-300">{settings.experienceValue}</div>
                 <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.experienceLabel}</div>
@@ -56,7 +56,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
             {settings.playbackUrl ? (
               <video
                 key={settings.playbackUrl}
