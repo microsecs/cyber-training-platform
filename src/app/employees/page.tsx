@@ -1,19 +1,53 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
 
+type MemberRow = {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  email: string;
+  fullName: string;
+};
+
+type InviteRow = {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  created_at: string;
+};
+
+function parseEmails(value: string) {
+  const matches =
+    value
+      .split(/[\s,;]+/)
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+      .filter((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item));
+
+  return Array.from(new Set(matches));
+}
+
 export default function EmployeesPage() {
   const { company, loading, error } = useCompany();
-  const [invites, setInvites] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+
+  const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [members, setMembers] = useState<MemberRow[]>([]);
   const [email, setEmail] = useState("");
-  const [loadError, setLoadError] = useState("");
-  const [employeeAction, setEmployeeAction] = useState<string | null>(null);
+  const [bulkText, setBulkText] = useState("");
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+
   const [busy, setBusy] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [inviteAction, setInviteAction] = useState<string | null>(null);
+  const [employeeAction, setEmployeeAction] = useState<string | null>(null);
+
+  const bulkEmails = useMemo(() => parseEmails(bulkText), [bulkText]);
 
   async function refresh() {
     if (!company) return;
@@ -35,13 +69,12 @@ export default function EmployeesPage() {
         .order("created_at", { ascending: true }),
     ]);
 
-    if (inviteResult.error) {
-      setLoadError(inviteResult.error.message);
-    }
+    if (inviteResult.error) setLoadError(inviteResult.error.message);
+
     if (memberResult.error) {
       setLoadError(memberResult.error.message);
       setMembers([]);
-      setInvites(inviteResult.data ?? []);
+      setInvites((inviteResult.data as InviteRow[]) ?? []);
       return;
     }
 
@@ -49,6 +82,7 @@ export default function EmployeesPage() {
     const userIds = membershipRows.map((m: any) => m.user_id);
 
     let profileMap = new Map<string, { email: string; fullName: string }>();
+
     if (userIds.length) {
       const profileResult = await supabase
         .from("profiles")
@@ -70,7 +104,7 @@ export default function EmployeesPage() {
       }
     }
 
-    setInvites(inviteResult.data ?? []);
+    setInvites((inviteResult.data as InviteRow[]) ?? []);
     setMembers(
       membershipRows.map((membership: any) => {
         const profile = profileMap.get(membership.user_id);
@@ -93,6 +127,26 @@ export default function EmployeesPage() {
     return data.session?.access_token ?? null;
   }
 
+  async function sendInvite(emailAddress: string, accessToken: string) {
+    const response = await fetch("/api/invite", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ email: emailAddress }),
+    });
+
+    const result = await response.json();
+    return {
+      ok: response.ok,
+      email: emailAddress,
+      message: response.ok
+        ? result.message || `Invitation sent to ${emailAddress}`
+        : result.error || `Could not invite ${emailAddress}`,
+    };
+  }
+
   async function invite(event: FormEvent) {
     event.preventDefault();
     setMessage("");
@@ -106,39 +160,99 @@ export default function EmployeesPage() {
       return;
     }
 
-    const response = await fetch("/api/invite", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ email }),
-    });
+    const result = await sendInvite(email.trim().toLowerCase(), accessToken);
 
-    const result = await response.json();
+    setMessage(result.message);
 
-    if (!response.ok) {
-      setMessage(result.error || "Could not send invitation");
-      setBusy(false);
-      return;
+    if (result.ok) {
+      setEmail("");
+      await refresh();
     }
 
-    setEmail("");
-    setMessage(result.message || "Invitation sent.");
-    await refresh();
     setBusy(false);
   }
 
-  async function manageInvitation(action: "remind" | "delete" | "remind_all", invitationId?: string) {
+  async function bulkInvite(event: FormEvent) {
+    event.preventDefault();
+    setMessage("");
+
+    if (!bulkEmails.length) {
+      setMessage("Enter at least one valid email address.");
+      return;
+    }
+
+    setBulkBusy(true);
+
+    const accessToken = await getAccessToken();
+
+    if (!accessToken) {
+      setMessage("Your session expired. Please sign in again.");
+      setBulkBusy(false);
+      return;
+    }
+
+    let sent = 0;
+    const failures: string[] = [];
+
+    for (const address of bulkEmails) {
+      const result = await sendInvite(address, accessToken);
+      if (result.ok) sent += 1;
+      else failures.push(`${address}: ${result.message}`);
+    }
+
+    const parts = [`${sent} invitation${sent === 1 ? "" : "s"} sent.`];
+    if (failures.length) {
+      parts.push(`${failures.length} failed: ${failures.join(" | ")}`);
+    }
+
+    setMessage(parts.join(" "));
+    if (sent > 0) {
+      setBulkText("");
+      await refresh();
+    }
+
+    setBulkBusy(false);
+  }
+
+  function loadCsv(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? "");
+      const emails = parseEmails(text);
+      setBulkText(emails.join("\n"));
+      setMessage(
+        emails.length
+          ? `${emails.length} unique email address${emails.length === 1 ? "" : "es"} loaded from ${file.name}.`
+          : `No valid email addresses were found in ${file.name}.`
+      );
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  }
+
+  async function manageInvitation(
+    action: "remind" | "delete" | "remind_all",
+    invitationId?: string
+  ) {
     if (action === "delete") {
       const invite = invites.find((item) => item.id === invitationId);
-      if (!window.confirm(`Delete the pending invitation for ${invite?.email ?? "this employee"}?`)) return;
+      if (
+        !window.confirm(
+          `Delete the pending invitation for ${invite?.email ?? "this employee"}?`
+        )
+      ) {
+        return;
+      }
     }
 
     setMessage("");
     setInviteAction(action === "remind_all" ? "all" : `${action}:${invitationId}`);
 
     const accessToken = await getAccessToken();
+
     if (!accessToken) {
       setMessage("Your session expired. Please sign in again.");
       setInviteAction(null);
@@ -155,13 +269,20 @@ export default function EmployeesPage() {
     });
 
     const result = await response.json();
-    setMessage(response.ok ? result.message : result.error || "Invitation action failed.");
+    setMessage(
+      response.ok
+        ? result.message
+        : result.error || "Invitation action failed."
+    );
 
     if (response.ok) await refresh();
     setInviteAction(null);
   }
 
-  async function manageEmployee(action: "remove" | "delete_data", member: any) {
+  async function manageEmployee(
+    action: "remove" | "delete_data",
+    member: MemberRow
+  ) {
     const label = member.fullName || member.email || "this employee";
     const prompt =
       action === "delete_data"
@@ -174,6 +295,7 @@ export default function EmployeesPage() {
     setEmployeeAction(`${action}:${member.user_id}`);
 
     const accessToken = await getAccessToken();
+
     if (!accessToken) {
       setMessage("Your session expired. Please sign in again.");
       setEmployeeAction(null);
@@ -190,7 +312,9 @@ export default function EmployeesPage() {
     });
 
     const result = await response.json();
-    setMessage(response.ok ? result.message : result.error || "Employee action failed.");
+    setMessage(
+      response.ok ? result.message : result.error || "Employee action failed."
+    );
 
     if (response.ok) await refresh();
     setEmployeeAction(null);
@@ -201,11 +325,19 @@ export default function EmployeesPage() {
   }
 
   if (error || !company) {
-    return <main className="mx-auto max-w-7xl px-6 py-12">Please sign in first.</main>;
+    return (
+      <main className="mx-auto max-w-7xl px-6 py-12">
+        Please sign in first.
+      </main>
+    );
   }
 
   if (company.role === "employee") {
-    return <main className="mx-auto max-w-7xl px-6 py-12">Admin access required.</main>;
+    return (
+      <main className="mx-auto max-w-7xl px-6 py-12">
+        Admin access required.
+      </main>
+    );
   }
 
   return (
@@ -214,45 +346,94 @@ export default function EmployeesPage() {
         <div className="text-sm text-cyan-300">{company.companyName}</div>
         <h1 className="mt-1 text-4xl font-bold">Employees</h1>
         <p className="mt-2 text-slate-400">
-          Invite employees by email and manage everyone under this company account.
+          Invite employees, manage active users, and follow up on pending invitations.
         </p>
       </div>
 
-      <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
-        <h2 className="text-xl font-semibold">Invite Employee</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          The employee will receive an email link to activate their account and choose a password.
-        </p>
+      {message ? (
+        <div className="mt-6 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-slate-300">
+          {message}
+        </div>
+      ) : null}
 
-        <form onSubmit={invite} className="mt-5 flex flex-col gap-3 md:flex-row">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="employee@company.com"
-            className="flex-1 rounded-lg border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400/50"
-          />
-          <button
-            disabled={busy}
-            className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
-          >
-            {busy ? "Sending..." : "Send Invitation"}
-          </button>
-        </form>
+      <div className="mt-8 grid gap-6 xl:grid-cols-2">
+        <section className="rounded-2xl border border-white/10 bg-slate-900 p-6">
+          <h2 className="text-xl font-semibold">Invite One Employee</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Send an activation link to a single employee.
+          </p>
 
-        {message && (
-          <div className="mt-4 rounded-lg border border-white/10 bg-slate-950 p-3 text-sm text-slate-300">
-            {message}
+          <form onSubmit={invite} className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="employee@company.com"
+              className="flex-1 rounded-lg border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400/50"
+            />
+            <button
+              disabled={busy}
+              className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+            >
+              {busy ? "Sending..." : "Send Invitation"}
+            </button>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-slate-900 p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Bulk Invite</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Paste email addresses separated by commas, spaces, semicolons, or new lines.
+              </p>
+            </div>
+
+            <label className="inline-flex cursor-pointer items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5">
+              Load CSV
+              <input
+                type="file"
+                accept=".csv,.txt"
+                onChange={loadCsv}
+                className="hidden"
+              />
+            </label>
           </div>
-        )}
-      </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <form onSubmit={bulkInvite} className="mt-5">
+            <textarea
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              rows={6}
+              placeholder={"employee1@company.com\nemployee2@company.com\nemployee3@company.com"}
+              className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-cyan-400/50"
+            />
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-xs text-slate-500">
+                {bulkEmails.length} valid unique email address
+                {bulkEmails.length === 1 ? "" : "es"} ready
+              </div>
+              <button
+                disabled={bulkBusy || bulkEmails.length === 0}
+                className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50"
+              >
+                {bulkBusy
+                  ? "Sending Invitations..."
+                  : `Send ${bulkEmails.length || ""} Invitation${bulkEmails.length === 1 ? "" : "s"}`}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           <div className="border-b border-white/10 px-5 py-4">
             <div className="font-semibold">Active Company Users ({members.length})</div>
-            <div className="mt-0.5 text-xs text-slate-500">Accepted users appear here with their name, email, role, and management options.</div>
+            <div className="mt-0.5 text-xs text-slate-500">
+              Accepted users appear here with their name, email, role, and management options.
+            </div>
           </div>
 
           {loadError ? (
@@ -262,21 +443,32 @@ export default function EmployeesPage() {
           ) : null}
 
           {members.length === 0 ? (
-            <div className="px-5 py-6 text-sm text-slate-500">No active users yet.</div>
+            <div className="px-5 py-6 text-sm text-slate-500">
+              No active users yet.
+            </div>
           ) : (
             members.map((member) => (
-              <div key={member.id} className="border-b border-white/10 px-5 py-4 last:border-0">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                key={member.id}
+                className="border-b border-white/10 px-5 py-4 last:border-0"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="truncate font-medium text-slate-200">
                       {member.fullName || member.email || "Active user"}
                     </div>
                     {member.email ? (
-                      <div className="mt-1 truncate text-sm text-slate-400">{member.email}</div>
+                      <div className="mt-1 truncate text-sm text-slate-400">
+                        {member.email}
+                      </div>
                     ) : (
-                      <div className="mt-1 text-xs text-slate-500">Profile email unavailable</div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        Profile email unavailable
+                      </div>
                     )}
-                    <div className="mt-1 text-xs capitalize text-slate-500">{member.role}</div>
+                    <div className="mt-1 text-xs capitalize text-slate-500">
+                      {member.role}
+                    </div>
                   </div>
 
                   {member.role === "employee" ? (
@@ -287,7 +479,9 @@ export default function EmployeesPage() {
                         disabled={employeeAction !== null}
                         className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5 disabled:opacity-50"
                       >
-                        {employeeAction === `remove:${member.user_id}` ? "Removing..." : "Remove"}
+                        {employeeAction === `remove:${member.user_id}`
+                          ? "Removing..."
+                          : "Remove"}
                       </button>
                       <button
                         type="button"
@@ -295,7 +489,9 @@ export default function EmployeesPage() {
                         disabled={employeeAction !== null}
                         className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/15 disabled:opacity-50"
                       >
-                        {employeeAction === `delete_data:${member.user_id}` ? "Deleting..." : "Delete + Training Data"}
+                        {employeeAction === `delete_data:${member.user_id}`
+                          ? "Deleting..."
+                          : "Delete + Training Data"}
                       </button>
                     </div>
                   ) : (
@@ -312,9 +508,14 @@ export default function EmployeesPage() {
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
             <div>
-              <div className="font-semibold">Pending Invitations ({invites.length})</div>
-              <div className="mt-0.5 text-xs text-slate-500">Only invitations awaiting acceptance are shown.</div>
+              <div className="font-semibold">
+                Pending Invitations ({invites.length})
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                Accepted invitations automatically move to the active-user list.
+              </div>
             </div>
+
             {invites.length > 0 ? (
               <button
                 type="button"
@@ -328,36 +529,45 @@ export default function EmployeesPage() {
           </div>
 
           {invites.length === 0 ? (
-            <div className="px-5 py-6 text-sm text-slate-500">No pending invitations.</div>
+            <div className="px-5 py-6 text-sm text-slate-500">
+              No pending invitations.
+            </div>
           ) : (
-            invites.map((x) => (
+            invites.map((invite) => (
               <div
-                key={x.id}
+                key={invite.id}
                 className="border-b border-white/10 px-5 py-4 text-sm last:border-0"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3">
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-200">{x.email}</div>
+                    <div className="truncate font-medium text-slate-200">
+                      {invite.email}
+                    </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Invited {new Date(x.created_at).toLocaleDateString()}
+                      Invited {new Date(invite.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => manageInvitation("remind", x.id)}
+                      onClick={() => manageInvitation("remind", invite.id)}
                       disabled={inviteAction !== null}
                       className="rounded-lg border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-400/15 disabled:opacity-50"
                     >
-                      {inviteAction === `remind:${x.id}` ? "Sending..." : "Remind"}
+                      {inviteAction === `remind:${invite.id}`
+                        ? "Sending..."
+                        : "Remind"}
                     </button>
                     <button
                       type="button"
-                      onClick={() => manageInvitation("delete", x.id)}
+                      onClick={() => manageInvitation("delete", invite.id)}
                       disabled={inviteAction !== null}
                       className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/15 disabled:opacity-50"
                     >
-                      {inviteAction === `delete:${x.id}` ? "Deleting..." : "Delete"}
+                      {inviteAction === `delete:${invite.id}`
+                        ? "Deleting..."
+                        : "Delete"}
                     </button>
                   </div>
                 </div>
