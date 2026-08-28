@@ -407,12 +407,12 @@ export default function EmployeesPage() {
               <button
                 type="button"
                 onClick={downloadSampleCsv}
-                className="inline-flex items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
+                className="inline-flex w-40 items-center justify-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
               >
                 Download Sample CSV
               </button>
 
-              <label className="inline-flex cursor-pointer items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5">
+              <label className="inline-flex w-40 cursor-pointer items-center justify-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5">
                 Load CSV
                 <input
                   type="file"
