@@ -7,14 +7,14 @@ function CardIcon({ kind }: { kind: string }) {
   const props = { className: "h-5 w-5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
   const k = kind.toLowerCase();
 
+  if (k.includes("loss") || k.includes("compromise") || k.includes("business email") || k.includes("dollar") || k.includes("$")) {
+    return <svg {...props}><circle cx="12" cy="12" r="9"/><path d="M16 8.5c-.7-.7-1.8-1.1-3-1.1-1.7 0-3 .8-3 2s1.1 1.8 3.1 2.2c2 .4 3.1 1 3.1 2.3 0 1.4-1.4 2.4-3.3 2.4-1.4 0-2.7-.5-3.5-1.3"/><path d="M12.8 5.5v13"/></svg>;
+  }
   if (k.includes("link") || k.includes("url")) {
     return <svg {...props}><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"/></svg>;
   }
   if (k.includes("complaint") || k.includes("report")) {
     return <svg {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.33 1.84.56 2.8.69A2 2 0 0 1 22 16.92z"/></svg>;
-  }
-  if (k.includes("loss") || k.includes("compromise") || k.includes("business email")) {
-    return <svg {...props}><circle cx="12" cy="12" r="9"/><path d="M16 8.5c-.7-.7-1.8-1.1-3-1.1-1.7 0-3 .8-3 2s1.1 1.8 3.1 2.2c2 .4 3.1 1 3.1 2.3 0 1.4-1.4 2.4-3.3 2.4-1.4 0-2.7-.5-3.5-1.3"/><path d="M12.8 5.5v13"/></svg>;
   }
   return <svg {...props}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/><path d="M18 3v4"/><path d="M16 5h4"/></svg>;
 }
@@ -135,19 +135,16 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-4 py-8 md:px-5 md:py-9">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              ["Phishing", "Spot suspicious senders, links, login requests, attachments, and social-engineering tactics."],
-              ["Passwords", "Build stronger password habits, use password managers, and understand multi-factor authentication."],
-              ["Remote Work", "Protect company accounts and devices while working remotely or using public Wi-Fi."],
-              ["Company Data", "Understand how everyday mistakes can expose sensitive company and customer information."],
-            ].map(([title, body]) => (
-              <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-lg font-semibold">{title}</div>
-                <p className="mt-2 text-sm leading-5 text-slate-400">{body}</p>
-              </div>
-            ))}
+        <div className="mx-auto max-w-7xl px-4 py-7 md:px-5 md:py-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">What the training covers</div>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Practical cybersecurity training for everyday employees</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300 md:text-base md:leading-7">
+              MicroSECONDS training focuses on the real-world situations employees face every day: recognizing phishing emails and suspicious links, creating and protecting strong passwords, using multi-factor authentication, working safely from home or on public Wi-Fi, and handling company and customer data responsibly. Lessons are designed to be clear, practical, and easy to apply without requiring a technical background.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-400 md:text-base">
+              Additional classes can cover emerging threats and other security topics as your organization’s training needs evolve.
+            </p>
           </div>
         </div>
       </section>
