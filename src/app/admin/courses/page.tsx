@@ -22,6 +22,9 @@ export default function CourseAdminPage() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadPercent, setUploadPercent] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [deletingVideo, setDeletingVideo] = useState(false);
 
   async function loadCourses() {
     const { data, error } = await supabase
@@ -72,6 +75,7 @@ export default function CourseAdminPage() {
     setVideoKey("");
     setVideoUrl("");
     setQuiz([{ question: "", choices: ["", "", ""], answer: 0 }]);
+    setPreviewUrl("");
     setMessage("");
   }
 
@@ -89,6 +93,7 @@ export default function CourseAdminPage() {
         ? course.quiz
         : [{ question: "", choices: ["", "", ""], answer: 0 }]
     );
+    setPreviewUrl("");
     setMessage("");
   }
 
@@ -179,7 +184,8 @@ export default function CourseAdminPage() {
 
       setVideoKey(presign.key);
       setVideoUrl("");
-      setMessage("Video uploaded to R2 and attached to this course.");
+      setPreviewUrl("");
+      setMessage("Video uploaded to R2 and attached to this course. Click Preview Video to review it.");
       await loadCourses();
       setUploading(false);
     };
@@ -192,6 +198,91 @@ export default function CourseAdminPage() {
     };
 
     xhr.send(file);
+  }
+
+
+  async function loadVideoPreview() {
+    if (!selectedId) return;
+
+    setPreviewLoading(true);
+    setMessage("");
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      setMessage("Your session expired. Please sign in again.");
+      setPreviewLoading(false);
+      return;
+    }
+
+    const response = await fetch(
+      `/api/r2/admin-course-preview-url?courseId=${encodeURIComponent(selectedId)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setMessage(result.error || "Video preview is unavailable.");
+      setPreviewLoading(false);
+      return;
+    }
+
+    setPreviewUrl(result.videoUrl);
+    setPreviewLoading(false);
+  }
+
+  async function deleteVideo() {
+    if (!selectedId || (!videoKey && !videoUrl)) return;
+
+    const confirmed = window.confirm(
+      videoKey
+        ? "Delete this training video from Cloudflare R2 and remove it from the course? This cannot be undone."
+        : "Remove this external video from the course?"
+    );
+
+    if (!confirmed) return;
+
+    setDeletingVideo(true);
+    setMessage("");
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      setMessage("Your session expired. Please sign in again.");
+      setDeletingVideo(false);
+      return;
+    }
+
+    const response = await fetch("/api/r2/delete-course-video", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ courseId: selectedId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setMessage(result.error || "Could not delete the video.");
+      setDeletingVideo(false);
+      return;
+    }
+
+    setVideoKey("");
+    setVideoUrl("");
+    setPreviewUrl("");
+    setMessage(
+      result.deletedFromR2
+        ? "Video deleted from R2 and removed from the course."
+        : "Video removed from the course."
+    );
+    await loadCourses();
+    setDeletingVideo(false);
   }
 
   function updateQuestion(index: number, field: string, value: any) {
@@ -281,7 +372,7 @@ export default function CourseAdminPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
+    <main className="mx-auto max-w-7xl px-6 py-10">
       <div className="text-sm text-cyan-300">
         Platform Administration
       </div>
@@ -395,6 +486,46 @@ export default function CourseAdminPage() {
                     No R2 video attached.
                   </div>
                 )}
+
+                {videoKey || videoUrl ? (
+                  <div className="mt-4 space-y-3">
+                    {previewUrl ? (
+                      <video
+                        key={previewUrl}
+                        controls
+                        preload="metadata"
+                        src={previewUrl}
+                        className="aspect-video w-full rounded-lg bg-black"
+                      >
+                        Your browser does not support video playback.
+                      </video>
+                    ) : null}
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={loadVideoPreview}
+                        disabled={previewLoading || deletingVideo}
+                        className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50"
+                      >
+                        {previewLoading
+                          ? "Loading Preview..."
+                          : previewUrl
+                          ? "Refresh Preview"
+                          : "Preview Video"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={deleteVideo}
+                        disabled={deletingVideo || uploading}
+                        className="rounded-lg border border-rose-400/40 bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-400/20 disabled:opacity-50"
+                      >
+                        {deletingVideo ? "Deleting..." : "Delete Video"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </>
             ) : (
               <div className="mt-3 text-sm text-amber-300">
@@ -406,6 +537,7 @@ export default function CourseAdminPage() {
               value={videoUrl}
               onChange={(e) => {
                 setVideoUrl(e.target.value);
+                setPreviewUrl("");
                 if (e.target.value) setVideoKey("");
               }}
               placeholder="Or external video URL"
