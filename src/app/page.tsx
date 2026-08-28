@@ -12,7 +12,7 @@ export default async function Home() {
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(59,130,246,0.10),transparent_30%)]" />
-        <div className="relative mx-auto grid max-w-[1440px] gap-5 px-4 py-7 md:px-5 md:py-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:py-9">
+        <div className="relative mx-auto grid max-w-7xl gap-5 px-4 py-7 md:px-5 md:py-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:py-9">
           <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-6">
             <div className="mb-3 inline-flex w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300">
               {settings.heroBadge}
@@ -90,7 +90,7 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10 bg-slate-900/55">
-        <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-5 md:py-9">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-5 md:py-9">
           <div className="mx-auto max-w-3xl text-center">
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">{settings.statsEyebrow}</div>
             <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{settings.statsHeading}</h2>
@@ -118,7 +118,7 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10">
-        <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-5 md:py-9">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-5 md:py-9">
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {[
               ["Phishing", "Spot suspicious senders, links, login requests, attachments, and social-engineering tactics."],
@@ -136,7 +136,7 @@ export default async function Home() {
       </section>
 
       <section id="subscribe" className="bg-slate-900/45">
-        <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-5 md:py-9">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:px-5 md:py-9">
           <div className="grid overflow-hidden rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] lg:grid-cols-[1.35fr_0.65fr]">
             <div className="p-5 md:p-6 lg:p-7">
               <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">{settings.pricingEyebrow}</div>
