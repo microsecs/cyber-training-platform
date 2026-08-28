@@ -98,8 +98,8 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   pricingHeading: "One subscription. Unlimited employees.",
   pricingBody:
     "Train your entire team without paying more every time you add another employee. Invite employees, assign courses, add quizzes, and track completion from one place.",
-  subscriptionPrice: "Flat-rate subscription",
-  subscriptionPeriod: "Unlimited employees included",
+  subscriptionPrice: "$149.00",
+  subscriptionPeriod: "per month · unlimited employees included",
   subscriptionFinePrint: "No per-employee training fee.",
   ctaLabel: "Subscribe & Start Training",
   ctaUrl: "/login",

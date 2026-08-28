@@ -12,18 +12,18 @@ export default async function Home() {
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(59,130,246,0.10),transparent_30%)]" />
-        <div className="relative mx-auto grid max-w-7xl gap-8 px-5 py-10 md:px-6 md:py-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-14">
-          <div>
-            <div className="mb-4 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300">
+        <div className="relative mx-auto grid max-w-[1440px] gap-5 px-4 py-7 md:px-5 md:py-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:py-9">
+          <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-5 md:p-6">
+            <div className="mb-3 inline-flex w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm text-cyan-300">
               {settings.heroBadge}
             </div>
-            <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl lg:text-[3.35rem]">
               {settings.heroTitle}
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
+            <p className="mt-3 max-w-2xl text-base leading-6 text-slate-300 md:text-lg">
               {settings.heroBody}
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <a
                 href={settings.ctaUrl}
                 target={ctaIsExternal ? "_blank" : undefined}
@@ -40,26 +40,34 @@ export default async function Home() {
               </Link>
             </div>
 
-            <div className="mt-6 grid max-w-2xl grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+            <div className="mt-5 grid max-w-2xl grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
                 <div className="text-xl font-black tracking-tight text-cyan-300 md:text-2xl">{settings.experienceValue}</div>
                 <div className="mt-1 text-sm text-slate-300">{settings.experienceLabel}</div>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
                 <div className="text-xl font-black tracking-tight text-cyan-300 md:text-2xl">{settings.subscriptionValue}</div>
                 <div className="mt-1 text-sm text-slate-300">{settings.subscriptionLabel}</div>
               </div>
             </div>
+
+            <div className="mt-auto pt-5">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-white/10 pt-4">
+                <span className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">One simple price</span>
+                <span className="text-2xl font-black tracking-tight text-cyan-300">{settings.subscriptionPrice}</span>
+                <span className="text-sm text-slate-400">{settings.subscriptionPeriod}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
             {settings.playbackUrl ? (
               <video
                 key={settings.playbackUrl}
                 controls
                 playsInline
                 preload="metadata"
-                className="aspect-video w-full bg-black object-contain"
+                className="aspect-video w-full flex-1 bg-black object-contain"
               >
                 <source src={settings.playbackUrl} />
                 Your browser does not support HTML5 video.
@@ -82,7 +90,7 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10 bg-slate-900/55">
-        <div className="mx-auto max-w-7xl px-5 py-10 md:px-6 md:py-12">
+        <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-5 md:py-9">
           <div className="mx-auto max-w-3xl text-center">
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">{settings.statsEyebrow}</div>
             <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{settings.statsHeading}</h2>
@@ -90,9 +98,9 @@ export default async function Home() {
           </div>
 
           {stats.length ? (
-            <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {stats.map((stat) => (
-                <article key={stat.id} className="flex min-h-[230px] flex-col rounded-2xl border border-white/10 bg-slate-950/75 p-5">
+                <article key={stat.id} className="flex min-h-[205px] flex-col rounded-2xl border border-white/10 bg-slate-950/75 p-4">
                   <div className="text-2xl font-black tracking-tight text-cyan-300 md:text-3xl">{stat.value}</div>
                   <h3 className="mt-3 font-semibold leading-snug">{stat.label}</h3>
                   {stat.detail ? <p className="mt-2 text-sm leading-5 text-slate-400">{stat.detail}</p> : null}
@@ -110,15 +118,15 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-5 py-10 md:px-6 md:py-12">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-5 md:py-9">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {[
               ["Phishing", "Spot suspicious senders, links, login requests, attachments, and social-engineering tactics."],
               ["Passwords", "Build stronger password habits, use password managers, and understand multi-factor authentication."],
               ["Remote Work", "Protect company accounts and devices while working remotely or using public Wi-Fi."],
               ["Company Data", "Understand how everyday mistakes can expose sensitive company and customer information."],
             ].map(([title, body]) => (
-              <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-lg font-semibold">{title}</div>
                 <p className="mt-2 text-sm leading-5 text-slate-400">{body}</p>
               </div>
@@ -128,20 +136,20 @@ export default async function Home() {
       </section>
 
       <section id="subscribe" className="bg-slate-900/45">
-        <div className="mx-auto max-w-7xl px-5 py-10 md:px-6 md:py-12">
-          <div className="grid overflow-hidden rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.06] lg:grid-cols-[1.35fr_0.65fr]">
-            <div className="p-6 md:p-8 lg:p-10">
+        <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-5 md:py-9">
+          <div className="grid overflow-hidden rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] lg:grid-cols-[1.35fr_0.65fr]">
+            <div className="p-5 md:p-6 lg:p-7">
               <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">{settings.pricingEyebrow}</div>
               <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">{settings.pricingHeading}</h2>
               <p className="mt-3 max-w-3xl leading-7 text-slate-300">{settings.pricingBody}</p>
-              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
                 <span>✓ Unlimited employees</span>
                 <span>✓ Quizzes & completion tracking</span>
                 <span>✓ Multiple security training topics</span>
               </div>
             </div>
 
-            <div className="flex flex-col justify-center border-t border-white/10 bg-slate-950/55 p-6 text-center md:p-8 lg:border-l lg:border-t-0">
+            <div className="flex flex-col justify-center border-t border-white/10 bg-slate-950/55 p-5 text-center md:p-6 lg:border-l lg:border-t-0">
               <div className="text-3xl font-black tracking-tight text-cyan-300">{settings.subscriptionPrice}</div>
               <div className="mt-2 text-sm font-medium text-slate-300">{settings.subscriptionPeriod}</div>
               <div className="mt-1 text-xs text-slate-500">{settings.subscriptionFinePrint}</div>
@@ -149,7 +157,7 @@ export default async function Home() {
                 href={settings.ctaUrl}
                 target={ctaIsExternal ? "_blank" : undefined}
                 rel={ctaIsExternal ? "noreferrer" : undefined}
-                className="mt-6 rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+                className="mt-5 rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
               >
                 {settings.ctaLabel}
               </a>
