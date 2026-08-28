@@ -9,29 +9,78 @@ export default function EmployeesPage() {
   const [invites, setInvites] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [email, setEmail] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [employeeAction, setEmployeeAction] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [inviteAction, setInviteAction] = useState<string | null>(null);
 
   async function refresh() {
     if (!company) return;
-    const s = createClient();
+    const supabase = createClient();
+    setLoadError("");
 
-    const [{ data: inviteData }, { data: memberData }] = await Promise.all([
-      s.from("invitations")
+    const [inviteResult, memberResult] = await Promise.all([
+      supabase
+        .from("invitations")
         .select("id,email,role,status,created_at")
         .eq("company_id", company.companyId)
         .eq("status", "pending")
         .order("created_at", { ascending: false }),
 
-      s.from("memberships")
+      supabase
+        .from("memberships")
         .select("id,user_id,role,created_at")
         .eq("company_id", company.companyId)
         .order("created_at", { ascending: true }),
     ]);
 
-    setInvites(inviteData ?? []);
-    setMembers(memberData ?? []);
+    if (inviteResult.error) {
+      setLoadError(inviteResult.error.message);
+    }
+    if (memberResult.error) {
+      setLoadError(memberResult.error.message);
+      setMembers([]);
+      setInvites(inviteResult.data ?? []);
+      return;
+    }
+
+    const membershipRows = memberResult.data ?? [];
+    const userIds = membershipRows.map((m: any) => m.user_id);
+
+    let profileMap = new Map<string, { email: string; fullName: string }>();
+    if (userIds.length) {
+      const profileResult = await supabase
+        .from("profiles")
+        .select("id,email,full_name")
+        .in("id", userIds);
+
+      if (profileResult.error) {
+        setLoadError(profileResult.error.message);
+      } else {
+        profileMap = new Map(
+          (profileResult.data ?? []).map((profile: any) => [
+            profile.id,
+            {
+              email: profile.email ?? "",
+              fullName: profile.full_name ?? "",
+            },
+          ])
+        );
+      }
+    }
+
+    setInvites(inviteResult.data ?? []);
+    setMembers(
+      membershipRows.map((membership: any) => {
+        const profile = profileMap.get(membership.user_id);
+        return {
+          ...membership,
+          email: profile?.email ?? "",
+          fullName: profile?.fullName ?? "",
+        };
+      })
+    );
   }
 
   useEffect(() => {
@@ -112,6 +161,41 @@ export default function EmployeesPage() {
     setInviteAction(null);
   }
 
+  async function manageEmployee(action: "remove" | "delete_data", member: any) {
+    const label = member.fullName || member.email || "this employee";
+    const prompt =
+      action === "delete_data"
+        ? `Permanently remove ${label} from this company and delete this employee's company training assignments and completion history?`
+        : `Remove ${label} from this company? Their company training history will be left in place.`;
+
+    if (!window.confirm(prompt)) return;
+
+    setMessage("");
+    setEmployeeAction(`${action}:${member.user_id}`);
+
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      setMessage("Your session expired. Please sign in again.");
+      setEmployeeAction(null);
+      return;
+    }
+
+    const response = await fetch("/api/employees/manage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ action, userId: member.user_id }),
+    });
+
+    const result = await response.json();
+    setMessage(response.ok ? result.message : result.error || "Employee action failed.");
+
+    if (response.ok) await refresh();
+    setEmployeeAction(null);
+  }
+
   if (loading) {
     return <main className="mx-auto max-w-7xl px-6 py-12">Loading...</main>;
   }
@@ -166,19 +250,60 @@ export default function EmployeesPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-          <div className="border-b border-white/10 px-5 py-4 font-semibold">
-            Active Company Users ({members.length})
+          <div className="border-b border-white/10 px-5 py-4">
+            <div className="font-semibold">Active Company Users ({members.length})</div>
+            <div className="mt-0.5 text-xs text-slate-500">Accepted users appear here with their name, email, role, and management options.</div>
           </div>
+
+          {loadError ? (
+            <div className="border-b border-red-400/20 bg-red-400/5 px-5 py-3 text-sm text-red-300">
+              {loadError}
+            </div>
+          ) : null}
+
           {members.length === 0 ? (
             <div className="px-5 py-6 text-sm text-slate-500">No active users yet.</div>
           ) : (
-            members.map((m) => (
-              <div
-                key={m.id}
-                className="grid grid-cols-[1.4fr_.6fr] border-b border-white/10 px-5 py-4 text-sm last:border-0"
-              >
-                <div className="text-slate-300">{m.user_id}</div>
-                <div className="text-right capitalize text-slate-400">{m.role}</div>
+            members.map((member) => (
+              <div key={member.id} className="border-b border-white/10 px-5 py-4 last:border-0">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-slate-200">
+                      {member.fullName || member.email || "Active user"}
+                    </div>
+                    {member.email ? (
+                      <div className="mt-1 truncate text-sm text-slate-400">{member.email}</div>
+                    ) : (
+                      <div className="mt-1 text-xs text-slate-500">Profile email unavailable</div>
+                    )}
+                    <div className="mt-1 text-xs capitalize text-slate-500">{member.role}</div>
+                  </div>
+
+                  {member.role === "employee" ? (
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => manageEmployee("remove", member)}
+                        disabled={employeeAction !== null}
+                        className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5 disabled:opacity-50"
+                      >
+                        {employeeAction === `remove:${member.user_id}` ? "Removing..." : "Remove"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => manageEmployee("delete_data", member)}
+                        disabled={employeeAction !== null}
+                        className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/15 disabled:opacity-50"
+                      >
+                        {employeeAction === `delete_data:${member.user_id}` ? "Deleting..." : "Delete + Training Data"}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs capitalize text-slate-400">
+                      {member.role}
+                    </span>
+                  )}
+                </div>
               </div>
             ))
           )}
