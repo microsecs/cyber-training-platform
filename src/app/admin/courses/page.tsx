@@ -22,6 +22,7 @@ export default function CourseAdminPage() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadPercent, setUploadPercent] = useState(0);
+  const [courseActionBusy, setCourseActionBusy] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [deletingVideo, setDeletingVideo] = useState(false);
@@ -313,6 +314,80 @@ export default function CourseAdminPage() {
     );
   }
 
+  async function toggleCourseActive() {
+    if (!selectedId) return;
+
+    setCourseActionBusy(true);
+    setMessage("");
+
+    const nextActive = !isActive;
+    const { error } = await supabase
+      .from("courses")
+      .update({
+        is_active: nextActive,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", selectedId);
+
+    if (error) {
+      setMessage(error.message);
+      setCourseActionBusy(false);
+      return;
+    }
+
+    setIsActive(nextActive);
+    setMessage(
+      nextActive
+        ? "Course reactivated. It is available for new assignments again."
+        : "Course deactivated. Existing assignments remain available, but the course will not appear for new assignments."
+    );
+    await loadCourses();
+    setCourseActionBusy(false);
+  }
+
+  async function deleteCourse() {
+    if (!selectedId) return;
+
+    const confirmed = window.confirm(
+      "Permanently delete this course? This cannot be undone. Courses with existing training assignments cannot be deleted; deactivate them instead."
+    );
+    if (!confirmed) return;
+
+    setCourseActionBusy(true);
+    setMessage("");
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      setMessage("Your session expired. Please sign in again.");
+      setCourseActionBusy(false);
+      return;
+    }
+
+    const response = await fetch("/api/admin/delete-course", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ courseId: selectedId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setMessage(result.error || "Could not delete course.");
+      setCourseActionBusy(false);
+      return;
+    }
+
+    newCourse();
+    setMessage("Course permanently deleted.");
+    await loadCourses();
+    setCourseActionBusy(false);
+  }
+
   async function saveCourse() {
     const cleanQuiz = quiz
       .filter((q) => q.question.trim())
@@ -400,7 +475,18 @@ export default function CourseAdminPage() {
                     : "border-white/10 bg-slate-950"
                 }`}
               >
-                <div className="font-medium">{course.title}</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-medium">{course.title}</div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      course.is_active
+                        ? "bg-emerald-400/10 text-emerald-300"
+                        : "bg-amber-400/10 text-amber-300"
+                    }`}
+                  >
+                    {course.is_active ? "ACTIVE" : "INACTIVE"}
+                  </span>
+                </div>
                 <div className="mt-1 text-xs text-slate-500">
                   {course.video_key
                     ? "R2 video attached"
@@ -545,14 +631,52 @@ export default function CourseAdminPage() {
             />
           </div>
 
-          <label className="flex gap-3">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-            />
-            Course is active
-          </label>
+          <div className="rounded-xl border border-white/10 bg-slate-950 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="font-medium">Course Status</div>
+                <div className="mt-1 text-sm text-slate-400">
+                  {isActive
+                    ? "Active courses are visible in the training library and can be assigned to employees."
+                    : "Inactive courses are hidden from new assignments. Existing employee assignments remain available."}
+                </div>
+              </div>
+
+              <span
+                className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                  isActive
+                    ? "bg-emerald-400/10 text-emerald-300"
+                    : "bg-amber-400/10 text-amber-300"
+                }`}
+              >
+                {isActive ? "ACTIVE" : "INACTIVE"}
+              </span>
+            </div>
+
+            {selectedId ? (
+              <button
+                type="button"
+                onClick={toggleCourseActive}
+                disabled={courseActionBusy || uploading}
+                className={`mt-4 rounded-lg px-4 py-2.5 font-semibold disabled:opacity-40 ${
+                  isActive
+                    ? "border border-amber-400/30 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20"
+                    : "bg-emerald-400 px-4 text-slate-950 hover:bg-emerald-300"
+                }`}
+              >
+                {isActive ? "Deactivate Course" : "Reactivate Course"}
+              </button>
+            ) : (
+              <label className="mt-4 flex gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                />
+                Make this course active when created
+              </label>
+            )}
+          </div>
 
           <div>
             <div className="flex justify-between">
@@ -622,13 +746,26 @@ export default function CourseAdminPage() {
             </div>
           </div>
 
-          <button
-            onClick={saveCourse}
-            disabled={!title.trim() || uploading}
-            className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-40"
-          >
-            {selectedId ? "Save Changes" : "Create Course"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={saveCourse}
+              disabled={!title.trim() || uploading || courseActionBusy}
+              className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-40"
+            >
+              {selectedId ? "Save Changes" : "Create Course"}
+            </button>
+
+            {selectedId ? (
+              <button
+                type="button"
+                onClick={deleteCourse}
+                disabled={uploading || courseActionBusy}
+                className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-5 py-3 font-semibold text-rose-300 hover:bg-rose-400/20 disabled:opacity-40"
+              >
+                Delete Course
+              </button>
+            ) : null}
+          </div>
 
           {message ? (
             <div className="rounded-lg bg-slate-950 p-4 text-sm text-slate-300">
