@@ -18,7 +18,7 @@ export default function AcceptInvitePage() {
       const tokenHash = params.get("token_hash");
       const type = params.get("type");
 
-      if (!tokenHash || type !== "invite") {
+      if (!tokenHash || (type !== "invite" && type !== "magiclink")) {
         setMessage(
           "This invitation link is missing its verification token. Ask the administrator to send a fresh invitation."
         );
@@ -31,7 +31,7 @@ export default function AcceptInvitePage() {
 
       const { data, error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
-        type: "invite",
+        type: type as "invite" | "magiclink",
       });
 
       if (error || !data.session) {
@@ -129,7 +129,7 @@ export default function AcceptInvitePage() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Choose a password to join your employer&apos;s MicroSECONDS training account.
+          Choose a password to join your employer&apos;s CyberAware training account.
         </p>
 
         {!ready ? (
