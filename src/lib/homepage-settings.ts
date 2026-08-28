@@ -16,6 +16,18 @@ function normalize(row: any): HomepageSettings {
     statsHeading: row?.stats_heading || DEFAULT_HOMEPAGE_SETTINGS.statsHeading,
     statsBody: row?.stats_body || DEFAULT_HOMEPAGE_SETTINGS.statsBody,
     stats: Array.isArray(row?.stats) ? row.stats : DEFAULT_HOMEPAGE_SETTINGS.stats,
+    experienceValue: row?.experience_value || DEFAULT_HOMEPAGE_SETTINGS.experienceValue,
+    experienceLabel: row?.experience_label || DEFAULT_HOMEPAGE_SETTINGS.experienceLabel,
+    subscriptionValue: row?.subscription_value || DEFAULT_HOMEPAGE_SETTINGS.subscriptionValue,
+    subscriptionLabel: row?.subscription_label || DEFAULT_HOMEPAGE_SETTINGS.subscriptionLabel,
+    pricingEyebrow: row?.pricing_eyebrow || DEFAULT_HOMEPAGE_SETTINGS.pricingEyebrow,
+    pricingHeading: row?.pricing_heading || DEFAULT_HOMEPAGE_SETTINGS.pricingHeading,
+    pricingBody: row?.pricing_body || DEFAULT_HOMEPAGE_SETTINGS.pricingBody,
+    subscriptionPrice: row?.subscription_price || DEFAULT_HOMEPAGE_SETTINGS.subscriptionPrice,
+    subscriptionPeriod: row?.subscription_period || DEFAULT_HOMEPAGE_SETTINGS.subscriptionPeriod,
+    subscriptionFinePrint: row?.subscription_fine_print || DEFAULT_HOMEPAGE_SETTINGS.subscriptionFinePrint,
+    ctaLabel: row?.cta_label || DEFAULT_HOMEPAGE_SETTINGS.ctaLabel,
+    ctaUrl: row?.cta_url || DEFAULT_HOMEPAGE_SETTINGS.ctaUrl,
   };
 }
 

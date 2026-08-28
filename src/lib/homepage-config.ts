@@ -20,10 +20,22 @@ export type HomepageSettings = {
   statsHeading: string;
   statsBody: string;
   stats: HomepageStat[];
+  experienceValue: string;
+  experienceLabel: string;
+  subscriptionValue: string;
+  subscriptionLabel: string;
+  pricingEyebrow: string;
+  pricingHeading: string;
+  pricingBody: string;
+  subscriptionPrice: string;
+  subscriptionPeriod: string;
+  subscriptionFinePrint: string;
+  ctaLabel: string;
+  ctaUrl: string;
 };
 
 export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
-  heroBadge: "Cybersecurity training for real businesses",
+  heroBadge: "Cybersecurity training backed by 40 years of experience",
   heroTitle: "Train your employees before an attacker does.",
   heroBody:
     "Practical cybersecurity training that helps employees recognize phishing, protect passwords, work safely from anywhere, and keep company data secure.",
@@ -78,4 +90,17 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
       enabled: true,
     },
   ],
+  experienceValue: "40+ YEARS",
+  experienceLabel: "of technology and security experience",
+  subscriptionValue: "ONE SUBSCRIPTION",
+  subscriptionLabel: "train unlimited employees",
+  pricingEyebrow: "Simple, predictable pricing",
+  pricingHeading: "One subscription. Unlimited employees.",
+  pricingBody:
+    "Train your entire team without paying more every time you add another employee. Invite employees, assign courses, add quizzes, and track completion from one place.",
+  subscriptionPrice: "Flat-rate subscription",
+  subscriptionPeriod: "Unlimited employees included",
+  subscriptionFinePrint: "No per-employee training fee.",
+  ctaLabel: "Subscribe & Start Training",
+  ctaUrl: "/login",
 };

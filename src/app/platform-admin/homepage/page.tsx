@@ -18,6 +18,18 @@ function rowToSettings(row: any): HomepageSettings {
     statsHeading: row.stats_heading || DEFAULT_HOMEPAGE_SETTINGS.statsHeading,
     statsBody: row.stats_body || DEFAULT_HOMEPAGE_SETTINGS.statsBody,
     stats: Array.isArray(row.stats) ? row.stats : DEFAULT_HOMEPAGE_SETTINGS.stats,
+    experienceValue: row.experience_value || DEFAULT_HOMEPAGE_SETTINGS.experienceValue,
+    experienceLabel: row.experience_label || DEFAULT_HOMEPAGE_SETTINGS.experienceLabel,
+    subscriptionValue: row.subscription_value || DEFAULT_HOMEPAGE_SETTINGS.subscriptionValue,
+    subscriptionLabel: row.subscription_label || DEFAULT_HOMEPAGE_SETTINGS.subscriptionLabel,
+    pricingEyebrow: row.pricing_eyebrow || DEFAULT_HOMEPAGE_SETTINGS.pricingEyebrow,
+    pricingHeading: row.pricing_heading || DEFAULT_HOMEPAGE_SETTINGS.pricingHeading,
+    pricingBody: row.pricing_body || DEFAULT_HOMEPAGE_SETTINGS.pricingBody,
+    subscriptionPrice: row.subscription_price || DEFAULT_HOMEPAGE_SETTINGS.subscriptionPrice,
+    subscriptionPeriod: row.subscription_period || DEFAULT_HOMEPAGE_SETTINGS.subscriptionPeriod,
+    subscriptionFinePrint: row.subscription_fine_print || DEFAULT_HOMEPAGE_SETTINGS.subscriptionFinePrint,
+    ctaLabel: row.cta_label || DEFAULT_HOMEPAGE_SETTINGS.ctaLabel,
+    ctaUrl: row.cta_url || DEFAULT_HOMEPAGE_SETTINGS.ctaUrl,
   };
 }
 
@@ -274,6 +286,33 @@ export default function HomepageSettingsPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <h2 className="text-xl font-semibold">Experience & Subscription Highlights</h2>
+        <p className="mt-1 text-sm text-slate-400">These two proof points appear directly under the homepage hero message.</p>
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 rounded-xl border border-white/10 bg-slate-950 p-4">
+            <label className="grid gap-2 text-sm">
+              <span className="text-slate-300">Experience value</span>
+              <input value={settings.experienceValue} onChange={(e) => setSettings({ ...settings, experienceValue: e.target.value })} placeholder="40+ YEARS" className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2" />
+            </label>
+            <label className="grid gap-2 text-sm">
+              <span className="text-slate-300">Experience description</span>
+              <input value={settings.experienceLabel} onChange={(e) => setSettings({ ...settings, experienceLabel: e.target.value })} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2" />
+            </label>
+          </div>
+          <div className="grid gap-4 rounded-xl border border-white/10 bg-slate-950 p-4">
+            <label className="grid gap-2 text-sm">
+              <span className="text-slate-300">Subscription value</span>
+              <input value={settings.subscriptionValue} onChange={(e) => setSettings({ ...settings, subscriptionValue: e.target.value })} placeholder="ONE SUBSCRIPTION" className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2" />
+            </label>
+            <label className="grid gap-2 text-sm">
+              <span className="text-slate-300">Subscription description</span>
+              <input value={settings.subscriptionLabel} onChange={(e) => setSettings({ ...settings, subscriptionLabel: e.target.value })} placeholder="train unlimited employees" className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">Homepage Video</h2>
@@ -374,6 +413,45 @@ export default function HomepageSettingsPage() {
         <button type="button" onClick={addStat} className="mt-5 rounded-lg border border-cyan-400/30 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-400/10">
           + Add Statistic
         </button>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <h2 className="text-xl font-semibold">Subscription & Call to Action</h2>
+        <p className="mt-1 text-sm text-slate-400">Controls the pricing panel and Subscribe & Start Training buttons on the public homepage.</p>
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">Section label</span>
+            <input value={settings.pricingEyebrow} onChange={(e) => setSettings({ ...settings, pricingEyebrow: e.target.value })} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">Subscription price</span>
+            <input value={settings.subscriptionPrice} onChange={(e) => setSettings({ ...settings, subscriptionPrice: e.target.value })} placeholder="$99/month" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm md:col-span-2">
+            <span className="text-slate-300">Pricing headline</span>
+            <input value={settings.pricingHeading} onChange={(e) => setSettings({ ...settings, pricingHeading: e.target.value })} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm md:col-span-2">
+            <span className="text-slate-300">Pricing description</span>
+            <textarea rows={3} value={settings.pricingBody} onChange={(e) => setSettings({ ...settings, pricingBody: e.target.value })} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">Price subheading / billing period</span>
+            <input value={settings.subscriptionPeriod} onChange={(e) => setSettings({ ...settings, subscriptionPeriod: e.target.value })} placeholder="per month · unlimited employees" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">Fine print</span>
+            <input value={settings.subscriptionFinePrint} onChange={(e) => setSettings({ ...settings, subscriptionFinePrint: e.target.value })} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">Subscribe button text</span>
+            <input value={settings.ctaLabel} onChange={(e) => setSettings({ ...settings, ctaLabel: e.target.value })} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">Subscribe button destination</span>
+            <input value={settings.ctaUrl} onChange={(e) => setSettings({ ...settings, ctaUrl: e.target.value })} placeholder="/login or https://..." className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2" />
+          </label>
+        </div>
       </section>
 
       <div className="sticky bottom-4 mt-8 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/95 p-4 shadow-2xl backdrop-blur">

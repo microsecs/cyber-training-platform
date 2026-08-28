@@ -103,6 +103,18 @@ export async function POST(request: NextRequest) {
       stats_heading: String(body.statsHeading || "").trim().slice(0, 400),
       stats_body: String(body.statsBody || "").trim().slice(0, 1200),
       stats: cleanStats(body.stats),
+      experience_value: String(body.experienceValue || "").trim().slice(0, 120),
+      experience_label: String(body.experienceLabel || "").trim().slice(0, 240),
+      subscription_value: String(body.subscriptionValue || "").trim().slice(0, 160),
+      subscription_label: String(body.subscriptionLabel || "").trim().slice(0, 240),
+      pricing_eyebrow: String(body.pricingEyebrow || "").trim().slice(0, 160),
+      pricing_heading: String(body.pricingHeading || "").trim().slice(0, 320),
+      pricing_body: String(body.pricingBody || "").trim().slice(0, 1200),
+      subscription_price: String(body.subscriptionPrice || "").trim().slice(0, 160),
+      subscription_period: String(body.subscriptionPeriod || "").trim().slice(0, 200),
+      subscription_fine_print: String(body.subscriptionFinePrint || "").trim().slice(0, 240),
+      cta_label: String(body.ctaLabel || "").trim().slice(0, 160),
+      cta_url: String(body.ctaUrl || "").trim().slice(0, 2000),
       updated_at: new Date().toISOString(),
     };
 
