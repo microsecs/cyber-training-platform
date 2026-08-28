@@ -214,6 +214,19 @@ export default function EmployeesPage() {
     setBulkBusy(false);
   }
 
+  function downloadSampleCsv() {
+    const csv = "email\nemployee1@company.com\nemployee2@company.com\nemployee3@company.com\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "microseconds-employee-invite-sample.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   function loadCsv(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -390,15 +403,25 @@ export default function EmployeesPage() {
               </p>
             </div>
 
-            <label className="inline-flex cursor-pointer items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5">
-              Load CSV
-              <input
-                type="file"
-                accept=".csv,.txt"
-                onChange={loadCsv}
-                className="hidden"
-              />
-            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={downloadSampleCsv}
+                className="inline-flex items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
+              >
+                Download Sample CSV
+              </button>
+
+              <label className="inline-flex cursor-pointer items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5">
+                Load CSV
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  onChange={loadCsv}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
 
           <form onSubmit={bulkInvite} className="mt-5">
