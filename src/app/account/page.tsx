@@ -231,14 +231,6 @@ export default function AccountPage() {
             Open Dashboard
           </Link>
 
-          {canManageBilling && (
-            <a
-              href="#billing"
-              className="rounded-lg border border-white/15 px-4 py-3 font-semibold hover:bg-white/5"
-            >
-              Billing & Subscription
-            </a>
-          )}
 
           <button
             type="button"
