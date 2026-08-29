@@ -23,7 +23,7 @@ export function useCompany() {
       const { data, error } = await supabase
         .from("memberships")
         .select(
-          "company_id, role, companies(name,stripe_customer_id,stripe_subscription_id,stripe_price_id,subscription_status,subscription_current_period_end,subscription_cancel_at_period_end,subscription_payment_failed,subscription_payment_failed_at,subscription_updated_at)"
+          "company_id, role, companies(name,stripe_customer_id,stripe_subscription_id,stripe_price_id,subscription_status,subscription_current_period_end,subscription_cancel_at_period_end,subscription_payment_failed,subscription_payment_failed_at,subscription_updated_at,billing_exempt)"
         )
         .eq("user_id", authData.user.id)
         .limit(1)
@@ -54,6 +54,7 @@ export function useCompany() {
         subscriptionPaymentFailed: c?.subscription_payment_failed ?? false,
         subscriptionPaymentFailedAt: c?.subscription_payment_failed_at ?? null,
         subscriptionUpdatedAt: c?.subscription_updated_at ?? null,
+        billingExempt: c?.billing_exempt ?? false,
       });
 
       setLoading(false);

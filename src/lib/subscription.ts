@@ -19,6 +19,7 @@ export type CompanySubscription = {
   cancelAtPeriodEnd?: boolean | null;
   paymentFailed?: boolean | null;
   paymentFailedAt?: string | null;
+  billingExempt?: boolean | null;
 };
 
 export const SUBSCRIPTION_GRACE_PERIOD_DAYS = 7;
@@ -54,6 +55,8 @@ export function isWithinPastDueGracePeriod(
 }
 
 export function companyHasSubscriptionAccess(subscription: CompanySubscription) {
+  if (subscription.billingExempt) return true;
+
   const status = subscription.status ?? "none";
 
   if (isSubscriptionFullyActive(status)) return true;
@@ -63,4 +66,13 @@ export function companyHasSubscriptionAccess(subscription: CompanySubscription) 
   }
 
   return false;
+}
+
+export function subscriptionAccessReason(subscription: CompanySubscription) {
+  if (subscription.billingExempt) return "billing_exempt";
+  const status = subscription.status ?? "none";
+  if (status === "active" || status === "trialing") return "active";
+  if (status === "past_due" && isWithinPastDueGracePeriod(subscription.paymentFailedAt)) return "grace_period";
+  if (status === "past_due") return "grace_expired";
+  return status;
 }

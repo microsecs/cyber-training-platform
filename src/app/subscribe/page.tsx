@@ -47,7 +47,7 @@ export default function SubscribePage() {
           )}
           {message && <div className="mt-4 text-sm text-rose-300">{message}</div>}
         </div>
-        <p className="mt-5 text-xs text-slate-500">Payments and promotion codes are handled by Stripe Checkout. This release does not yet activate access from Checkout; webhook synchronization is the next update.</p>
+        <p className="mt-5 text-xs text-slate-500">Payments and promotion codes are handled securely by Stripe Checkout. Subscription status is synchronized automatically through Stripe webhooks.</p>
       </div>
     </main>
   );
