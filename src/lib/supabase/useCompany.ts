@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,14 +22,15 @@ export function useCompany() {
 
       const { data, error } = await supabase
         .from("memberships")
-        .select("company_id, role, is_active, companies(name)")
+        .select(
+          "company_id, role, companies(name,stripe_customer_id,stripe_subscription_id,stripe_price_id,subscription_status,subscription_current_period_end,subscription_cancel_at_period_end,subscription_payment_failed,subscription_payment_failed_at,subscription_updated_at)"
+        )
         .eq("user_id", authData.user.id)
-        .eq("is_active", true)
         .limit(1)
         .single();
 
       if (error || !data) {
-        setError(error?.message || "No active company membership found");
+        setError(error?.message || "No company membership found");
         setLoading(false);
         return;
       }
@@ -43,6 +45,15 @@ export function useCompany() {
         role: data.role,
         userId: authData.user.id,
         email: authData.user.email ?? "",
+        stripeCustomerId: c?.stripe_customer_id ?? null,
+        stripeSubscriptionId: c?.stripe_subscription_id ?? null,
+        stripePriceId: c?.stripe_price_id ?? null,
+        subscriptionStatus: c?.subscription_status ?? "none",
+        subscriptionCurrentPeriodEnd: c?.subscription_current_period_end ?? null,
+        subscriptionCancelAtPeriodEnd: c?.subscription_cancel_at_period_end ?? false,
+        subscriptionPaymentFailed: c?.subscription_payment_failed ?? false,
+        subscriptionPaymentFailedAt: c?.subscription_payment_failed_at ?? null,
+        subscriptionUpdatedAt: c?.subscription_updated_at ?? null,
       });
 
       setLoading(false);
