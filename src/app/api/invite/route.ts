@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Resend } from "resend";
+import { getUserCompanySubscriptionAccess } from "@/lib/subscriptionServer";
 
 const FROM_EMAIL = "MicroSECONDS Training <training@microseconds.com>";
 
@@ -42,6 +43,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid session" },
         { status: 401 }
+      );
+    }
+
+    const subscriptionAccess = await getUserCompanySubscriptionAccess(userData.user.id);
+    if (!subscriptionAccess.allowed) {
+      return NextResponse.json(
+        { error: "An active MicroSECONDS subscription is required to invite employees." },
+        { status: 402 }
       );
     }
 

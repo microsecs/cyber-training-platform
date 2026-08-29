@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getUserCompanySubscriptionAccess } from "@/lib/subscriptionServer";
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
@@ -19,6 +20,14 @@ export async function POST(req: NextRequest) {
   const { data: userData } = await s.auth.getUser(token);
   if (!userData.user) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  }
+
+  const subscriptionAccess = await getUserCompanySubscriptionAccess(userData.user.id);
+  if (!subscriptionAccess.allowed) {
+    return NextResponse.json(
+      { error: "Your employer's MicroSECONDS subscription is inactive. Training cannot be completed until service is restored." },
+      { status: 402 }
+    );
   }
 
   const { assignmentId, score } = await req.json();

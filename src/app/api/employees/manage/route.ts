@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { getUserCompanySubscriptionAccess } from "@/lib/subscriptionServer";
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -20,6 +21,14 @@ export async function POST(request: NextRequest) {
     const { data: userData, error: userError } = await userClient.auth.getUser(token);
     if (userError || !userData.user) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const subscriptionAccess = await getUserCompanySubscriptionAccess(userData.user.id);
+    if (!subscriptionAccess.allowed) {
+      return NextResponse.json(
+        { error: "An active MicroSECONDS subscription is required for this company-management action." },
+        { status: 402 }
+      );
     }
 
     const { data: requester, error: requesterError } = await userClient

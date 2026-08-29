@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
+import SubscriptionGate from "@/components/SubscriptionGate";
 
 type Course = { id: string; title: string };
 type Employee = {
@@ -20,7 +21,7 @@ type InviteRow = {
   status: string;
 };
 
-export default function AssignTrainingPage() {
+function AssignTrainingPageContent() {
   const { company, loading } = useCompany();
   const [courses, setCourses] = useState<Course[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -337,5 +338,14 @@ export default function AssignTrainingPage() {
         )}
       </section>
     </main>
+  );
+}
+
+
+export default function AssignTrainingPage() {
+  return (
+    <SubscriptionGate>
+      <AssignTrainingPageContent />
+    </SubscriptionGate>
   );
 }

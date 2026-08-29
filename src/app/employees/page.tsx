@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/lib/supabase/useCompany";
+import SubscriptionGate from "@/components/SubscriptionGate";
 
 type MemberRow = {
   id: string;
@@ -32,7 +33,7 @@ function parseEmails(value: string) {
   return Array.from(new Set(matches));
 }
 
-export default function EmployeesPage() {
+function EmployeesPageContent() {
   const { company, loading, error } = useCompany();
 
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -600,5 +601,14 @@ export default function EmployeesPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+
+export default function EmployeesPage() {
+  return (
+    <SubscriptionGate>
+      <EmployeesPageContent />
+    </SubscriptionGate>
   );
 }

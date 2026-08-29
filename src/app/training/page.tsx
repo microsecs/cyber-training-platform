@@ -4,7 +4,10 @@ import {
   useEffect,
   useState,
 } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useCompany } from "@/lib/supabase/useCompany";
+import { companyHasSubscriptionAccess } from "@/lib/subscription";
 
 type Course = {
   id: string;
@@ -30,6 +33,13 @@ type Course = {
 };
 
 export default function TrainingPage() {
+  const { company } = useCompany();
+  const hasSubscriptionAccess = company ? companyHasSubscriptionAccess({
+    status: company.subscriptionStatus,
+    paymentFailedAt: company.subscriptionPaymentFailedAt,
+    billingExempt: company.billingExempt,
+  }) : true;
+
   const [courses, setCourses] =
     useState<Course[]>([]);
 
@@ -39,6 +49,8 @@ export default function TrainingPage() {
   ] = useState<
     Record<string, string>
   >({});
+
+  const [previewSeconds, setPreviewSeconds] = useState<Record<string, number | null>>({});
 
   const [
     previewErrors,
@@ -148,10 +160,13 @@ export default function TrainingPage() {
       setPreviewUrls(
         (current) => ({
           ...current,
-          [courseId]:
-            result.videoUrl,
+          [courseId]: result.videoUrl,
         })
       );
+      setPreviewSeconds((current) => ({
+        ...current,
+        [courseId]: typeof result.previewSeconds === "number" ? result.previewSeconds : null,
+      }));
     } else {
       setPreviewErrors(
         (current) => ({
@@ -184,6 +199,13 @@ export default function TrainingPage() {
       <p className="mt-2 text-slate-400">
         Preview the actual training content your employees will receive. Company administrators can assign courses, while only the platform owner can edit them.
       </p>
+
+      {!hasSubscriptionAccess ? (
+        <div className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100">
+          Your subscription is inactive. You can still preview the first 20 seconds of each training video. {" "}
+          <Link href="/account#billing" className="font-semibold underline">Subscribe to unlock full videos.</Link>
+        </div>
+      ) : null}
 
       <div className="mt-7 grid gap-6 lg:grid-cols-2">
         {courses.map(
@@ -221,9 +243,20 @@ export default function TrainingPage() {
                     <video
                       controls
                       preload="metadata"
-                      src={
-                        previewUrl
-                      }
+                      src={previewUrl}
+                      onTimeUpdate={(event) => {
+                        const limit = previewSeconds[course.id];
+                        if (typeof limit === "number" && event.currentTarget.currentTime >= limit) {
+                          event.currentTarget.pause();
+                          event.currentTarget.currentTime = limit;
+                        }
+                      }}
+                      onSeeking={(event) => {
+                        const limit = previewSeconds[course.id];
+                        if (typeof limit === "number" && event.currentTarget.currentTime > limit) {
+                          event.currentTarget.currentTime = limit;
+                        }
+                      }}
                       className="aspect-video w-full bg-black"
                     >
                       Your browser does not support video playback.
@@ -298,7 +331,7 @@ export default function TrainingPage() {
 
                   {previewUrl ? (
                     <div className="mt-4 text-xs text-slate-500">
-                      Admin preview only — watching this video does not create or complete an employee assignment.
+                      {previewSeconds[course.id] ? "20-second subscription preview — subscribe to watch the full course." : "Admin preview only — watching this video does not create or complete an employee assignment."}
                     </div>
                   ) : null}
                 </div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { companyHasSubscriptionAccess } from "@/lib/subscription";
 
 type Assignment = {
   id: string;
@@ -40,6 +41,7 @@ export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
+  const [trainingAccess, setTrainingAccess] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
@@ -58,6 +60,24 @@ export default function EmployeeDashboard() {
       }
 
       setEmail(userData.user.email ?? "");
+
+      const { data: membership } = await supabase
+        .from("memberships")
+        .select("companies(subscription_status,subscription_payment_failed_at,billing_exempt)")
+        .eq("user_id", userData.user.id)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      const company: any = Array.isArray((membership as any)?.companies)
+        ? (membership as any).companies[0]
+        : (membership as any)?.companies;
+
+      setTrainingAccess(companyHasSubscriptionAccess({
+        status: company?.subscription_status ?? "none",
+        paymentFailedAt: company?.subscription_payment_failed_at ?? null,
+        billingExempt: company?.billing_exempt ?? false,
+      }));
 
       const { data, error: assignmentError } = await supabase
         .from("assignments")
@@ -116,6 +136,12 @@ export default function EmployeeDashboard() {
           {error}
         </div>
       )}
+
+      {!error && !trainingAccess ? (
+        <div className="mt-6 rounded-lg border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100">
+          Your employer's MicroSECONDS subscription is currently inactive. You can still view your training history and completed courses, but new or in-progress training is temporarily unavailable.
+        </div>
+      ) : null}
 
       {!error && (
         <>
@@ -248,7 +274,7 @@ export default function EmployeeDashboard() {
                             >
                               Review Course
                             </Link>
-                          ) : (
+                          ) : trainingAccess ? (
                             <Link
                               href={`/course/${assignment.id}`}
                               className="inline-block rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
@@ -257,6 +283,10 @@ export default function EmployeeDashboard() {
                                 ? "Continue Training"
                                 : "Start Training"}
                             </Link>
+                          ) : (
+                            <span className="inline-block cursor-not-allowed rounded-lg border border-white/10 bg-slate-950 px-4 py-3 font-semibold text-slate-500">
+                              Training Unavailable
+                            </span>
                           )}
                         </div>
                       </div>

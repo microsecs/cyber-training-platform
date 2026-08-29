@@ -3,6 +3,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createClient } from "@supabase/supabase-js";
 import { createR2Client, getR2BucketName } from "@/lib/r2/client";
+import { getUserCompanySubscriptionAccess } from "@/lib/subscriptionServer";
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,6 +87,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const subscriptionAccess = await getUserCompanySubscriptionAccess(userData.user.id);
+    const previewSeconds = subscriptionAccess.allowed ? null : 20;
+
     const {
       data: course,
       error: courseError,
@@ -130,6 +134,7 @@ export async function GET(request: NextRequest) {
         ok: true,
         videoUrl,
         source: "r2",
+        previewSeconds,
       });
     }
 
@@ -139,6 +144,7 @@ export async function GET(request: NextRequest) {
         videoUrl:
           course.video_url,
         source: "external",
+        previewSeconds,
       });
     }
 

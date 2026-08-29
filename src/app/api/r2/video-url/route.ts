@@ -3,6 +3,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createClient } from "@supabase/supabase-js";
 import { createR2Client, getR2BucketName } from "@/lib/r2/client";
+import { getUserCompanySubscriptionAccess } from "@/lib/subscriptionServer";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,6 +38,14 @@ export async function GET(request: NextRequest) {
 
     if (userError || !userData.user) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const subscriptionAccess = await getUserCompanySubscriptionAccess(userData.user.id);
+    if (!subscriptionAccess.allowed) {
+      return NextResponse.json(
+        { error: "Your employer's MicroSECONDS subscription is inactive. Training playback is temporarily unavailable." },
+        { status: 402 }
+      );
     }
 
     const { data: assignment, error: assignmentError } = await supabase
