@@ -44,7 +44,6 @@ export default function SiteNav() {
           { href: "/training", label: "Training" },
           { href: "/assign-training", label: "Assign Training" },
           { href: "/reports", label: "Reports" },
-          { href: "/billing", label: "Billing" },
         ]
       : role === "employee"
       ? [{ href: "/employee", label: "My Training" }]
