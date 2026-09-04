@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 import RoleAccessGate from "@/components/RoleAccessGate";
 
 export const metadata: Metadata = {
@@ -15,9 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="flex min-h-screen flex-col">
         <SiteNav />
-        <RoleAccessGate>{children}</RoleAccessGate>
+        <div className="flex-1">
+          <RoleAccessGate>{children}</RoleAccessGate>
+        </div>
+        <SiteFooter />
       </body>
     </html>
   );

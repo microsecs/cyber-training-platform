@@ -3,7 +3,6 @@ import { getHomepageSettings } from "@/lib/homepage-settings";
 
 export const dynamic = "force-dynamic";
 
-
 export default async function Home() {
   const settings = await getHomepageSettings();
   const stats = settings.stats.filter((stat) => stat.enabled);
@@ -12,48 +11,83 @@ export default async function Home() {
   return (
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,0.12),transparent_42%)]" />
-        <div className="relative mx-auto max-w-7xl px-5 py-9 text-center md:py-11 lg:py-12">
-          <div className="mx-auto inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300">
-            {settings.heroBadge}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(34,211,238,0.12),transparent_34%),radial-gradient(circle_at_82%_24%,rgba(59,130,246,0.09),transparent_30%)]" />
+        <div className="relative mx-auto grid max-w-7xl gap-6 px-5 py-8 md:py-9 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-10">
+          <div>
+            <div className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+              {settings.heroBadge}
+            </div>
+
+            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-[3.35rem]">
+              Employee Cybersecurity Training Made Simple
+            </h1>
+
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
+              Straightforward cybersecurity training that helps employees recognize threats, protect passwords, work securely, and keep company information safe.
+            </p>
+
+            <div className="mt-5 text-2xl font-bold tracking-tight text-white md:text-3xl">
+              One subscription. Unlimited employees.
+            </div>
+            <div className="mt-1 text-3xl font-black tracking-tight text-cyan-300 md:text-4xl">
+              {settings.subscriptionPrice}
+              <span className="ml-2 text-base font-medium text-slate-400 md:text-lg">per month</span>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a
+                href={settings.ctaUrl}
+                target={ctaIsExternal ? "_blank" : undefined}
+                rel={ctaIsExternal ? "noreferrer" : undefined}
+                className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+              >
+                {settings.ctaLabel}
+              </a>
+              <Link
+                href="/training"
+                className="rounded-lg border border-white/15 px-5 py-3 font-semibold text-white hover:bg-white/5"
+              >
+                Preview Training
+              </Link>
+            </div>
+
+            <p className="mt-3 text-sm text-slate-500">
+              Track assignments, quizzes, and completion from one simple dashboard.
+            </p>
           </div>
 
-          <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
-            Employee Cybersecurity Training Made Simple
-          </h1>
-
-          <p className="mx-auto mt-5 max-w-5xl text-base leading-7 text-slate-300 md:text-lg">
-            Straightforward cybersecurity training that helps employees recognize threats, protect passwords, work securely, and keep company information safe.
-          </p>
-
-          <div className="mt-6 text-2xl font-bold tracking-tight text-white md:text-3xl">
-            One subscription. Unlimited employees.
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+            {settings.playbackUrl ? (
+              <video
+                key={settings.playbackUrl}
+                controls
+                playsInline
+                preload="metadata"
+                className="aspect-video w-full bg-black object-contain"
+              >
+                <source src={settings.playbackUrl} />
+                Your browser does not support HTML5 video.
+              </video>
+            ) : (
+              <div className="flex aspect-video items-center justify-center bg-slate-950 px-8 text-center">
+                <div>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-xl text-cyan-300">
+                    ▶
+                  </div>
+                  <div className="mt-4 text-lg font-semibold">Homepage video</div>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Add your promotional video from Platform Admin.
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="border-t border-white/10 px-4 py-3 md:px-5">
+              <div className="font-semibold">{settings.videoTitle}</div>
+              <div className="mt-0.5 text-xs text-slate-400 md:text-sm">
+                A short introduction to practical employee cybersecurity awareness.
+              </div>
+            </div>
           </div>
-          <div className="mt-2 text-3xl font-black tracking-tight text-cyan-300 md:text-4xl">
-            {settings.subscriptionPrice}
-            <span className="ml-2 text-base font-medium text-slate-400 md:text-lg">per month</span>
-          </div>
-
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <a
-              href={settings.ctaUrl}
-              target={ctaIsExternal ? "_blank" : undefined}
-              rel={ctaIsExternal ? "noreferrer" : undefined}
-              className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
-            >
-              {settings.ctaLabel}
-            </a>
-            <Link
-              href="/training"
-              className="rounded-lg border border-white/15 px-5 py-3 font-semibold text-white hover:bg-white/5"
-            >
-              Preview Training
-            </Link>
-          </div>
-
-          <p className="mt-4 text-sm text-slate-500">
-            Track assignments, quizzes, and completion from one simple dashboard.
-          </p>
         </div>
       </section>
 
@@ -134,8 +168,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-
     </main>
   );
 }
