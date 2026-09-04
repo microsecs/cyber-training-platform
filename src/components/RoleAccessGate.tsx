@@ -10,7 +10,10 @@ function isPublicPath(pathname: string) {
     pathname === "/login" ||
     pathname === "/forgot-password" ||
     pathname === "/reset-password" ||
-    pathname === "/accept-invite"
+    pathname === "/accept-invite" ||
+    pathname === "/contact" ||
+    pathname === "/privacy" ||
+    pathname === "/terms"
   );
 }
 

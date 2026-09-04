@@ -528,7 +528,7 @@ export default function CourseAdminPage() {
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                       course.is_active
                         ? "bg-emerald-400/10 text-emerald-300"
-                        : "bg-amber-400/10 text-amber-300"
+                        : "bg-red-400/10 text-red-300"
                     }`}
                   >
                     {course.is_active ? "ACTIVE" : "INACTIVE"}
@@ -693,7 +693,7 @@ export default function CourseAdminPage() {
                 className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
                   isActive
                     ? "bg-emerald-400/10 text-emerald-300"
-                    : "bg-amber-400/10 text-amber-300"
+                    : "bg-red-400/10 text-red-300"
                 }`}
               >
                 {isActive ? "ACTIVE" : "INACTIVE"}

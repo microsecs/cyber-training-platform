@@ -116,10 +116,18 @@ function BillingSection() {
       <div className="mt-6 grid gap-5 md:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-slate-950 p-6">
           <div className="text-sm text-slate-400">Subscription status</div>
-          <div className="mt-2 text-2xl font-bold capitalize">
+          <div
+            className={`mt-2 text-2xl font-bold capitalize ${
+              company.billingExempt ||
+              company.subscriptionStatus === "active" ||
+              company.subscriptionStatus === "trialing"
+                ? "text-emerald-300"
+                : "text-red-300"
+            }`}
+          >
             {company.billingExempt
               ? "Billing exempt"
-              : company.subscriptionStatus || "none"}
+              : company.subscriptionStatus || "inactive"}
           </div>
           <div className="mt-4 text-sm text-slate-300">
             {company.subscriptionCancelAtPeriodEnd
