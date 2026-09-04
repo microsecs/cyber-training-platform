@@ -51,7 +51,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            <p className="mt-3 text-sm text-slate-500">
+            <p className="mt-3 text-base text-slate-500">
               Track assignments, quizzes, and completion from one simple dashboard.
             </p>
           </div>
