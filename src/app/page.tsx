@@ -136,7 +136,7 @@ export default async function Home() {
       </section>
 
       <section id="subscribe">
-        <div className="mx-auto max-w-5xl px-5 py-8 md:py-9">
+        <div className="mx-auto max-w-7xl px-5 py-8 md:py-9">
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.055] px-6 py-7 text-center md:px-10 md:py-8">
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
               {settings.pricingEyebrow}
