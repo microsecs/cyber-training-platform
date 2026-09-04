@@ -18,11 +18,11 @@ export default async function Home() {
             {settings.heroBadge}
           </div>
 
-          <h1 className="mx-auto mt-5 max-w-5xl text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
             Employee Cybersecurity Training Made Simple
           </h1>
 
-          <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
+          <p className="mx-auto mt-5 max-w-5xl text-base leading-7 text-slate-300 md:text-lg">
             Straightforward cybersecurity training that helps employees recognize threats, protect passwords, work securely, and keep company information safe.
           </p>
 
@@ -135,39 +135,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="subscribe">
-        <div className="mx-auto max-w-7xl px-5 py-8 md:py-9">
-          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.055] px-6 py-7 text-center md:px-10 md:py-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
-              {settings.pricingEyebrow}
-            </div>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">
-              {settings.pricingHeading}
-            </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-              {settings.pricingBody}
-            </p>
 
-            <div className="mt-6 text-4xl font-black tracking-tight text-cyan-300">
-              {settings.subscriptionPrice}
-            </div>
-            <div className="mt-1 text-sm text-slate-400">per month · unlimited employees included</div>
-
-            <a
-              href={settings.ctaUrl}
-              target={ctaIsExternal ? "_blank" : undefined}
-              rel={ctaIsExternal ? "noreferrer" : undefined}
-              className="mt-6 inline-block rounded-lg bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
-            >
-              {settings.ctaLabel}
-            </a>
-
-            <div className="mt-4 text-xs text-slate-500">
-              Have a promotional code? Apply it during checkout.
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }
