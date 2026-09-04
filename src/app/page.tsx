@@ -3,20 +3,6 @@ import { getHomepageSettings } from "@/lib/homepage-settings";
 
 export const dynamic = "force-dynamic";
 
-const benefits = [
-  {
-    title: "Unlimited Employees",
-    body: "Train your entire team for one flat monthly subscription with no per-employee training fee.",
-  },
-  {
-    title: "Track Completion",
-    body: "Assign courses, use quizzes, and see who has completed training from one simple dashboard.",
-  },
-  {
-    title: "Practical Training",
-    body: "Clear lessons covering phishing, passwords, remote work, public Wi-Fi, company data, and more.",
-  },
-];
 
 export default async function Home() {
   const settings = await getHomepageSettings();
@@ -27,12 +13,12 @@ export default async function Home() {
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,0.12),transparent_42%)]" />
-        <div className="relative mx-auto max-w-6xl px-5 py-12 text-center md:py-16 lg:py-20">
+        <div className="relative mx-auto max-w-7xl px-5 py-9 text-center md:py-11 lg:py-12">
           <div className="mx-auto inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300">
             {settings.heroBadge}
           </div>
 
-          <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
+          <h1 className="mx-auto mt-5 max-w-5xl text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
             Employee Cybersecurity Training Made Simple
           </h1>
 
@@ -40,7 +26,7 @@ export default async function Home() {
             Straightforward cybersecurity training that helps employees recognize threats, protect passwords, work securely, and keep company information safe.
           </p>
 
-          <div className="mt-7 text-2xl font-bold tracking-tight text-white md:text-3xl">
+          <div className="mt-6 text-2xl font-bold tracking-tight text-white md:text-3xl">
             One subscription. Unlimited employees.
           </div>
           <div className="mt-2 text-3xl font-black tracking-tight text-cyan-300 md:text-4xl">
@@ -48,7 +34,7 @@ export default async function Home() {
             <span className="ml-2 text-base font-medium text-slate-400 md:text-lg">per month</span>
           </div>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
               href={settings.ctaUrl}
               target={ctaIsExternal ? "_blank" : undefined}
@@ -72,7 +58,7 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10 bg-slate-900/45">
-        <div className="mx-auto max-w-7xl px-5 py-10 md:py-12">
+        <div className="mx-auto max-w-7xl px-5 py-7 md:py-8">
           <div className="mx-auto max-w-3xl text-center">
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
               {settings.statsEyebrow}
@@ -83,7 +69,7 @@ export default async function Home() {
           </div>
 
           {stats.length ? (
-            <div className="mt-8 grid gap-y-8 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-y-6 md:grid-cols-2 xl:grid-cols-4">
               {stats.map((stat, index) => (
                 <article
                   key={stat.id}
@@ -118,33 +104,8 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-5 py-11 md:py-14">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
-              Everything you need
-            </div>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">
-              Train your team without making security complicated.
-            </h2>
-          </div>
-
-          <div className="mt-9 grid gap-8 md:grid-cols-3">
-            {benefits.map((benefit, index) => (
-              <div
-                key={benefit.title}
-                className={`text-center md:px-6 ${index > 0 ? "md:border-l md:border-white/10" : ""}`}
-              >
-                <div className="text-lg font-semibold text-white">{benefit.title}</div>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-400">{benefit.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="border-b border-white/10 bg-slate-900/35">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-11 md:py-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-7 px-5 py-8 md:py-9 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
               See the training
@@ -153,7 +114,7 @@ export default async function Home() {
               Preview the actual courses your employees will receive.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 md:text-base">
-              Browse the training library and preview course videos before subscribing. Employers without an active subscription can watch the first 20 seconds of available training videos.
+              Browse the training library and preview course videos before subscribing. Employers without an active subscription can watch the first 60 seconds of available training videos.
             </p>
           </div>
 
@@ -175,8 +136,8 @@ export default async function Home() {
       </section>
 
       <section id="subscribe">
-        <div className="mx-auto max-w-5xl px-5 py-11 md:py-14">
-          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.055] px-6 py-8 text-center md:px-10 md:py-10">
+        <div className="mx-auto max-w-5xl px-5 py-8 md:py-9">
+          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.055] px-6 py-7 text-center md:px-10 md:py-8">
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
               {settings.pricingEyebrow}
             </div>

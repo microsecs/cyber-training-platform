@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     }
 
     const subscriptionAccess = await getUserCompanySubscriptionAccess(userData.user.id);
-    const previewSeconds = subscriptionAccess.allowed ? null : 20;
+    const previewSeconds = subscriptionAccess.allowed ? null : 60;
 
     const {
       data: course,

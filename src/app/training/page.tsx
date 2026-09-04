@@ -202,7 +202,7 @@ export default function TrainingPage() {
 
       {!hasSubscriptionAccess ? (
         <div className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100">
-          Your subscription is inactive. You can still preview the first 20 seconds of each training video. {" "}
+          Your subscription is inactive. You can still preview the first 60 seconds of each training video. {" "}
           <Link href="/account#billing" className="font-semibold underline">Subscribe to unlock full videos.</Link>
         </div>
       ) : null}
@@ -331,7 +331,7 @@ export default function TrainingPage() {
 
                   {previewUrl ? (
                     <div className="mt-4 text-xs text-slate-500">
-                      {previewSeconds[course.id] ? "20-second subscription preview — subscribe to watch the full course." : "Admin preview only — watching this video does not create or complete an employee assignment."}
+                      {previewSeconds[course.id] ? "60-second subscription preview — subscribe to watch the full course." : "Admin preview only — watching this video does not create or complete an employee assignment."}
                     </div>
                   ) : null}
                 </div>
