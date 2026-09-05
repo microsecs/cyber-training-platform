@@ -5,7 +5,7 @@ import { parseEmail } from "outlook-email-parser";
 export const runtime = "nodejs";
 
 async function authorize(request: NextRequest) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return { ok: false as const, status: 401, error: "Please sign in." };
 
   const admin = createAdminClient();
