@@ -25,6 +25,7 @@ export default function SupportSettingsPage() {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
+
       if (!userData.user) {
         setAuthorized(false);
         setLoading(false);
@@ -44,20 +45,35 @@ export default function SupportSettingsPage() {
       }
 
       setAuthorized(true);
+
       const response = await fetch("/api/support-settings");
       const result = await response.json();
+
       if (!response.ok) {
-        setError(result.error || "Could not load support settings. Run the included SQL patch first.");
+        setError(
+          result.error ||
+            "Could not load support settings. Run the included SQL patch first."
+        );
         setLoading(false);
         return;
       }
 
-      setSupportEmail(result.settings?.support_email || "support@microseconds.com");
-      setRemotePcSupportUrl(result.settings?.remote_pc_support_url || "");
-      setRemoteMacSupportUrl(result.settings?.remote_mac_support_url || "");
-      setEasyDesktopUrl(result.settings?.easydesktop_url || "");
+      setSupportEmail(
+        result.settings?.support_email || "support@microseconds.com"
+      );
+      setRemotePcSupportUrl(
+        result.settings?.remote_pc_support_url || ""
+      );
+      setRemoteMacSupportUrl(
+        result.settings?.remote_mac_support_url || ""
+      );
+      setEasyDesktopUrl(
+        result.settings?.easydesktop_url || ""
+      );
+
       setLoading(false);
     }
+
     load();
   }, []);
 
@@ -65,9 +81,13 @@ export default function SupportSettingsPage() {
     setSaving(true);
     setError("");
     setMessage("");
+
     try {
       const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
+
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
 
       const response = await fetch("/api/support-settings", {
         method: "POST",
@@ -75,27 +95,52 @@ export default function SupportSettingsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ supportEmail, remotePcSupportUrl, remoteMacSupportUrl, easyDesktopUrl }),
+        body: JSON.stringify({
+          supportEmail,
+          remotePcSupportUrl,
+          remoteMacSupportUrl,
+          easyDesktopUrl,
+        }),
       });
+
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not save support settings");
-      setMessage("Support settings saved. The public Support page is updated.");
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Could not save support settings"
+        );
+      }
+
+      setMessage(
+        "Support settings saved. The public Support page and footer are updated."
+      );
     } catch (saveError: any) {
-      setError(saveError?.message || "Could not save support settings");
+      setError(
+        saveError?.message || "Could not save support settings"
+      );
     } finally {
       setSaving(false);
     }
   }
 
   if (loading || authorized === null) {
-    return <main className="mx-auto max-w-6xl px-6 py-12">Loading support settings...</main>;
+    return (
+      <main className="mx-auto max-w-6xl px-6 py-12">
+        Loading support settings...
+      </main>
+    );
   }
 
   if (!authorized) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-3xl font-bold">Platform Admin Required</h1>
-        <p className="mt-3 text-slate-400">This account does not have platform administration access.</p>
+        <h1 className="text-3xl font-bold">
+          Platform Admin Required
+        </h1>
+
+        <p className="mt-3 text-slate-400">
+          This account does not have platform administration access.
+        </p>
       </main>
     );
   }
@@ -104,24 +149,47 @@ export default function SupportSettingsPage() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-sm text-cyan-300">MicroSECONDS Platform</div>
-          <h1 className="mt-1 text-4xl font-bold">Support Settings</h1>
+          <div className="text-sm text-cyan-300">
+            MicroSECONDS Platform
+          </div>
+
+          <h1 className="mt-1 text-4xl font-bold">
+            Support Settings
+          </h1>
+
           <p className="mt-2 max-w-3xl text-slate-400">
-            Configure the contact email and remote-support links shown on the public Support page.
+            Configure the contact email, remote-support links,
+            and EasyDesktop software link.
           </p>
         </div>
-        <Link href="/platform-admin" className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5">
+
+        <Link
+          href="/platform-admin"
+          className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5"
+        >
           Back to Platform Admin
         </Link>
       </div>
 
-      {error ? <div className="mt-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-red-200">{error}</div> : null}
-      {message ? <div className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-emerald-200">{message}</div> : null}
+      {error ? (
+        <div className="mt-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-red-200">
+          {error}
+        </div>
+      ) : null}
+
+      {message ? (
+        <div className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-emerald-200">
+          {message}
+        </div>
+      ) : null}
 
       <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
         <div className="grid gap-5">
           <label className="grid gap-2 text-sm">
-            <span className="text-slate-300">Support email</span>
+            <span className="text-slate-300">
+              Support email
+            </span>
+
             <input
               type="email"
               value={supportEmail}
@@ -131,7 +199,10 @@ export default function SupportSettingsPage() {
           </label>
 
           <label className="grid gap-2 text-sm">
-            <span className="text-slate-300">Remote PC Support URL</span>
+            <span className="text-slate-300">
+              Remote PC Support URL
+            </span>
+
             <input
               type="url"
               value={remotePcSupportUrl}
@@ -139,11 +210,17 @@ export default function SupportSettingsPage() {
               placeholder="https://..."
               className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2"
             />
-            <span className="text-xs text-slate-500">Leave blank to hide the Windows support button.</span>
+
+            <span className="text-xs text-slate-500">
+              Leave blank to hide the Windows support button.
+            </span>
           </label>
 
           <label className="grid gap-2 text-sm">
-            <span className="text-slate-300">Remote Mac Support URL</span>
+            <span className="text-slate-300">
+              Remote Mac Support URL
+            </span>
+
             <input
               type="url"
               value={remoteMacSupportUrl}
@@ -151,7 +228,28 @@ export default function SupportSettingsPage() {
               placeholder="https://..."
               className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2"
             />
-            <span className="text-xs text-slate-500">Leave blank to hide the Mac support button.</span>
+
+            <span className="text-xs text-slate-500">
+              Leave blank to hide the Mac support button.
+            </span>
+          </label>
+
+          <label className="grid gap-2 text-sm">
+            <span className="text-slate-300">
+              EasyDesktop / Software website URL
+            </span>
+
+            <input
+              type="url"
+              value={easyDesktopUrl}
+              onChange={(e) => setEasyDesktopUrl(e.target.value)}
+              placeholder="https://..."
+              className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2"
+            />
+
+            <span className="text-xs text-slate-500">
+              This controls the Software link in the footer.
+            </span>
           </label>
         </div>
 
