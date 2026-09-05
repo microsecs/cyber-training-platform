@@ -62,7 +62,7 @@ export default function SupportPage() {
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
                   <path d="M3 4.7 10.7 3.6v7.5H3V4.7Zm8.7-1.2L21 2.2v8.9h-9.3V3.5ZM3 12.1h7.7v7.5L3 18.5v-6.4Zm8.7 0H21V21l-9.3-1.3v-7.6Z" />
                 </svg>
-                <span>Remote Support – Windows PC</span>
+                <span>Remote PC</span>
               </a>
             ) : null}
 
@@ -73,10 +73,10 @@ export default function SupportPage() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-4 text-center font-semibold text-slate-950 hover:bg-cyan-300"
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6 fill-current">
                   <path d="M16.7 12.8c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.9-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3.1-.7s1.9.7 3.1.7c1.3 0 2.1-1.1 2.8-2.2.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.7-1-2.7-3.7ZM14.4 6c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.3-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.8-1.2Z" />
                 </svg>
-                <span>Remote Support – Mac</span>
+                <span>Remote MAC</span>
               </a>
             ) : null}
           </div>
