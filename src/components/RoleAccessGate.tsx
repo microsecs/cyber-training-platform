@@ -15,7 +15,8 @@ function isPublicPath(pathname: string) {
     pathname === "/privacy" ||
     pathname === "/terms" ||
     pathname === "/support" ||
-    pathname === "/consulting"
+    pathname === "/consulting" ||
+    pathname === "/easydesktop"
   );
 }
 
