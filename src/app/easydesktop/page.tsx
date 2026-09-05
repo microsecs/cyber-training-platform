@@ -123,6 +123,37 @@ export default function EasyDesktopPage() {
         </div>
       </section>
 
+      <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6 md:p-8">
+        <div className="grid gap-6 lg:grid-cols-[.75fr_1.25fr] lg:items-center">
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+              Product Overview
+            </div>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">
+              See EasyDesktop 10 in action.
+            </h2>
+            <p className="mt-3 leading-7 text-slate-400">
+              Watch a quick introduction to EasyDesktop and see how it can simplify
+              your Windows 11 desktop, organize frequently used items, and put useful
+              Windows tools within easy reach.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+            <div className="aspect-video">
+              <iframe
+                className="h-full w-full"
+                src="https://www.youtube.com/embed/YWHCpfb37cg"
+                title="EasyDesktop 10 Introduction"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       <section className="mt-6">
         <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
           See EasyDesktop in Action
@@ -178,67 +209,63 @@ export default function EasyDesktopPage() {
             </div>
           </article>
 
-          <article className="grid gap-5 md:grid-cols-2">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-              <img
-                src="https://static.wixstatic.com/media/87282c_02859a7ed89a4b5bb9b8e57b2dc3b76c~mv2.jpg/v1/fill/w_900,h_610,al_c,q_90/explore.jpg"
-                alt="EasyDesktop drive and folder explorer"
-                className="w-full object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-white">Drives and folders</h3>
-                <p className="mt-2 leading-7 text-slate-400">
-                  Instantly browse disk drives and common locations such as Documents,
-                  Downloads, and Pictures.
-                </p>
-              </div>
+          <article className="grid overflow-hidden rounded-2xl border border-white/10 bg-slate-900 lg:grid-cols-2 lg:items-center">
+            <div className="order-2 p-7 md:p-9 lg:order-1">
+              <h3 className="text-2xl font-semibold text-white">Drives and folders</h3>
+              <p className="mt-3 leading-7 text-slate-400">
+                Instantly browse disk drives and common locations such as Documents,
+                Downloads, and Pictures.
+              </p>
             </div>
+            <img
+              src="https://static.wixstatic.com/media/87282c_02859a7ed89a4b5bb9b8e57b2dc3b76c~mv2.jpg/v1/fill/w_900,h_610,al_c,q_90/explore.jpg"
+              alt="EasyDesktop drive and folder explorer"
+              className="order-1 h-full w-full object-cover lg:order-2"
+            />
+          </article>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-              <img
-                src="https://static.wixstatic.com/media/87282c_c91e0d1382104718b567921750db80eb~mv2.jpg/v1/fill/w_900,h_610,al_c,q_90/power.jpg"
-                alt="EasyDesktop shutdown restart and lock controls"
-                className="w-full object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-white">Power controls</h3>
-                <p className="mt-2 leading-7 text-slate-400">
-                  Shut down, restart, or lock Windows quickly, including a configurable
-                  shutdown delay in case you change your mind.
-                </p>
-              </div>
+          <article className="grid overflow-hidden rounded-2xl border border-white/10 bg-slate-900 lg:grid-cols-2 lg:items-center">
+            <img
+              src="https://static.wixstatic.com/media/87282c_c91e0d1382104718b567921750db80eb~mv2.jpg/v1/fill/w_900,h_610,al_c,q_90/power.jpg"
+              alt="EasyDesktop shutdown restart and lock controls"
+              className="h-full w-full object-cover"
+            />
+            <div className="p-7 md:p-9">
+              <h3 className="text-2xl font-semibold text-white">Power controls</h3>
+              <p className="mt-3 leading-7 text-slate-400">
+                Shut down, restart, or lock Windows quickly, including a configurable
+                shutdown delay in case you change your mind.
+              </p>
             </div>
           </article>
 
-          <article className="grid gap-5 md:grid-cols-2">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-              <img
-                src="https://static.wixstatic.com/media/87282c_a74e58ef24d04e5b9d8f62d818621248~mv2.jpg/v1/fill/w_900,h_582,al_c,q_90/space.jpg"
-                alt="EasyDesktop disk space viewer"
-                className="w-full object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-white">Disk-space at a glance</h3>
-                <p className="mt-2 leading-7 text-slate-400">
-                  View free space and drive information immediately, including an easy visual
-                  reference for storage usage.
-                </p>
-              </div>
+          <article className="grid overflow-hidden rounded-2xl border border-white/10 bg-slate-900 lg:grid-cols-2 lg:items-center">
+            <div className="order-2 p-7 md:p-9 lg:order-1">
+              <h3 className="text-2xl font-semibold text-white">Disk-space at a glance</h3>
+              <p className="mt-3 leading-7 text-slate-400">
+                View free space and drive information immediately, including an easy visual
+                reference for storage usage.
+              </p>
             </div>
+            <img
+              src="https://static.wixstatic.com/media/87282c_a74e58ef24d04e5b9d8f62d818621248~mv2.jpg/v1/fill/w_900,h_582,al_c,q_90/space.jpg"
+              alt="EasyDesktop disk space viewer"
+              className="order-1 h-full w-full object-cover lg:order-2"
+            />
+          </article>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-              <img
-                src="https://static.wixstatic.com/media/87282c_adb6266c3bae4fb0b31cd0e5d08e2668~mv2.jpg/v1/fill/w_900,h_569,al_c,q_90/fontsamples.jpg"
-                alt="EasyDesktop font samples utility"
-                className="w-full object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-white">Fonts and more</h3>
-                <p className="mt-2 leading-7 text-slate-400">
-                  Preview installed fonts, print sample sheets, secure higher-level editing
-                  features with Administrator Lock, and use other built-in utilities.
-                </p>
-              </div>
+          <article className="grid overflow-hidden rounded-2xl border border-white/10 bg-slate-900 lg:grid-cols-2 lg:items-center">
+            <img
+              src="https://static.wixstatic.com/media/87282c_adb6266c3bae4fb0b31cd0e5d08e2668~mv2.jpg/v1/fill/w_900,h_569,al_c,q_90/fontsamples.jpg"
+              alt="EasyDesktop font samples utility"
+              className="h-full w-full object-cover"
+            />
+            <div className="p-7 md:p-9">
+              <h3 className="text-2xl font-semibold text-white">Fonts and more</h3>
+              <p className="mt-3 leading-7 text-slate-400">
+                Preview installed fonts, print sample sheets, secure higher-level editing
+                features with Administrator Lock, and use other built-in utilities.
+              </p>
             </div>
           </article>
         </div>
