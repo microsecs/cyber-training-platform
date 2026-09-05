@@ -47,7 +47,7 @@ export async function GET() {
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("support_settings")
-      .select("support_email,remote_pc_support_url,remote_mac_support_url")
+      .select("support_email,remote_pc_support_url,remote_mac_support_url,easydesktop_url")
       .eq("id", 1)
       .maybeSingle();
 
@@ -59,6 +59,7 @@ export async function GET() {
         support_email: "support@microseconds.com",
         remote_pc_support_url: null,
         remote_mac_support_url: null,
+        easydesktop_url: null,
       },
     });
   } catch (error: any) {
@@ -78,8 +79,10 @@ export async function POST(request: NextRequest) {
     const supportEmail = String(body.supportEmail || "support@microseconds.com").trim().toLowerCase();
     const pcRaw = String(body.remotePcSupportUrl || "").trim();
     const macRaw = String(body.remoteMacSupportUrl || "").trim();
+    const easyRaw = String(body.easyDesktopUrl || "").trim();
     const pcUrl = cleanUrl(pcRaw);
     const macUrl = cleanUrl(macRaw);
+    const easyUrl = cleanUrl(easyRaw);
 
     if (!supportEmail || !supportEmail.includes("@")) {
       return NextResponse.json({ error: "Enter a valid support email address." }, { status: 400 });
@@ -90,6 +93,9 @@ export async function POST(request: NextRequest) {
     if (macRaw && !macUrl) {
       return NextResponse.json({ error: "Remote Mac Support URL must begin with http:// or https://." }, { status: 400 });
     }
+    if (easyRaw && !easyUrl) {
+      return NextResponse.json({ error: "EasyDesktop URL must begin with http:// or https://." }, { status: 400 });
+    }
 
     const admin = createAdminClient();
     const { error } = await admin.from("support_settings").upsert(
@@ -98,6 +104,7 @@ export async function POST(request: NextRequest) {
         support_email: supportEmail.slice(0, 320),
         remote_pc_support_url: pcUrl,
         remote_mac_support_url: macUrl,
+        easydesktop_url: easyUrl,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }

@@ -9,6 +9,7 @@ export default function SupportSettingsPage() {
   const [supportEmail, setSupportEmail] = useState("support@microseconds.com");
   const [remotePcSupportUrl, setRemotePcSupportUrl] = useState("");
   const [remoteMacSupportUrl, setRemoteMacSupportUrl] = useState("");
+  const [easyDesktopUrl, setEasyDesktopUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -54,6 +55,7 @@ export default function SupportSettingsPage() {
       setSupportEmail(result.settings?.support_email || "support@microseconds.com");
       setRemotePcSupportUrl(result.settings?.remote_pc_support_url || "");
       setRemoteMacSupportUrl(result.settings?.remote_mac_support_url || "");
+      setEasyDesktopUrl(result.settings?.easydesktop_url || "");
       setLoading(false);
     }
     load();
@@ -73,7 +75,7 @@ export default function SupportSettingsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ supportEmail, remotePcSupportUrl, remoteMacSupportUrl }),
+        body: JSON.stringify({ supportEmail, remotePcSupportUrl, remoteMacSupportUrl, easyDesktopUrl }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save support settings");
