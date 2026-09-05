@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppRole, defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
+import { createClient } from "@/lib/supabase/client";
 
 function isPublicPath(pathname: string) {
   return (
@@ -16,15 +17,21 @@ function isPublicPath(pathname: string) {
     pathname === "/terms" ||
     pathname === "/support" ||
     pathname === "/consulting" ||
-    pathname === "/easydesktop"
+    pathname === "/easydesktop" ||
+    pathname.startsWith("/easydesktop/")
   );
 }
 
 function isAllowed(pathname: string, role: AppRole) {
   if (isPublicPath(pathname)) return true;
+  if (pathname === "/mfa" || pathname === "/mfa/setup") return role !== "guest";
   if (pathname === "/account") return role !== "guest";
 
-  if (pathname === "/platform-admin" || pathname.startsWith("/platform-admin/") || pathname.startsWith("/admin/courses")) {
+  if (
+    pathname === "/platform-admin" ||
+    pathname.startsWith("/platform-admin/") ||
+    pathname.startsWith("/admin/courses")
+  ) {
     return role === "platform_admin";
   }
 
@@ -70,6 +77,34 @@ export default function RoleAccessGate({ children }: { children: ReactNode }) {
       if (!isAllowed(pathname, access.role)) {
         router.replace(defaultPathForRole(access.role));
         return;
+      }
+
+      // Don't redirect while the user is already completing MFA.
+      if (pathname !== "/mfa" && pathname !== "/mfa/setup") {
+        const supabase = createClient();
+
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const verifiedFactor = factors?.totp?.find(
+          (item: any) => item.status === "verified"
+        );
+
+        const { data: aal } =
+          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+        const privileged =
+          access.role === "platform_admin" ||
+          access.role === "owner" ||
+          access.role === "admin";
+
+        if (privileged && !verifiedFactor) {
+          router.replace("/mfa/setup");
+          return;
+        }
+
+        if (verifiedFactor && aal?.currentLevel !== "aal2") {
+          router.replace(`/mfa?returnTo=${encodeURIComponent(pathname)}`);
+          return;
+        }
       }
 
       setReady(true);

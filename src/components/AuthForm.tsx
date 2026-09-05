@@ -45,6 +45,30 @@ export default function AuthForm() {
     }
 
     const access = await resolveUserAccess();
+
+    const { data: factorData } = await supabase.auth.mfa.listFactors();
+    const verifiedFactor = factorData?.totp?.find(
+      (item: any) => item.status === "verified"
+    );
+
+    const { data: aalData } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+    const privileged =
+      access.role === "platform_admin" ||
+      access.role === "owner" ||
+      access.role === "admin";
+
+    if (privileged && !verifiedFactor) {
+      window.location.href = "/mfa/setup";
+      return;
+    }
+
+    if (verifiedFactor && aalData?.currentLevel !== "aal2") {
+      window.location.href = "/mfa";
+      return;
+    }
+
     window.location.href = defaultPathForRole(access.role);
   }
 

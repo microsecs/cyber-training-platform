@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import MfaSettings from "@/components/MfaSettings";
 import {
   defaultPathForRole,
   resolveUserAccess,
@@ -249,6 +250,8 @@ export default function AccountPage() {
           </button>
         </div>
       </section>
+
+      <MfaSettings />
 
       {canManageBilling && <BillingSection />}
     </main>
