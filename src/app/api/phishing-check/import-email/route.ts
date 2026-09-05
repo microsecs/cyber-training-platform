@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseEmail } from "outlook-email-parser";
 
@@ -8,18 +9,15 @@ async function authorize(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return { ok: false as const, status: 401, error: "Please sign in." };
 
+  const authClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } }
+  );
+  const { data: userData } = await authClient.auth.getUser(token);
+  if (!userData.user) return { ok: false as const, status: 401, error: "Your session has expired." };
+
   const admin = createAdminClient();
-
-  const { data: userData, error: userError } =
-    await admin.auth.getUser(token);
-
-  if (userError || !userData.user) {
-    return {
-      ok: false as const,
-      status: 401,
-      error: "Your session could not be verified. Please sign out and sign back in.",
-    };
-  }
   const { data: platformAdmin } = await admin.from("platform_admins").select("user_id").eq("user_id", userData.user.id).maybeSingle();
   if (platformAdmin) return { ok: true as const };
 
@@ -65,21 +63,65 @@ export async function POST(request: NextRequest) {
     }
     if (file.size > 15 * 1024 * 1024) return NextResponse.json({ error: "Email files are limited to 15 MB." }, { status: 400 });
 
-    const parsed: any = await parseEmail(Buffer.from(await file.arrayBuffer()), file.name);
+    const result: any = await parseEmail(
+      Buffer.from(await file.arrayBuffer()),
+      file.name
+    );
+
+    // outlook-email-parser returns the actual parsed message under result.data.
+    // Keep a fallback for parser versions that may return the message directly.
+    const parsed: any = result?.data ?? result;
+
     const attachments = Array.isArray(parsed?.attachments)
-      ? parsed.attachments.map((a: any) => a?.filename || a?.fileName || a?.name).filter(Boolean).join(", ")
+      ? parsed.attachments
+          .map(
+            (a: any) =>
+              a?.filename ||
+              a?.fileName ||
+              a?.name
+          )
+          .filter(Boolean)
+          .join(", ")
       : "";
+
+    const from =
+      parsed?.from ||
+      parsed?.sender ||
+      parsed?.senderEmail ||
+      parsed?.senderName;
+
+    const body =
+      parsed?.textContent ||
+      parsed?.text ||
+      parsed?.body ||
+      parsed?.textBody ||
+      parsed?.htmlContent ||
+      parsed?.html ||
+      "";
+
+    const headers =
+      parsed?.headers ||
+      parsed?.header ||
+      parsed?.rawHeaders ||
+      parsed?.internetHeaders ||
+      "";
 
     let emailText = [
       parsed?.subject ? `Subject: ${parsed.subject}` : "",
-      parsed?.from ? `From: ${str(parsed.from)}` : "",
+      from ? `From: ${str(from)}` : "",
       parsed?.to ? `To: ${str(parsed.to)}` : "",
       parsed?.cc ? `CC: ${str(parsed.cc)}` : "",
-      parsed?.replyTo ? `Reply-To: ${str(parsed.replyTo)}` : "",
+      parsed?.bcc ? `BCC: ${str(parsed.bcc)}` : "",
+      (parsed?.replyTo || parsed?.reply_to)
+        ? `Reply-To: ${str(parsed?.replyTo || parsed?.reply_to)}`
+        : "",
       attachments ? `Attachments: ${attachments}` : "",
-      parsed?.headers ? `\n--- MESSAGE HEADERS ---\n${str(parsed.headers)}` : "",
-      (parsed?.text || parsed?.body || parsed?.textBody || parsed?.html) ? `\n--- MESSAGE BODY ---\n${str(parsed?.text || parsed?.body || parsed?.textBody || parsed?.html)}` : "",
-    ].filter(Boolean).join("\n").trim();
+      headers ? `\n--- MESSAGE HEADERS ---\n${str(headers)}` : "",
+      body ? `\n--- MESSAGE BODY ---\n${str(body)}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n")
+      .trim();
 
     if (!emailText) return NextResponse.json({ error: "The email file contained no extractable text." }, { status: 422 });
     if (emailText.length > 50000) emailText = emailText.slice(0, 50000);
