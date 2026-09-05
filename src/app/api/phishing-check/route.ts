@@ -189,7 +189,21 @@ ${emailText}
     const raw = await aiResponse.json();
     if (!aiResponse.ok) {
       console.error("OpenAI phishing analysis error", raw);
-      return NextResponse.json({ error: "The AI analysis service is temporarily unavailable." }, { status: 502 });
+
+      const providerMessage =
+        raw?.error?.message ||
+        raw?.message ||
+        `OpenAI returned HTTP ${aiResponse.status}.`;
+
+      const publicMessage =
+        access.role === "platform_admin"
+          ? `OpenAI API error: ${providerMessage}`
+          : "The AI analysis service is temporarily unavailable.";
+
+      return NextResponse.json(
+        { error: publicMessage },
+        { status: 502 }
+      );
     }
 
     const outputText =
