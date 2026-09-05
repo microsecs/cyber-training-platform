@@ -116,8 +116,8 @@ export default function MfaSetupPage() {
         </h1>
         <p className="mt-3 max-w-2xl leading-7 text-slate-400">
           {optional
-            ? "Your account has company administrative access. We strongly recommend protecting it with an authenticator app in addition to your password."
-            : "Your account has platform administration access, so MicroSECONDS requires an authenticator app in addition to your password."}
+            ? "Your account has administrative access. We strongly recommend protecting it with an authenticator app in addition to your password."
+            : "Protect your account with an authenticator app in addition to your password."}
         </p>
 
         {qrCode ? (

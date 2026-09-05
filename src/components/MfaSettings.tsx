@@ -177,8 +177,8 @@ export default function MfaSettings() {
         ) : !enrollingId ? (
           <>
             <p className="mt-3 text-sm text-slate-400">
-              Platform Admins are required to use MFA. Company owners/admins are
-              strongly encouraged to enable it, and employees may enable it optionally.
+              MFA is strongly recommended for Platform Admins and company
+              owners/admins, but it is optional for all accounts.
             </p>
 
             <button

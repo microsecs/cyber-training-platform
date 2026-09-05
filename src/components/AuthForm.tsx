@@ -54,15 +54,10 @@ export default function AuthForm() {
     const { data: aalData } =
       await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
-    const mustUseMfa = access.role === "platform_admin";
-
-    if (mustUseMfa && !verifiedFactor) {
-      window.location.href = "/mfa/setup";
-      return;
-    }
-
     if (
-      (access.role === "owner" || access.role === "admin") &&
+      (access.role === "platform_admin" ||
+        access.role === "owner" ||
+        access.role === "admin") &&
       !verifiedFactor
     ) {
       window.location.href = "/mfa/setup?optional=1";
