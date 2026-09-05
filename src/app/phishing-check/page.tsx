@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { DragEvent, FormEvent, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Analysis = {
@@ -17,6 +17,57 @@ export default function PhishingCheckPage() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [fileBusy, setFileBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  async function getToken() {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
+  }
+
+  async function importEmailFile(file: File) {
+    setError("");
+    setAnalysis(null);
+    const lower = file.name.toLowerCase();
+    if (!lower.endsWith(".msg") && !lower.endsWith(".eml")) {
+      setError("Choose an Outlook .msg file or an .eml email file.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Email files are limited to 15 MB.");
+      return;
+    }
+    setFileBusy(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in to use Email Risk Analyzer.");
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/phishing-check/import-email", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not read the email file.");
+      setEmailText(result.emailText || "");
+      setFileName(file.name);
+    } catch (e: any) {
+      setError(e?.message || "Could not read the email file.");
+    } finally {
+      setFileBusy(false);
+    }
+  }
+
+  async function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) await importEmailFile(file);
+  }
 
   async function analyze(event: FormEvent) {
     event.preventDefault();
@@ -66,7 +117,46 @@ export default function PhishingCheckPage() {
         Paste a suspicious email below. MicroSECONDS will examine common phishing indicators and use AI to evaluate the message&apos;s context, requests, links, impersonation attempts, and social-engineering language.
       </p>
 
-      <form onSubmit={analyze} className="mt-7 rounded-2xl border border-white/10 bg-slate-900 p-6">
+      <section className="mt-7 rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <div
+          onDragEnter={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragging(false); }}
+          onDrop={handleDrop}
+          className={`rounded-2xl border-2 border-dashed px-6 py-10 text-center transition ${
+            dragging ? "border-cyan-300 bg-cyan-400/10" : "border-white/15 bg-slate-950"
+          }`}
+        >
+          <div className="text-xl font-semibold text-white">Drag an Outlook email here</div>
+          <p className="mt-2 text-sm text-slate-400">Or choose an email file from your computer.</p>
+          <p className="mt-1 text-xs text-slate-500">Supported: .msg and .eml • Maximum 15 MB</p>
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".msg,.eml,message/rfc822,application/vnd.ms-outlook"
+            className="hidden"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (file) await importEmailFile(file);
+              event.currentTarget.value = "";
+            }}
+          />
+          <button
+            type="button"
+            disabled={fileBusy}
+            onClick={() => fileInput.current?.click()}
+            className="mt-5 rounded-xl border border-white/15 px-5 py-3 font-semibold text-white hover:border-cyan-400/40 hover:text-cyan-300 disabled:opacity-50"
+          >
+            {fileBusy ? "Reading Email..." : "Choose Email File"}
+          </button>
+          {fileName ? <div className="mt-4 text-sm text-emerald-300">Loaded: {fileName}</div> : null}
+        </div>
+
+        <div className="my-6 flex items-center gap-4 text-xs uppercase tracking-[0.18em] text-slate-600">
+          <div className="h-px flex-1 bg-white/10" />Or paste the email<div className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <form onSubmit={analyze}>
         <label className="block text-sm font-semibold text-slate-200">
           Paste the email
         </label>
@@ -90,7 +180,8 @@ export default function PhishingCheckPage() {
             {busy ? "Analyzing..." : "Analyze Email"}
           </button>
         </div>
-      </form>
+        </form>
+      </section>
 
       {error ? (
         <div className="mt-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-red-200">{error}</div>
