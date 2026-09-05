@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseEmail } from "outlook-email-parser";
 
@@ -9,15 +8,18 @@ async function authorize(request: NextRequest) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
   if (!token) return { ok: false as const, status: 401, error: "Please sign in." };
 
-  const authClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } }
-  );
-  const { data: userData } = await authClient.auth.getUser(token);
-  if (!userData.user) return { ok: false as const, status: 401, error: "Your session has expired." };
-
   const admin = createAdminClient();
+
+  const { data: userData, error: userError } =
+    await admin.auth.getUser(token);
+
+  if (userError || !userData.user) {
+    return {
+      ok: false as const,
+      status: 401,
+      error: "Your session could not be verified. Please sign out and sign back in.",
+    };
+  }
   const { data: platformAdmin } = await admin.from("platform_admins").select("user_id").eq("user_id", userData.user.id).maybeSingle();
   if (platformAdmin) return { ok: true as const };
 
