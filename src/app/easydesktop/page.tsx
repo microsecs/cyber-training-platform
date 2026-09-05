@@ -77,9 +77,7 @@ export default function EasyDesktopPage() {
 
             <div className="mt-7 flex flex-wrap gap-3">
               <a
-                href="https://www.microseconds.com/product-page/easydesktop-10"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/api/easydesktop/create-checkout-session"
                 className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
               >
                 Buy EasyDesktop 10

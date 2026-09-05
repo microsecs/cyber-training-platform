@@ -9,6 +9,8 @@ export default function EasyDesktopSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [fullFileName, setFullFileName] = useState("");
+  const [stripePriceId, setStripePriceId] = useState("");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -58,6 +60,8 @@ export default function EasyDesktopSettingsPage() {
         );
       } else {
         setFileName(result.settings?.trial_file_name || "");
+        setFullFileName(result.settings?.full_file_name || "");
+        setStripePriceId(result.settings?.stripe_price_id || "");
         setUpdatedAt(result.settings?.updated_at || null);
       }
 
@@ -132,6 +136,100 @@ export default function EasyDesktopSettingsPage() {
       setError(uploadError?.message || "Could not upload the EasyDesktop trial.");
     } finally {
       setUploading(false);
+    }
+  }
+
+
+  async function uploadFullVersion(file: File) {
+    setUploading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+
+      const signResponse = await fetch("/api/r2/easydesktop-full-upload-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type || "application/octet-stream",
+          size: file.size,
+        }),
+      });
+
+      const signed = await signResponse.json();
+      if (!signResponse.ok) {
+        throw new Error(signed.error || "Could not prepare the full-version upload.");
+      }
+
+      const uploadResponse = await fetch(signed.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("The full-version file could not be uploaded.");
+      }
+
+      const saveResponse = await fetch("/api/easydesktop/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullObjectKey: signed.key,
+          fullFileName: file.name,
+        }),
+      });
+
+      const saveResult = await saveResponse.json();
+      if (!saveResponse.ok) {
+        throw new Error(saveResult.error || "Could not save the full-version download.");
+      }
+
+      setFullFileName(file.name);
+      setMessage("Full EasyDesktop installer uploaded. Paid purchases will receive this file.");
+    } catch (uploadError: any) {
+      setError(uploadError?.message || "Could not upload the full EasyDesktop installer.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function savePriceId() {
+    setMessage("");
+    setError("");
+
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch("/api/easydesktop/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ stripePriceId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Could not save the Stripe Price ID.");
+      }
+
+      setMessage("EasyDesktop Stripe Price ID saved.");
+    } catch (saveError: any) {
+      setError(saveError?.message || "Could not save the Stripe Price ID.");
     }
   }
 
@@ -230,6 +328,64 @@ export default function EasyDesktopSettingsPage() {
           Test Current Download
         </a>
       </section>
+
+      <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <h2 className="text-2xl font-semibold text-white">EasyDesktop Sales</h2>
+        <p className="mt-2 text-sm text-slate-400">
+          Configure the one-time Stripe price and upload the full installer that paid customers receive.
+        </p>
+
+        <label className="mt-5 grid gap-2 text-sm">
+          <span className="text-slate-300">Stripe one-time Price ID</span>
+          <input
+            type="text"
+            value={stripePriceId}
+            onChange={(event) => setStripePriceId(event.target.value)}
+            placeholder="price_..."
+            className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2"
+          />
+          <span className="text-xs text-slate-500">
+            Create a one-time EasyDesktop price in Stripe Test mode first. Promotion codes are supported at checkout.
+          </span>
+        </label>
+
+        <button
+          type="button"
+          onClick={savePriceId}
+          className="mt-4 rounded-lg bg-cyan-400 px-5 py-2.5 font-semibold text-slate-950 hover:bg-cyan-300"
+        >
+          Save Stripe Price ID
+        </button>
+
+        <div className="mt-7 rounded-xl border border-white/10 bg-slate-950 p-5">
+          <div className="text-sm text-slate-400">Current full-version file</div>
+          <div className="mt-1 font-semibold text-white">
+            {fullFileName || "No paid installer uploaded"}
+          </div>
+        </div>
+
+        <label className="mt-5 block">
+          <span className="mb-2 block text-sm text-slate-300">
+            Upload full EasyDesktop installer
+          </span>
+          <input
+            type="file"
+            accept=".zip,.exe,.msi,application/zip,application/x-zip-compressed,application/octet-stream"
+            disabled={uploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) uploadFullVersion(file);
+              event.currentTarget.value = "";
+            }}
+            className="block w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-3 text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-cyan-400 file:px-4 file:py-2 file:font-semibold file:text-slate-950"
+          />
+        </label>
+
+        <p className="mt-3 text-xs leading-5 text-slate-500">
+          ZIP, EXE, or MSI files up to 1 GB. This file is never exposed publicly; paid downloads use a short-lived signed R2 URL after Stripe verifies the purchase.
+        </p>
+      </section>
+
     </main>
   );
 }

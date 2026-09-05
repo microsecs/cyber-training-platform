@@ -5,6 +5,7 @@ import {
   subscriptionIdFromInvoice,
   syncStripeSubscription,
 } from "@/lib/stripeSubscriptionSync";
+import { recordEasyDesktopPurchase } from "@/lib/easydesktopPurchase";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,15 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session: any = event.data.object;
+
+        if (
+          session.mode === "payment" &&
+          session.metadata?.product_key === "easydesktop10"
+        ) {
+          await recordEasyDesktopPurchase(session);
+          break;
+        }
+
         const subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription
