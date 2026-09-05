@@ -86,7 +86,7 @@ export default function EasyDesktopPage() {
               </a>
 
               <a
-                href="https://github.com/microsecs/EasyDesktop/releases/download/10/ed10trial.zip"
+                href="/api/easydesktop/trial-download"
                 className="rounded-xl border border-white/15 bg-slate-950 px-6 py-3 font-semibold text-white hover:bg-white/5"
               >
                 Download 15-Day Trial
@@ -332,7 +332,7 @@ export default function EasyDesktopPage() {
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <a
-            href="https://github.com/microsecs/EasyDesktop/releases/download/10/ed10trial.zip"
+            href="/api/easydesktop/trial-download"
             className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
           >
             Download 15-Day Trial

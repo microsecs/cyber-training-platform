@@ -31,7 +31,11 @@ export default function PlatformAdminPage() {
   }, []);
 
   if (authorized === null) {
-    return <main className="mx-auto max-w-6xl px-6 py-12">Checking platform access...</main>;
+    return (
+      <main className="mx-auto max-w-6xl px-6 py-12">
+        Checking platform access...
+      </main>
+    );
   }
 
   if (!authorized) {
@@ -70,7 +74,8 @@ export default function PlatformAdminPage() {
         >
           <div className="text-xl font-semibold">Homepage Settings</div>
           <p className="mt-2 text-sm text-slate-400">
-            Change the homepage video, messaging, cybersecurity statistics, sources, and visibility.
+            Change homepage video, messaging, cybersecurity statistics, sources,
+            and visibility.
           </p>
         </Link>
 
@@ -80,7 +85,17 @@ export default function PlatformAdminPage() {
         >
           <div className="text-xl font-semibold">Support Settings</div>
           <p className="mt-2 text-sm text-slate-400">
-            Configure the support email and Windows/Mac remote-support links.
+            Configure support email, remote-support links, and software link.
+          </p>
+        </Link>
+
+        <Link
+          href="/platform-admin/easydesktop"
+          className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40"
+        >
+          <div className="text-xl font-semibold">EasyDesktop Settings</div>
+          <p className="mt-2 text-sm text-slate-400">
+            Upload and replace the public 15-day EasyDesktop trial download.
           </p>
         </Link>
 
