@@ -80,7 +80,7 @@ export default function EasyDesktopPage() {
                 href="/api/easydesktop/create-checkout-session"
                 className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
               >
-                Buy EasyDesktop 10
+                Purchase Now
               </a>
 
               <a
@@ -100,7 +100,7 @@ export default function EasyDesktopPage() {
             </div>
 
             <p className="mt-4 text-sm text-slate-500">
-              EasyDesktop 10 requires Windows 11.
+              Secure checkout powered by Stripe. Promotion codes can be applied at checkout.\n            </p>\n            <p className="mt-2 text-sm text-slate-500">\n              EasyDesktop 10 requires Windows 11.
             </p>
           </div>
 
@@ -336,7 +336,14 @@ export default function EasyDesktopPage() {
             Download 15-Day Trial
           </a>
 
-          <Link
+                    <a
+            href="/api/easydesktop/create-checkout-session"
+            className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+          >
+            Purchase Now
+          </a>
+
+<Link
             href="/support"
             className="rounded-xl border border-white/15 bg-slate-950 px-6 py-3 font-semibold text-white hover:bg-white/5"
           >
