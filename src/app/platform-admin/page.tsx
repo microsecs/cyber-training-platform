@@ -74,6 +74,16 @@ export default function PlatformAdminPage() {
           </p>
         </Link>
 
+        <Link
+          href="/platform-admin/support"
+          className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40"
+        >
+          <div className="text-xl font-semibold">Support Settings</div>
+          <p className="mt-2 text-sm text-slate-400">
+            Configure the support email and Windows/Mac remote-support links.
+          </p>
+        </Link>
+
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-6">
           <div className="text-xl font-semibold">Customer Companies</div>
           <p className="mt-2 text-sm text-slate-400">

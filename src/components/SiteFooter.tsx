@@ -17,7 +17,7 @@ export default function SiteFooter() {
           <Link href="/account" className="hover:text-cyan-300">Account</Link>
           <Link href="/privacy" className="hover:text-cyan-300">Privacy</Link>
           <Link href="/terms" className="hover:text-cyan-300">Terms</Link>
-          <Link href="/contact" className="hover:text-cyan-300">Contact</Link>
+          <Link href="/support" className="hover:text-cyan-300">Support</Link>
         </nav>
       </div>
     </footer>

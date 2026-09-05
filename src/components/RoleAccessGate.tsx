@@ -13,7 +13,8 @@ function isPublicPath(pathname: string) {
     pathname === "/accept-invite" ||
     pathname === "/contact" ||
     pathname === "/privacy" ||
-    pathname === "/terms"
+    pathname === "/terms" ||
+    pathname === "/support"
   );
 }
 
@@ -21,7 +22,7 @@ function isAllowed(pathname: string, role: AppRole) {
   if (isPublicPath(pathname)) return true;
   if (pathname === "/account") return role !== "guest";
 
-  if (pathname === "/platform-admin" || pathname.startsWith("/admin/courses")) {
+  if (pathname === "/platform-admin" || pathname.startsWith("/platform-admin/") || pathname.startsWith("/admin/courses")) {
     return role === "platform_admin";
   }
 
