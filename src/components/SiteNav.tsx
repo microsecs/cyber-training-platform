@@ -77,7 +77,7 @@ export default function SiteNav() {
                 className={
                   link.href === "/platform-admin"
                     ? "rounded-lg bg-amber-400/10 px-3 py-2 text-amber-300 hover:bg-amber-400/20"
-                    : "hover:text-white"
+                    : "hover:text-cyan-300"
                 }
               >
                 {link.label}
