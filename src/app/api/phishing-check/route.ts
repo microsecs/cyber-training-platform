@@ -167,7 +167,7 @@ ${emailText}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_PHISHING_MODEL || "gpt-5-mini",
+        model: process.env.OPENAI_PHISHING_MODEL || "gpt-5.6-luna",
         store: false,
         input: [
           {
@@ -195,13 +195,13 @@ ${emailText}
         raw?.message ||
         `OpenAI returned HTTP ${aiResponse.status}.`;
 
-      const publicMessage =
-        access.role === "platform_admin"
-          ? `OpenAI API error: ${providerMessage}`
-          : "The AI analysis service is temporarily unavailable.";
-
       return NextResponse.json(
-        { error: publicMessage },
+        {
+          error: `OpenAI API error: ${providerMessage}`,
+          provider_status: aiResponse.status,
+          provider_code: raw?.error?.code || null,
+          provider_type: raw?.error?.type || null,
+        },
         { status: 502 }
       );
     }
