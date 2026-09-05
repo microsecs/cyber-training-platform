@@ -91,12 +91,9 @@ export default function RoleAccessGate({ children }: { children: ReactNode }) {
         const { data: aal } =
           await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
-        const privileged =
-          access.role === "platform_admin" ||
-          access.role === "owner" ||
-          access.role === "admin";
+        const mustUseMfa = access.role === "platform_admin";
 
-        if (privileged && !verifiedFactor) {
+        if (mustUseMfa && !verifiedFactor) {
           router.replace("/mfa/setup");
           return;
         }

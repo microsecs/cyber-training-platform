@@ -12,8 +12,12 @@ export default function MfaSetupPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [ready, setReady] = useState(false);
+  const [optional, setOptional] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setOptional(params.get("optional") === "1");
+
     async function prepare() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
@@ -104,13 +108,16 @@ export default function MfaSetupPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
       <div className="rounded-2xl border border-white/10 bg-slate-900 p-8">
-        <div className="text-sm text-cyan-300">Required account security</div>
+        <div className="text-sm text-cyan-300">
+          {optional ? "Recommended account security" : "Required account security"}
+        </div>
         <h1 className="mt-2 text-3xl font-bold">
           Set up multi-factor authentication
         </h1>
         <p className="mt-3 max-w-2xl leading-7 text-slate-400">
-          Your account has administrative access, so MicroSECONDS requires an
-          authenticator app in addition to your password.
+          {optional
+            ? "Your account has company administrative access. We strongly recommend protecting it with an authenticator app in addition to your password."
+            : "Your account has platform administration access, so MicroSECONDS requires an authenticator app in addition to your password."}
         </p>
 
         {qrCode ? (
@@ -175,6 +182,19 @@ export default function MfaSetupPage() {
           <div className="mt-5 rounded-lg border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200">
             {message}
           </div>
+        ) : null}
+
+        {optional ? (
+          <button
+            type="button"
+            onClick={async () => {
+              const access = await resolveUserAccess();
+              window.location.href = defaultPathForRole(access.role);
+            }}
+            className="mt-6 text-sm font-medium text-slate-400 hover:text-white"
+          >
+            Skip for now
+          </button>
         ) : null}
       </div>
     </main>
