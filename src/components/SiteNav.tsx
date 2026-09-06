@@ -37,9 +37,10 @@ export default function SiteNav() {
   }
 
   const publicLinks = [
-    { href: "/support", label: "Support" },
+    { href: "/", label: "Home" },
     { href: "/consulting", label: "IT Consulting" },
     { href: "/easydesktop", label: "EasyDesktop" },
+    { href: "/support", label: "Support" },
   ];
 
   const roleLinks =
