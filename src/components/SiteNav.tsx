@@ -44,18 +44,11 @@ export default function SiteNav() {
           { href: "/training", label: "Training" },
           { href: "/assign-training", label: "Assign Training" },
           { href: "/reports", label: "Reports" },
-          { href: "/phishing-check", label: "Email Analyzer" },
         ]
       : role === "employee"
-      ? [
-          { href: "/employee", label: "My Training" },
-          { href: "/phishing-check", label: "Email Analyzer" },
-        ]
+      ? [{ href: "/employee", label: "My Training" }]
       : role === "platform_admin"
-      ? [
-          { href: "/platform-admin", label: "Platform Admin" },
-          { href: "/phishing-check", label: "Email Analyzer" },
-        ]
+      ? [{ href: "/platform-admin", label: "Platform Admin" }]
       : [];
 
   return (
@@ -68,7 +61,7 @@ export default function SiteNav() {
             width={835}
             height={109}
             priority
-            className="h-7 w-auto max-w-[190px] object-contain sm:h-8 sm:max-w-[235px] lg:h-9 lg:max-w-[270px]"
+            className="h-7 w-auto max-w-[150px] object-contain sm:h-8 sm:max-w-[210px] lg:h-9 lg:max-w-[270px]"
           />
           <div className="mt-1 hidden text-xs font-medium tracking-wide text-slate-400 sm:block lg:text-sm">
             Employee Security Training
@@ -76,7 +69,7 @@ export default function SiteNav() {
         </Link>
 
         {!loading && links.length > 0 ? (
-          <nav className="hidden items-center gap-5 text-sm text-slate-300 md:flex">
+          <nav className="hidden items-center gap-5 text-sm text-slate-300 lg:flex">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -95,7 +88,7 @@ export default function SiteNav() {
 
         <div className="flex shrink-0 gap-2">
           {!loading && role !== "guest" ? (
-            <>
+            <div className="hidden items-center gap-2 sm:flex">
               <Link
                 href="/account"
                 className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
@@ -110,7 +103,7 @@ export default function SiteNav() {
               >
                 Sign Out
               </button>
-            </>
+            </div>
           ) : null}
 
           {!loading && role === "guest" ? (
