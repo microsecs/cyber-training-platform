@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveTxt } from "dns/promises";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function levelFor(score: number) {
   if (score >= 75) return "HIGH RISK";
@@ -43,6 +45,319 @@ function ruleSignals(text: string) {
   }
 
   return { points: Math.min(points, 55), signals: signals.slice(0, 8) };
+}
+
+
+type TechnicalCheck = {
+  label: string;
+  status: "pass" | "warning" | "danger" | "info";
+  detail: string;
+};
+
+function extractUrls(text: string): string[] {
+  return Array.from(
+    new Set(
+      (text.match(/https?:\/\/[^\s<>"')\]]+/gi) || [])
+        .map((u) => u.replace(/[.,;:!?]+$/g, ""))
+        .filter((u) => u.length < 2048)
+    )
+  ).slice(0, 20);
+}
+
+function addressDomain(text: string, header: string): string | null {
+  const match = text.match(new RegExp(`^${header}:.*?@([a-z0-9._-]+)`, "im"));
+  return match?.[1]?.toLowerCase() || null;
+}
+
+function parseAuthResults(text: string) {
+  const lines = text
+    .split(/\r?\n/)
+    .filter((line) => /^(authentication-results|arc-authentication-results):/i.test(line))
+    .join(" ");
+
+  const value = (name: string) =>
+    lines.match(new RegExp(`\\b${name}=([a-z0-9_-]+)`, "i"))?.[1]?.toLowerCase();
+
+  return { spf: value("spf"), dkim: value("dkim"), dmarc: value("dmarc") };
+}
+
+function authCheck(name: string, value?: string): TechnicalCheck | null {
+  if (!value) return null;
+  if (value === "pass") {
+    return { label: `${name} authentication`, status: "pass", detail: `${name} passed according to the submitted message headers.` };
+  }
+  if (["fail", "softfail", "temperror", "permerror"].includes(value)) {
+    return { label: `${name} authentication`, status: "danger", detail: `${name} returned ${value} in the submitted message headers.` };
+  }
+  return { label: `${name} authentication`, status: "warning", detail: `${name} returned ${value} in the submitted message headers.` };
+}
+
+async function fetchJson(url: string, init?: RequestInit, timeoutMs = 3500) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function domainAgeCheck(domain: string): Promise<TechnicalCheck | null> {
+  if (!domain || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(domain)) return null;
+
+  const data = await fetchJson(`https://rdap.org/domain/${encodeURIComponent(domain)}`, undefined, 3000);
+  const events = Array.isArray(data?.events) ? data.events : [];
+  const registration = events.find((event: any) =>
+    ["registration", "registered"].includes(String(event?.eventAction || "").toLowerCase())
+  );
+  if (!registration?.eventDate) return null;
+
+  const created = new Date(registration.eventDate);
+  if (Number.isNaN(created.getTime())) return null;
+
+  const ageDays = Math.floor((Date.now() - created.getTime()) / 86400000);
+  const age =
+    ageDays < 60 ? `${ageDays} days` :
+    ageDays < 730 ? `${Math.floor(ageDays / 30)} months` :
+    `${(ageDays / 365).toFixed(1)} years`;
+
+  if (ageDays >= 0 && ageDays < 30) {
+    return { label: `Domain age: ${domain}`, status: "danger", detail: `The domain appears to be only ${age} old.` };
+  }
+  if (ageDays >= 0 && ageDays < 180) {
+    return { label: `Domain age: ${domain}`, status: "warning", detail: `The domain appears to be about ${age} old.` };
+  }
+  return { label: `Domain age: ${domain}`, status: "info", detail: `The domain appears to be about ${age} old.` };
+}
+
+async function dnsPolicyChecks(domain: string | null): Promise<TechnicalCheck[]> {
+  if (!domain) return [];
+  const checks: TechnicalCheck[] = [];
+
+  try {
+    const txt = (await resolveTxt(domain)).map((row) => row.join(""));
+    const hasSpf = txt.some((row) => /^v=spf1\b/i.test(row));
+    checks.push({
+      label: "Sender-domain SPF policy",
+      status: hasSpf ? "info" : "warning",
+      detail: hasSpf
+        ? "The sender domain publishes an SPF policy. This does not prove this specific email passed SPF."
+        : "No SPF policy was found for the sender domain.",
+    });
+  } catch {
+    checks.push({ label: "Sender-domain SPF policy", status: "warning", detail: "No SPF policy could be confirmed for the sender domain." });
+  }
+
+  try {
+    const txt = (await resolveTxt(`_dmarc.${domain}`)).map((row) => row.join(""));
+    const hasDmarc = txt.some((row) => /^v=DMARC1\b/i.test(row));
+    checks.push({
+      label: "Sender-domain DMARC policy",
+      status: hasDmarc ? "info" : "warning",
+      detail: hasDmarc
+        ? "The sender domain publishes a DMARC policy. This does not prove this specific email passed DMARC."
+        : "No DMARC policy was found for the sender domain.",
+    });
+  } catch {
+    checks.push({ label: "Sender-domain DMARC policy", status: "warning", detail: "No DMARC policy could be confirmed for the sender domain." });
+  }
+
+  return checks;
+}
+
+function inspectUrls(urls: string[]) {
+  const checks: TechnicalCheck[] = [];
+  let points = 0;
+  const suspiciousTlds = new Set(["zip", "mov", "click", "top", "xyz", "work", "support", "buzz", "monster", "cam"]);
+  const shorteners = new Set(["bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "rb.gy", "cutt.ly"]);
+  const domains: string[] = [];
+
+  for (const raw of urls) {
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.toLowerCase();
+      if (!domains.includes(host)) domains.push(host);
+
+      if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) {
+        points += 15;
+        checks.push({ label: "Raw-IP link", status: "danger", detail: `A URL uses an IP address instead of a normal domain: ${host}` });
+      }
+      if (host.split(".").some((part) => part.startsWith("xn--"))) {
+        points += 12;
+        checks.push({ label: "Punycode/lookalike domain", status: "danger", detail: `A URL uses an internationalized/punycode hostname: ${host}` });
+      }
+      if (shorteners.has(host)) {
+        points += 10;
+        checks.push({ label: "Shortened URL", status: "warning", detail: `A shortened-link service hides the final destination: ${host}` });
+      }
+      const tld = host.split(".").pop() || "";
+      if (suspiciousTlds.has(tld)) {
+        points += 5;
+        checks.push({ label: "Higher-risk top-level domain", status: "warning", detail: `A link uses .${tld}: ${host}` });
+      }
+      if (url.username || url.password) {
+        points += 12;
+        checks.push({ label: "Misleading URL structure", status: "danger", detail: `A URL contains embedded credential-style text before the actual host: ${host}` });
+      }
+    } catch {}
+  }
+
+  return { checks: checks.slice(0, 8), points: Math.min(points, 35), domains };
+}
+
+function inspectAttachments(text: string) {
+  const line = text.match(/^Attachments?:\s*(.+)$/im)?.[1] || "";
+  const checks: TechnicalCheck[] = [];
+  let points = 0;
+
+  for (const name of line.split(/,\s*/).filter(Boolean).slice(0, 10)) {
+    if (/\.(exe|scr|js|jse|vbs|vbe|cmd|bat|com|ps1|hta|msi|lnk|iso|img|jar)$/i.test(name)) {
+      points += 18;
+      checks.push({ label: "High-risk attachment type", status: "danger", detail: `${name} can contain executable code.` });
+    } else if (/\.(docm|xlsm|pptm|xlam)$/i.test(name)) {
+      points += 12;
+      checks.push({ label: "Macro-enabled attachment", status: "danger", detail: `${name} can contain Office macros.` });
+    } else if (/\.(zip|rar|7z)$/i.test(name)) {
+      points += 5;
+      checks.push({ label: "Archive attachment", status: "warning", detail: `${name} is an archive that can conceal other files.` });
+    }
+  }
+
+  return { checks, points: Math.min(points, 25) };
+}
+
+async function virusTotalChecks(domains: string[]): Promise<TechnicalCheck[]> {
+  const apiKey = process.env.VIRUSTOTAL_API_KEY;
+  if (!apiKey) return [];
+
+  const checks: TechnicalCheck[] = [];
+  for (const domain of domains.slice(0, 3)) {
+    const data = await fetchJson(
+      `https://www.virustotal.com/api/v3/domains/${encodeURIComponent(domain)}`,
+      { headers: { "x-apikey": apiKey } },
+      3500
+    );
+    const stats = data?.data?.attributes?.last_analysis_stats;
+    if (!stats) continue;
+
+    const malicious = Number(stats.malicious || 0);
+    const suspicious = Number(stats.suspicious || 0);
+
+    checks.push({
+      label: `VirusTotal reputation: ${domain}`,
+      status: malicious > 0 ? "danger" : suspicious > 0 ? "warning" : "info",
+      detail:
+        malicious > 0 || suspicious > 0
+          ? `VirusTotal reports ${malicious} malicious and ${suspicious} suspicious detections.`
+          : "VirusTotal did not report malicious or suspicious detections in the latest available domain analysis.",
+    });
+  }
+  return checks;
+}
+
+async function googleSafeBrowsingChecks(urls: string[]): Promise<TechnicalCheck[]> {
+  const apiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
+  if (!apiKey || !urls.length) return [];
+
+  const data = await fetchJson(
+    `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client: { clientId: "microseconds-email-risk-analyzer", clientVersion: "1.0" },
+        threatInfo: {
+          threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE"],
+          platformTypes: ["ANY_PLATFORM"],
+          threatEntryTypes: ["URL"],
+          threatEntries: urls.slice(0, 10).map((url) => ({ url })),
+        },
+      }),
+    },
+    4000
+  );
+
+  const matches = Array.isArray(data?.matches) ? data.matches : [];
+  if (!matches.length) {
+    return [{ label: "Google Safe Browsing", status: "info", detail: "No submitted URL was returned as a known Safe Browsing threat." }];
+  }
+
+  return matches.slice(0, 5).map((match: any) => ({
+    label: "Google Safe Browsing",
+    status: "danger" as const,
+    detail: `${match?.threat?.url || "A submitted URL"} is listed for ${match?.threatType || "a known web threat"}.`,
+  }));
+}
+
+async function technicalAnalysis(emailText: string) {
+  const checks: TechnicalCheck[] = [];
+  let points = 0;
+
+  const auth = parseAuthResults(emailText);
+  for (const [name, value] of [["SPF", auth.spf], ["DKIM", auth.dkim], ["DMARC", auth.dmarc]] as const) {
+    const check = authCheck(name, value);
+    if (check) {
+      checks.push(check);
+      if (check.status === "danger") points += 14;
+      else if (check.status === "warning") points += 5;
+    }
+  }
+
+  const fromDomain = addressDomain(emailText, "From");
+  const replyToDomain = addressDomain(emailText, "Reply-To");
+  if (fromDomain && replyToDomain && fromDomain !== replyToDomain) {
+    points += 10;
+    checks.push({
+      label: "From / Reply-To mismatch",
+      status: "warning",
+      detail: `The From domain (${fromDomain}) differs from the Reply-To domain (${replyToDomain}).`,
+    });
+  }
+
+  const urls = extractUrls(emailText);
+  const urlResult = inspectUrls(urls);
+  checks.push(...urlResult.checks);
+  points += urlResult.points;
+
+  const attachmentResult = inspectAttachments(emailText);
+  checks.push(...attachmentResult.checks);
+  points += attachmentResult.points;
+
+  checks.push(...(await dnsPolicyChecks(fromDomain)));
+
+  const domains = Array.from(new Set([fromDomain, ...urlResult.domains].filter(Boolean) as string[])).slice(0, 4);
+  const ages = await Promise.all(domains.map((domain) => domainAgeCheck(domain)));
+  for (const age of ages) {
+    if (!age) continue;
+    checks.push(age);
+    if (age.status === "danger") points += 14;
+    else if (age.status === "warning") points += 6;
+  }
+
+  for (const check of await virusTotalChecks(domains)) {
+    checks.push(check);
+    if (check.status === "danger") points += 20;
+    else if (check.status === "warning") points += 8;
+  }
+
+  for (const check of await googleSafeBrowsingChecks(urls)) {
+    checks.push(check);
+    if (check.status === "danger") points += 25;
+  }
+
+  if (!auth.spf && !auth.dkim && !auth.dmarc) {
+    checks.push({
+      label: "Header authentication evidence",
+      status: "info",
+      detail: "No SPF/DKIM/DMARC results were found in the submitted text. Full message headers improve this check.",
+    });
+  }
+
+  return { checks: checks.slice(0, 18), points: Math.min(points, 60) };
 }
 
 async function authorize(request: NextRequest) {
@@ -130,6 +445,7 @@ export async function POST(request: NextRequest) {
     }
 
     const rules = ruleSignals(emailText);
+    const technical = await technicalAnalysis(emailText);
 
     const schema = {
       type: "object",
@@ -154,6 +470,15 @@ If evidence is insufficient, say so. Never guarantee an email is safe.
 
 Local rule-engine signals:
 ${rules.signals.length ? rules.signals.map(x => "- " + x).join("\n") : "- No strong rule-based indicators detected."}
+
+Independent technical checks:
+${technical.checks.length
+  ? technical.checks.map((x) => `- [${x.status.toUpperCase()}] ${x.label}: ${x.detail}`).join("\n")
+  : "- No additional technical checks returned a result."}
+
+Treat authentication PASS results as useful evidence, but never as proof that an email is safe.
+Treat SPF/DMARC DNS policy existence as domain posture only, not a per-message pass/fail result.
+Domain age and external reputation data can be incomplete.
 
 EMAIL:
 ---BEGIN UNTRUSTED EMAIL---
@@ -189,12 +514,6 @@ ${emailText}
     const raw = await aiResponse.json();
     if (!aiResponse.ok) {
       console.error("OpenAI phishing analysis error", raw);
-
-      const providerMessage =
-        raw?.error?.message ||
-        raw?.message ||
-        `OpenAI returned HTTP ${aiResponse.status}.`;
-
       return NextResponse.json(
         { error: "The AI analysis service is temporarily unavailable. Please try again shortly." },
         { status: 502 }
@@ -217,8 +536,18 @@ ${emailText}
 
     // AI provides the primary contextual judgment. Rules can raise a low AI score
     // when concrete high-risk indicators were detected, but do not blindly add points.
-    const score = Math.round(Math.max(aiScore, Math.min(100, rules.points + aiScore * 0.72)));
-    const combinedFindings = [...rules.signals, ...(ai.findings || [])]
+    const score = Math.round(
+      Math.max(
+        aiScore,
+        Math.min(100, aiScore * 0.72 + rules.points * 0.42 + technical.points * 0.72)
+      )
+    );
+
+    const technicalRiskFindings = technical.checks
+      .filter((item) => item.status === "danger" || item.status === "warning")
+      .map((item) => `${item.label}: ${item.detail}`);
+
+    const combinedFindings = [...rules.signals, ...technicalRiskFindings, ...(ai.findings || [])]
       .filter((item, index, array) => item && array.indexOf(item) === index)
       .slice(0, 8);
 
@@ -230,6 +559,11 @@ ${emailText}
         findings: combinedFindings,
         recommendations: ai.recommendations,
         technical_note: ai.technical_note,
+        technical_checks: technical.checks,
+        reputation_services: {
+          virus_total: Boolean(process.env.VIRUSTOTAL_API_KEY),
+          google_safe_browsing: Boolean(process.env.GOOGLE_SAFE_BROWSING_API_KEY),
+        },
       },
     });
   } catch (error: any) {

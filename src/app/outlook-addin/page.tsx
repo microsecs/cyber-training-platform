@@ -13,6 +13,11 @@ type Analysis = {
   findings: string[];
   recommendations: string[];
   technical_note?: string;
+  technical_checks?: Array<{
+    label: string;
+    status: "pass" | "warning" | "danger" | "info";
+    detail: string;
+  }>;
 };
 
 function addressText(value: any): string {
@@ -473,6 +478,32 @@ export default function OutlookAddinPage() {
                 ))}
               </ul>
             </div>
+
+
+            {analysis.technical_checks?.length ? (
+              <div className="mt-5">
+                <div className="text-sm font-semibold">Technical checks</div>
+                <div className="mt-2 space-y-2">
+                  {analysis.technical_checks.slice(0, 10).map((check, index) => (
+                    <div
+                      key={`${check.label}-${index}`}
+                      className={`rounded-lg border p-3 text-xs leading-5 ${
+                        check.status === "danger"
+                          ? "border-red-400/25 bg-red-400/10 text-red-100"
+                          : check.status === "warning"
+                          ? "border-amber-400/25 bg-amber-400/10 text-amber-100"
+                          : check.status === "pass"
+                          ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-100"
+                          : "border-white/10 bg-slate-950 text-slate-400"
+                      }`}
+                    >
+                      <div className="font-semibold">{check.label}</div>
+                      <div className="mt-0.5 opacity-80">{check.detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-5">
               <div className="text-sm font-semibold">Recommended action</div>

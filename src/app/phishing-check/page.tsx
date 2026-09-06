@@ -10,6 +10,11 @@ type Analysis = {
   findings: string[];
   recommendations: string[];
   technical_note?: string;
+  technical_checks?: Array<{
+    label: string;
+    status: "pass" | "warning" | "danger" | "info";
+    detail: string;
+  }>;
 };
 
 export default function PhishingCheckPage() {
@@ -212,6 +217,35 @@ export default function PhishingCheckPage() {
               </ul>
             </div>
           </div>
+
+
+          {analysis.technical_checks?.length ? (
+            <div className="rounded-2xl border border-white/10 bg-slate-900 p-6">
+              <h2 className="text-xl font-semibold">Technical checks</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Header authentication, domain age, DNS policy, URL structure, attachment type, and optional reputation checks.
+              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {analysis.technical_checks.map((check, i) => (
+                  <div
+                    key={`${check.label}-${i}`}
+                    className={`rounded-xl border p-4 text-sm ${
+                      check.status === "danger"
+                        ? "border-red-400/25 bg-red-400/10"
+                        : check.status === "warning"
+                        ? "border-amber-400/25 bg-amber-400/10"
+                        : check.status === "pass"
+                        ? "border-emerald-400/25 bg-emerald-400/10"
+                        : "border-white/10 bg-slate-950"
+                    }`}
+                  >
+                    <div className="font-semibold text-slate-100">{check.label}</div>
+                    <div className="mt-1 leading-5 text-slate-400">{check.detail}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {analysis.technical_note ? (
             <div className="rounded-xl border border-white/10 bg-slate-900 p-5 text-sm text-slate-400">
