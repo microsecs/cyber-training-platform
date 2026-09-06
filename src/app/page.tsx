@@ -134,48 +134,34 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="border-b border-white/10 bg-slate-950/45">
-        <div className="mx-auto max-w-7xl px-4 py-6 md:px-5">
-          <div className="flex flex-col gap-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-5 md:flex-row md:items-center md:justify-between md:p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z" />
-                  <path d="M8.5 12h7" />
-                  <path d="m13 9 3 3-3 3" />
-                </svg>
-              </div>
-
-              <div>
-                <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-                  Exclusive subscriber tool
-                </div>
-                <h2 className="mt-1 text-xl font-bold md:text-2xl">
-                  Email Risk Analyzer
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 md:text-base">
-                  MicroSECONDS subscribers get access to our exclusive Email Risk Analyzer,
-                  which evaluates suspicious emails for common phishing and scam indicators
-                  and provides a clear risk score, findings, and recommended next steps.
-                </p>
-              </div>
+      <section className="border-b border-white/10 bg-slate-950/35">
+        <div className="mx-auto max-w-7xl px-4 py-4 md:px-5">
+          <div className="flex items-start gap-3 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.04] px-4 py-3.5">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
             </div>
-
-            <Link
-              href="/phishing-check"
-              className="shrink-0 rounded-lg border border-cyan-400/30 px-4 py-2.5 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/10"
-            >
-              Email Risk Analyzer
-            </Link>
+            <div>
+              <div className="font-semibold text-white">
+                Exclusive Email Risk Analyzer
+              </div>
+              <p className="mt-1 text-sm leading-5 text-slate-400">
+                Active subscribers can evaluate suspicious emails for phishing and scam risk,
+                including a clear risk score and recommended next steps. An Outlook add-in is
+                also available so users can analyze an email directly from Outlook.
+              </p>
+            </div>
           </div>
         </div>
       </section>
