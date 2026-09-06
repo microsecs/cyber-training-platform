@@ -15,8 +15,9 @@ export default function SiteFooter() {
           className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400"
           aria-label="Footer navigation"
         >
-          <Link href="/easydesktop" className="hover:text-cyan-300">Software</Link>
+          <Link href="/" className="hover:text-cyan-300">Home</Link>
           <Link href="/consulting" className="hover:text-cyan-300">IT Consulting</Link>
+          <Link href="/easydesktop" className="hover:text-cyan-300">EasyDesktop</Link>
           <Link href="/terms" className="hover:text-cyan-300">Terms</Link>
           <Link href="/privacy" className="hover:text-cyan-300">Privacy</Link>
           <Link href="/support" className="hover:text-cyan-300">Support</Link>
