@@ -44,11 +44,27 @@ export default function SiteNav() {
           { href: "/training", label: "Training" },
           { href: "/assign-training", label: "Assign Training" },
           { href: "/reports", label: "Reports" },
+          { href: "/phishing-check", label: "Email Analyzer" },
+          { href: "/support", label: "Support" },
+          { href: "/consulting", label: "IT Consulting" },
+          { href: "/easydesktop", label: "EasyDesktop" },
         ]
       : role === "employee"
-      ? [{ href: "/employee", label: "My Training" }]
+      ? [
+          { href: "/employee", label: "My Training" },
+          { href: "/phishing-check", label: "Email Analyzer" },
+          { href: "/support", label: "Support" },
+          { href: "/consulting", label: "IT Consulting" },
+          { href: "/easydesktop", label: "EasyDesktop" },
+        ]
       : role === "platform_admin"
-      ? [{ href: "/platform-admin", label: "Platform Admin" }]
+      ? [
+          { href: "/platform-admin", label: "Platform Admin" },
+          { href: "/phishing-check", label: "Email Analyzer" },
+          { href: "/support", label: "Support" },
+          { href: "/consulting", label: "IT Consulting" },
+          { href: "/easydesktop", label: "EasyDesktop" },
+        ]
       : [];
 
   return (
