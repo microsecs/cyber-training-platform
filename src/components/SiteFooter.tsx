@@ -1,6 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function SiteFooter() {
+  const pathname = usePathname();
+  const isOutlookAddin = pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
+
+  if (isOutlookAddin) {
+    return (
+      <footer className="mt-auto border-t border-white/10 bg-slate-950/95">
+        <div className="mx-auto max-w-7xl px-5 py-4 text-center text-xs text-slate-600">
+          © 2026 MicroSECONDS Computer Consulting. All rights reserved.
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="mt-auto border-t border-white/10 bg-slate-950/95">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-6 md:flex-row md:items-center md:justify-between">

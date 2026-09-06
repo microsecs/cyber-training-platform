@@ -3,10 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AppRole, resolveUserAccess } from "@/lib/supabase/access";
 
 export default function SiteNav() {
+  const pathname = usePathname();
+  const isOutlookAddin = pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
   const [role, setRole] = useState<AppRole>("guest");
   const [loading, setLoading] = useState(true);
 
@@ -105,12 +108,14 @@ export default function SiteNav() {
         <div className="flex shrink-0 gap-2">
           {!loading && role !== "guest" ? (
             <>
-              <Link
-                href="/account"
-                className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
-              >
-                Account
-              </Link>
+              {!isOutlookAddin ? (
+                <Link
+                  href="/account"
+                  className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
+                >
+                  Account
+                </Link>
+              ) : null}
 
               <button
                 type="button"
