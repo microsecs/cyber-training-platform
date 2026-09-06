@@ -196,12 +196,7 @@ ${emailText}
         `OpenAI returned HTTP ${aiResponse.status}.`;
 
       return NextResponse.json(
-        {
-          error: `OpenAI API error: ${providerMessage}`,
-          provider_status: aiResponse.status,
-          provider_code: raw?.error?.code || null,
-          provider_type: raw?.error?.type || null,
-        },
+        { error: "The AI analysis service is temporarily unavailable. Please try again shortly." },
         { status: 502 }
       );
     }
