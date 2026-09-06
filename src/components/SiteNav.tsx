@@ -36,7 +36,13 @@ export default function SiteNav() {
     window.location.href = "/login";
   }
 
-  const links =
+  const publicLinks = [
+    { href: "/support", label: "Support" },
+    { href: "/consulting", label: "IT Consulting" },
+    { href: "/easydesktop", label: "EasyDesktop" },
+  ];
+
+  const roleLinks =
     role === "owner" || role === "admin"
       ? [
           { href: "/admin", label: "Dashboard" },
@@ -45,27 +51,20 @@ export default function SiteNav() {
           { href: "/assign-training", label: "Assign Training" },
           { href: "/reports", label: "Reports" },
           { href: "/phishing-check", label: "Email Analyzer" },
-          { href: "/support", label: "Support" },
-          { href: "/consulting", label: "IT Consulting" },
-          { href: "/easydesktop", label: "EasyDesktop" },
         ]
       : role === "employee"
       ? [
           { href: "/employee", label: "My Training" },
           { href: "/phishing-check", label: "Email Analyzer" },
-          { href: "/support", label: "Support" },
-          { href: "/consulting", label: "IT Consulting" },
-          { href: "/easydesktop", label: "EasyDesktop" },
         ]
       : role === "platform_admin"
       ? [
           { href: "/platform-admin", label: "Platform Admin" },
           { href: "/phishing-check", label: "Email Analyzer" },
-          { href: "/support", label: "Support" },
-          { href: "/consulting", label: "IT Consulting" },
-          { href: "/easydesktop", label: "EasyDesktop" },
         ]
       : [];
+
+  const links = [...roleLinks, ...publicLinks];
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
@@ -84,7 +83,7 @@ export default function SiteNav() {
           </div>
         </Link>
 
-        {!loading && links.length > 0 ? (
+        {!loading ? (
           <nav className="hidden items-center gap-5 text-sm text-slate-300 lg:flex">
             {links.map((link) => (
               <Link
