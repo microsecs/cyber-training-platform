@@ -88,7 +88,7 @@ export default function SiteNav() {
 
         <div className="flex shrink-0 gap-2">
           {!loading && role !== "guest" ? (
-            <div className="hidden items-center gap-2 sm:flex">
+            <>
               <Link
                 href="/account"
                 className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
@@ -103,7 +103,7 @@ export default function SiteNav() {
               >
                 Sign Out
               </button>
-            </div>
+            </>
           ) : null}
 
           {!loading && role === "guest" ? (
