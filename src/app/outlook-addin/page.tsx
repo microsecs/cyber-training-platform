@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Script from "next/script";
 import { createClient } from "@/lib/supabase/client";
 
 declare const Office: any;
@@ -40,6 +41,7 @@ function officeAsync<T>(fn: (callback: (result: any) => void) => void): Promise<
 
 export default function OutlookAddinPage() {
   const [officeReady, setOfficeReady] = useState(false);
+  const [officeError, setOfficeError] = useState("");
   const [messageText, setMessageText] = useState("");
   const [messageSubject, setMessageSubject] = useState("");
   const [reading, setReading] = useState(false);
@@ -156,23 +158,51 @@ export default function OutlookAddinPage() {
   }
 
   useEffect(() => {
-    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (!officeReady) {
+        setOfficeError(
+          "Outlook did not finish initializing the MicroSECONDS add-in. Close the task pane, reopen the email, and try the add-in again."
+        );
+      }
+    }, 12000);
 
-    function ready() {
-      if (cancelled) return;
-      setOfficeReady(true);
-      refreshAuthState();
-      loadCurrentMessage();
+    return () => window.clearTimeout(timer);
+  }, [officeReady]);
+
+  function initializeOffice() {
+    try {
+      if (typeof Office === "undefined") {
+        setOfficeError("Microsoft Office.js did not load.");
+        return;
+      }
+
+      let completed = false;
+
+      const ready = () => {
+        if (completed) return;
+        completed = true;
+        setOfficeError("");
+        setOfficeReady(true);
+        refreshAuthState();
+        loadCurrentMessage();
+      };
+
+      // Current Office.js initialization path.
+      if (typeof Office.onReady === "function") {
+        Office.onReady(() => ready());
+      }
+
+      // Compatibility fallback for older/classic Outlook webviews.
+      Office.initialize = () => ready();
+
+      // Some clients already have a mailbox context by the time the script loads.
+      if (Office.context?.mailbox) {
+        window.setTimeout(ready, 0);
+      }
+    } catch (e: any) {
+      setOfficeError(e?.message || "Outlook could not initialize the MicroSECONDS add-in.");
     }
-
-    if (typeof Office !== "undefined") {
-      Office.onReady(ready);
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }
 
   async function signIn(event: FormEvent) {
     event.preventDefault();
@@ -266,14 +296,59 @@ export default function OutlookAddinPage() {
 
   if (!officeReady) {
     return (
-      <main className="min-h-screen bg-slate-950 p-5 text-slate-300">
-        Loading MicroSECONDS for Outlook...
-      </main>
+      <>
+        <Script
+          src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"
+          strategy="afterInteractive"
+          onLoad={initializeOffice}
+          onError={() =>
+            setOfficeError(
+              "Microsoft Office.js could not be loaded. Check that Outlook can reach appsforoffice.microsoft.com."
+            )
+          }
+        />
+
+        <main className="min-h-screen bg-slate-950 p-5 text-slate-300">
+          <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6">
+            <div className="text-sm font-semibold text-cyan-300">MicroSECONDS</div>
+            <h1 className="mt-1 text-2xl font-bold text-white">
+              Email Risk Analyzer
+            </h1>
+
+            {officeError ? (
+              <div className="mt-5 rounded-xl border border-red-400/25 bg-red-400/10 p-4 text-sm leading-6 text-red-200">
+                {officeError}
+              </div>
+            ) : (
+              <div className="mt-5 text-sm text-slate-400">
+                Connecting to Outlook...
+              </div>
+            )}
+
+            {officeError ? (
+              <button
+                type="button"
+                onClick={initializeOffice}
+                className="mt-5 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:border-cyan-400/40 hover:text-cyan-300"
+              >
+                Try Again
+              </button>
+            ) : null}
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 p-4 text-white">
+    <>
+      <Script
+        src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"
+        strategy="afterInteractive"
+        onLoad={initializeOffice}
+      />
+
+      <main className="min-h-screen bg-slate-950 p-4 text-white">
       <div className="mx-auto max-w-xl">
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
@@ -409,5 +484,6 @@ export default function OutlookAddinPage() {
         ) : null}
       </div>
     </main>
+    </>
   );
 }
