@@ -189,6 +189,25 @@ export default function TrainingPage() {
     );
   }
 
+  useEffect(() => {
+    // Automatically load signed preview URLs so each course card can display
+    // the video's paused opening frame instead of a separate Preview button.
+    courses.forEach((course) => {
+      const hasVideo = Boolean(course.video_key || course.video_url);
+      if (
+        hasVideo &&
+        !previewUrls[course.id] &&
+        !previewLoading[course.id] &&
+        !previewErrors[course.id]
+      ) {
+        loadPreview(course.id);
+      }
+    });
+    // Intentionally run when the course list changes. Preview state updates
+    // should not repeatedly re-request URLs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courses]);
+
   return (
     <main className="mx-auto max-w-7xl px-6 pt-6 pb-10">
       <div className="text-sm text-cyan-300">
@@ -205,7 +224,7 @@ export default function TrainingPage() {
 
       {!hasSubscriptionAccess ? (
         <div className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm text-amber-100">
-          Your subscription is inactive. You can still preview the first 20 seconds of each training video. {" "}
+          Your subscription is inactive. You can still preview the first 60 seconds of each training video. {" "}
           <Link href="/account#billing" className="font-semibold underline">Subscribe to unlock full videos.</Link>
         </div>
       ) : null}
@@ -245,8 +264,17 @@ export default function TrainingPage() {
                   {previewUrl ? (
                     <video
                       controls
-                      preload="metadata"
+                      playsInline
+                      preload="auto"
                       src={previewUrl}
+                      onLoadedMetadata={(event) => {
+                        // Nudge slightly into the file so browsers decode and
+                        // display the opening frame while the video remains paused.
+                        const video = event.currentTarget;
+                        if (video.currentTime === 0 && Number.isFinite(video.duration) && video.duration > 0.05) {
+                          video.currentTime = 0.05;
+                        }
+                      }}
                       onTimeUpdate={(event) => {
                         const limit = previewSeconds[course.id];
                         if (typeof limit === "number" && event.currentTarget.currentTime >= limit) {
@@ -273,22 +301,10 @@ export default function TrainingPage() {
                           }
                         </div>
                       ) : hasVideo ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            loadPreview(
-                              course.id
-                            )
-                          }
-                          disabled={
-                            loading
-                          }
-                          className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
-                        >
-                          {loading
-                            ? "Loading Video..."
-                            : "Preview Video"}
-                        </button>
+                        <div className="flex flex-col items-center gap-3 text-sm text-slate-400">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-cyan-300" />
+                          <div>{loading ? "Loading video preview..." : "Preparing video preview..."}</div>
+                        </div>
                       ) : (
                         <div className="text-sm text-slate-500">
                           No video has been configured for this course.
@@ -335,7 +351,7 @@ export default function TrainingPage() {
 
                   {previewUrl ? (
                     <div className="mt-4 text-xs text-slate-500">
-                      {previewSeconds[course.id] ? "20-second subscription preview — subscribe to watch the full course." : "Admin preview only — watching this video does not create or complete an employee assignment."}
+                      {previewSeconds[course.id] ? "60-second subscription preview — subscribe to watch the full course." : "Admin preview only — watching this video does not create or complete an employee assignment."}
                     </div>
                   ) : null}
                 </div>
