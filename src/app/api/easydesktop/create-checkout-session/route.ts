@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!secretKey.startsWith("sk_live_")) {
+    if (!(secretKey.startsWith("sk_live_") || secretKey.startsWith("rk_live_"))) {
       return NextResponse.json(
         { error: "EasyDesktop checkout is not configured with a live Stripe key." },
         { status: 500 }

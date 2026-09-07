@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     process.env.EASYDESKTOP_STRIPE_LIVE_WEBHOOK_SECRET || ""
   ).trim();
 
-  if (!secretKey || !secretKey.startsWith("sk_live_")) {
+  if (!secretKey || !(secretKey.startsWith("sk_live_") || secretKey.startsWith("rk_live_"))) {
     return NextResponse.json(
       { error: "EasyDesktop live Stripe secret key is not configured." },
       { status: 500 }
