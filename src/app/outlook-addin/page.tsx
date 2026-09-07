@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/client";
 
 declare const Office: any;
 
+type SubscriptionNotice = {
+  role?: string;
+  message: string;
+  manageUrl?: string | null;
+};
+
 type Analysis = {
   score: number;
   level: string;
@@ -13,11 +19,6 @@ type Analysis = {
   findings: string[];
   recommendations: string[];
   technical_note?: string;
-  technical_checks?: Array<{
-    label: string;
-    status: "pass" | "warning" | "danger" | "info";
-    detail: string;
-  }>;
 };
 
 function addressText(value: any): string {
@@ -59,30 +60,9 @@ export default function OutlookAddinPage() {
   const [mfaCode, setMfaCode] = useState("");
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [subscriptionNotice, setSubscriptionNotice] = useState<SubscriptionNotice | null>(null);
   const [busy, setBusy] = useState(false);
-  const [analysisRunning, setAnalysisRunning] = useState(false);
-  const [analysisStage, setAnalysisStage] = useState(0);
   const [error, setError] = useState("");
-
-  const analysisSteps = [
-    "Reading email",
-    "Checking headers",
-    "Verifying sender",
-    "Checking DNS",
-    "Analyzing links",
-    "Checking attachments",
-    "Running AI analysis",
-    "Calculating score",
-  ];
-
-  useEffect(() => {
-    if (!analysisRunning) return;
-    setAnalysisStage(0);
-    const timer = window.setInterval(() => {
-      setAnalysisStage((current) => Math.min(current + 1, analysisSteps.length - 1));
-    }, 800);
-    return () => window.clearInterval(timer);
-  }, [analysisRunning]);
 
   const scoreTone = useMemo(() => {
     if (!analysis) return "";
@@ -286,9 +266,9 @@ export default function OutlookAddinPage() {
 
   async function analyze() {
     setBusy(true);
-    setAnalysisRunning(true);
     setError("");
     setAnalysis(null);
+    setSubscriptionNotice(null);
 
     try {
       const supabase = createClient();
@@ -306,11 +286,23 @@ export default function OutlookAddinPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ emailText: messageText, source: "outlook" }),
+        body: JSON.stringify({ emailText: messageText }),
       });
 
       const result = await response.json();
+
       if (!response.ok) {
+        if (result?.code === "subscription_required") {
+          setSubscriptionNotice({
+            role: result.role,
+            message:
+              result.message ||
+              "Your organization's MicroSECONDS subscription is no longer active.",
+            manageUrl: result.manage_url || null,
+          });
+          return;
+        }
+
         throw new Error(result.error || "Could not analyze this message.");
       }
 
@@ -319,7 +311,6 @@ export default function OutlookAddinPage() {
       setError(e?.message || "Could not analyze this message.");
     } finally {
       setBusy(false);
-      setAnalysisRunning(false);
     }
   }
 
@@ -472,44 +463,33 @@ export default function OutlookAddinPage() {
           )}
 
 
-          {analysisRunning ? (
-            <div className="mt-5 rounded-xl border border-cyan-400/20 bg-slate-950 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-white">Security analysis in progress</div>
-                <div className="text-xs font-semibold text-cyan-300">
-                  {Math.min(95, Math.round(((analysisStage + 1) / analysisSteps.length) * 100))}%
+          {subscriptionNotice ? (
+            <div className="mt-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
+                Subscription Required
+              </div>
+              <div className="mt-2 text-lg font-bold text-white">
+                Email Risk Analyzer is unavailable
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                {subscriptionNotice.message}
+              </p>
+
+              {subscriptionNotice.manageUrl &&
+              (subscriptionNotice.role === "owner" || subscriptionNotice.role === "admin") ? (
+                <a
+                  href={subscriptionNotice.manageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+                >
+                  Manage Subscription
+                </a>
+              ) : (
+                <div className="mt-3 text-xs leading-5 text-slate-400">
+                  Contact your organization&apos;s MicroSECONDS owner or administrator to restore access.
                 </div>
-              </div>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-900">
-                <div
-                  className="h-full rounded-full bg-cyan-400 transition-all duration-700"
-                  style={{ width: `${Math.min(95, ((analysisStage + 1) / analysisSteps.length) * 100)}%` }}
-                />
-              </div>
-              <div className="mt-3 space-y-1">
-                {analysisSteps.map((step, index) => {
-                  const complete = index < analysisStage;
-                  const active = index === analysisStage;
-                  return (
-                    <div key={step} className="flex items-center gap-2 py-1 text-xs">
-                      <span
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                          complete
-                            ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-300"
-                            : active
-                            ? "border-cyan-400/40 text-cyan-300"
-                            : "border-white/10 text-slate-600"
-                        }`}
-                      >
-                        {complete ? "✓" : active ? <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" /> : "·"}
-                      </span>
-                      <span className={active ? "text-cyan-100" : complete ? "text-slate-300" : "text-slate-600"}>
-                        {step}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              )}
             </div>
           ) : null}
 
@@ -544,32 +524,6 @@ export default function OutlookAddinPage() {
                 ))}
               </ul>
             </div>
-
-
-            {analysis.technical_checks?.length ? (
-              <div className="mt-5">
-                <div className="text-sm font-semibold">Technical checks</div>
-                <div className="mt-2 space-y-2">
-                  {analysis.technical_checks.slice(0, 10).map((check, index) => (
-                    <div
-                      key={`${check.label}-${index}`}
-                      className={`rounded-lg border p-3 text-xs leading-5 ${
-                        check.status === "danger"
-                          ? "border-red-400/25 bg-red-400/10 text-red-100"
-                          : check.status === "warning"
-                          ? "border-amber-400/25 bg-amber-400/10 text-amber-100"
-                          : check.status === "pass"
-                          ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-100"
-                          : "border-white/10 bg-slate-950 text-slate-400"
-                      }`}
-                    >
-                      <div className="font-semibold">{check.label}</div>
-                      <div className="mt-0.5 opacity-80">{check.detail}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
 
             <div className="mt-5">
               <div className="text-sm font-semibold">Recommended action</div>

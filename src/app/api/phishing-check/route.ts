@@ -471,10 +471,19 @@ async function authorize(request: NextRequest) {
     company?.subscription_status === "trialing";
 
   if (!active) {
+    const role = String((membership as any).role || "employee");
+    const isOwner = role === "owner" || role === "admin";
+
     return {
       ok: false as const,
       status: 403,
-      error: "Email Risk Analyzer requires an active MicroSECONDS subscription.",
+      error: "MicroSECONDS Subscription Required",
+      code: "subscription_required",
+      role,
+      message: isOwner
+        ? "Your organization's MicroSECONDS subscription is no longer active. Reactivate the subscription to continue using Email Risk Analyzer."
+        : "Your organization's MicroSECONDS subscription is no longer active. Please contact your organization's MicroSECONDS administrator.",
+      manage_url: isOwner ? "https://microseconds.com/account" : null,
     };
   }
 

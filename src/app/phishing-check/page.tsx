@@ -3,6 +3,12 @@
 import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+type SubscriptionNotice = {
+  role?: string;
+  message: string;
+  manageUrl?: string | null;
+};
+
 type Analysis = {
   score: number;
   level: "LOW RISK" | "CAUTION" | "SUSPICIOUS" | "HIGH RISK";
@@ -26,6 +32,7 @@ export default function PhishingCheckPage() {
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState("");
   const [analysisStage, setAnalysisStage] = useState(0);
+  const [subscriptionNotice, setSubscriptionNotice] = useState<SubscriptionNotice | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const analysisSteps = [
@@ -101,6 +108,7 @@ export default function PhishingCheckPage() {
     setBusy(true);
     setError("");
     setAnalysis(null);
+    setSubscriptionNotice(null);
 
     try {
       const supabase = createClient();
@@ -118,7 +126,22 @@ export default function PhishingCheckPage() {
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not analyze this email.");
+
+      if (!response.ok) {
+        if (result?.code === "subscription_required") {
+          setSubscriptionNotice({
+            role: result.role,
+            message:
+              result.message ||
+              "Your organization's MicroSECONDS subscription is no longer active.",
+            manageUrl: result.manage_url || null,
+          });
+          return;
+        }
+
+        throw new Error(result.error || "Could not analyze this email.");
+      }
+
       setAnalysis(result.analysis);
     } catch (e: any) {
       setError(e?.message || "Could not analyze this email.");
@@ -268,6 +291,35 @@ export default function PhishingCheckPage() {
               );
             })}
           </div>
+        </section>
+      ) : null}
+
+
+      {subscriptionNotice ? (
+        <section className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
+            Subscription Required
+          </div>
+          <h2 className="mt-2 text-2xl font-bold text-white">
+            Email Risk Analyzer Requires an Active Subscription
+          </h2>
+          <p className="mt-3 max-w-3xl leading-7 text-slate-300">
+            {subscriptionNotice.message}
+          </p>
+
+          {subscriptionNotice.manageUrl &&
+          (subscriptionNotice.role === "owner" || subscriptionNotice.role === "admin") ? (
+            <a
+              href={subscriptionNotice.manageUrl}
+              className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+            >
+              Manage Subscription
+            </a>
+          ) : (
+            <div className="mt-4 text-sm text-slate-400">
+              Please contact your organization&apos;s MicroSECONDS owner or administrator to restore access.
+            </div>
+          )}
         </section>
       ) : null}
 
