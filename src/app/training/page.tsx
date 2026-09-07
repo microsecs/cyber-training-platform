@@ -268,11 +268,26 @@ export default function TrainingPage() {
                       preload="auto"
                       src={previewUrl}
                       onLoadedMetadata={(event) => {
-                        // Nudge slightly into the file so browsers decode and
-                        // display the opening frame while the video remains paused.
+                        // Show the frame around 6 seconds as the resting thumbnail.
+                        // The first time the user presses Play, playback is reset
+                        // to the beginning of the video.
                         const video = event.currentTarget;
-                        if (video.currentTime === 0 && Number.isFinite(video.duration) && video.duration > 0.05) {
-                          video.currentTime = 0.05;
+                        video.dataset.previewStarted = "0";
+
+                        if (Number.isFinite(video.duration) && video.duration > 0.1) {
+                          const thumbnailTime = Math.min(
+                            6,
+                            Math.max(0.05, video.duration - 0.1)
+                          );
+                          video.currentTime = thumbnailTime;
+                        }
+                      }}
+                      onPlay={(event) => {
+                        const video = event.currentTarget;
+
+                        if (video.dataset.previewStarted !== "1") {
+                          video.dataset.previewStarted = "1";
+                          video.currentTime = 0;
                         }
                       }}
                       onTimeUpdate={(event) => {
