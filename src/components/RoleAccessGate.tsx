@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppRole, defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
+import { createClient } from "@/lib/supabase/client";
 
 function isPublicPath(pathname: string) {
   return (
@@ -79,6 +80,26 @@ export default function RoleAccessGate({ children }: { children: ReactNode }) {
         return;
       }
 
+      // MFA is optional to enroll, but once a verified factor exists,
+      // require it for the current login session.
+      if (pathname !== "/mfa" && pathname !== "/mfa/setup") {
+        const supabase = createClient();
+
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const verifiedFactor = factors?.totp?.find(
+          (item: any) => item.status === "verified"
+        );
+
+        if (verifiedFactor) {
+          const { data: aal } =
+            await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+          if (aal?.currentLevel !== "aal2") {
+            router.replace(`/mfa?returnTo=${encodeURIComponent(pathname)}`);
+            return;
+          }
+        }
+      }
 
       setReady(true);
     }

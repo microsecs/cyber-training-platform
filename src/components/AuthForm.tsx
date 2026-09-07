@@ -46,6 +46,23 @@ export default function AuthForm() {
 
     const access = await resolveUserAccess();
 
+    const { data: factorData } = await supabase.auth.mfa.listFactors();
+    const verifiedFactor = factorData?.totp?.find(
+      (item: any) => item.status === "verified"
+    );
+
+    if (verifiedFactor) {
+      const { data: aalData } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+      if (aalData?.currentLevel !== "aal2") {
+        window.location.href = `/mfa?returnTo=${encodeURIComponent(
+          defaultPathForRole(access.role)
+        )}`;
+        return;
+      }
+    }
+
     window.location.href = defaultPathForRole(access.role);
   }
 
