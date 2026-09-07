@@ -87,7 +87,7 @@ export default function SiteNav() {
           </div>
         </Link>
 
-        {!loading ? (
+        {!isGmailConnect && !loading ? (
           <nav className="hidden items-center gap-5 text-sm text-slate-300 lg:flex">
             {links.map((link) => (
               <Link
