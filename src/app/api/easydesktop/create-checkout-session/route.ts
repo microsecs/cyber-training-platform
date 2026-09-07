@@ -4,6 +4,25 @@ import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
+function normalizeSecret(value: string | undefined) {
+  return String(value || "")
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .trim();
+}
+
+function keyType(value: string) {
+  if (!value) return "missing";
+  if (value.startsWith("sk_live_")) return "sk_live";
+  if (value.startsWith("rk_live_")) return "rk_live";
+  if (value.startsWith("pk_live_")) return "pk_live";
+  if (value.startsWith("sk_test_")) return "sk_test";
+  if (value.startsWith("rk_test_")) return "rk_test";
+  if (value.startsWith("pk_test_")) return "pk_test";
+  return "unrecognized";
+}
+
+
 export async function GET(request: NextRequest) {
   try {
     const admin = createAdminClient();
@@ -31,9 +50,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const secretKey = String(
-      process.env.EASYDESKTOP_STRIPE_LIVE_SECRET_KEY || ""
-    ).trim();
+    const secretKey = normalizeSecret(
+      process.env.EASYDESKTOP_STRIPE_LIVE_SECRET_KEY
+    );
 
     if (!secretKey) {
       return NextResponse.json(
@@ -43,8 +62,22 @@ export async function GET(request: NextRequest) {
     }
 
     if (!(secretKey.startsWith("sk_live_") || secretKey.startsWith("rk_live_"))) {
+      const detected = keyType(secretKey);
+      const hint =
+        detected === "pk_live"
+          ? "A Stripe publishable key was entered. Use the live Secret key instead."
+          : detected.includes("test")
+          ? "A Stripe test/sandbox key is configured. Use a live Secret key instead."
+          : detected === "missing"
+          ? "The Vercel Production environment variable is missing or was not loaded by this deployment."
+          : "The configured value is not a recognized Stripe live Secret key.";
+
       return NextResponse.json(
-        { error: "EasyDesktop checkout is not configured with a live Stripe key." },
+        {
+          error: "EasyDesktop checkout is not configured with a live Stripe key.",
+          detected_key_type: detected,
+          hint,
+        },
         { status: 500 }
       );
     }
