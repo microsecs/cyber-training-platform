@@ -68,11 +68,14 @@ export default function SiteNav() {
         ]
       : [];
 
-  const links = role === "guest" ? publicLinks : roleLinks;
+  const links =
+    role === "guest"
+      ? publicLinks
+      : [...roleLinks, { href: "/support", label: "Support" }];
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="group min-w-0 shrink" aria-label="MicroSECONDS Training home">
           <Image
             src="/microseconds-logo.png"
@@ -80,7 +83,7 @@ export default function SiteNav() {
             width={835}
             height={109}
             priority
-            className="h-7 w-auto max-w-[150px] object-contain sm:h-8 sm:max-w-[210px] lg:h-8 lg:max-w-[220px] xl:h-9 xl:max-w-[250px]"
+            className="h-7 w-auto max-w-[150px] object-contain sm:h-8 sm:max-w-[210px] lg:h-8 lg:max-w-[220px] xl:h-9 xl:max-w-[240px]"
           />
           <div className="mt-1 hidden text-xs font-medium tracking-wide text-slate-400 sm:block lg:text-sm">
             Employee Security Training
@@ -88,7 +91,7 @@ export default function SiteNav() {
         </Link>
 
         {!isGmailConnect && !loading ? (
-          <nav className="hidden min-w-0 items-center gap-3 whitespace-nowrap text-xs text-slate-300 lg:flex xl:gap-5 xl:text-sm">
+          <nav className="hidden min-w-0 items-center gap-3 whitespace-nowrap text-xs text-slate-300 lg:flex xl:gap-4 xl:text-sm">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -106,25 +109,6 @@ export default function SiteNav() {
         ) : null}
 
         <div className="flex shrink-0 items-center gap-2">
-          {!isGmailConnect && !loading && role !== "guest" ? (
-            <details className="group relative hidden xl:block">
-              <summary className="cursor-pointer list-none rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-cyan-300">
-                More
-              </summary>
-              <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950 p-2 shadow-2xl">
-                {publicLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-cyan-300"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </details>
-          ) : null}
-
           {!loading && role !== "guest" ? (
             <>
               {!isGmailConnect ? (
