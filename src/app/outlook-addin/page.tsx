@@ -62,7 +62,34 @@ export default function OutlookAddinPage() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [subscriptionNotice, setSubscriptionNotice] = useState<SubscriptionNotice | null>(null);
   const [busy, setBusy] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStage, setAnalysisStage] = useState(0);
   const [error, setError] = useState("");
+
+  const analysisSteps = [
+    "Reading email content",
+    "Checking email headers",
+    "Verifying sender information",
+    "Checking DNS records",
+    "Analyzing links and domains",
+    "Checking attachments",
+    "Running AI analysis",
+    "Calculating risk score",
+    "Generating recommendations",
+  ];
+
+  useEffect(() => {
+    if (!isAnalyzing) return;
+
+    setAnalysisStage(0);
+    const timer = window.setInterval(() => {
+      setAnalysisStage((current) =>
+        Math.min(current + 1, analysisSteps.length - 1)
+      );
+    }, 850);
+
+    return () => window.clearInterval(timer);
+  }, [isAnalyzing]);
 
   const scoreTone = useMemo(() => {
     if (!analysis) return "";
@@ -266,6 +293,7 @@ export default function OutlookAddinPage() {
 
   async function analyze() {
     setBusy(true);
+    setIsAnalyzing(true);
     setError("");
     setAnalysis(null);
     setSubscriptionNotice(null);
@@ -310,6 +338,7 @@ export default function OutlookAddinPage() {
     } catch (e: any) {
       setError(e?.message || "Could not analyze this message.");
     } finally {
+      setIsAnalyzing(false);
       setBusy(false);
     }
   }
@@ -461,6 +490,90 @@ export default function OutlookAddinPage() {
               {busy ? "Analyzing..." : "Analyze with MicroSECONDS"}
             </button>
           )}
+
+          {isAnalyzing ? (
+            <section className="mt-5 overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950">
+              <div className="border-b border-white/10 bg-cyan-400/[0.06] px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">
+                      Analyzing this email...
+                    </div>
+                    <div className="mt-1 text-[11px] leading-4 text-slate-400">
+                      Running security checks and AI analysis.
+                    </div>
+                  </div>
+                  <div className="text-xs font-semibold text-cyan-300">
+                    {Math.min(
+                      95,
+                      Math.round(
+                        ((analysisStage + 1) / analysisSteps.length) * 100
+                      )
+                    )}
+                    %
+                  </div>
+                </div>
+
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-900">
+                  <div
+                    className="h-full rounded-full bg-cyan-400 transition-all duration-700"
+                    style={{
+                      width: `${Math.min(
+                        95,
+                        ((analysisStage + 1) / analysisSteps.length) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="p-3">
+                {analysisSteps.map((step, index) => {
+                  const complete = index < analysisStage;
+                  const active = index === analysisStage;
+
+                  return (
+                    <div
+                      key={step}
+                      className={`flex items-center gap-2 rounded-lg px-2 py-2 text-xs ${
+                        active
+                          ? "bg-cyan-400/10 text-cyan-100"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                          complete
+                            ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-300"
+                            : active
+                            ? "border-cyan-400/40 text-cyan-300"
+                            : "border-white/10 text-slate-600"
+                        }`}
+                      >
+                        {complete ? (
+                          <span className="text-[10px] font-bold">✓</span>
+                        ) : active ? (
+                          <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+                        ) : (
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-700" />
+                        )}
+                      </div>
+
+                      <span className="min-w-0 flex-1">{step}</span>
+
+                      {complete ? (
+                        <span className="text-[10px] text-emerald-400">Complete</span>
+                      ) : null}
+
+                      {active ? (
+                        <span className="text-[10px] text-cyan-300">Checking...</span>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
 
 
           {subscriptionNotice ? (
