@@ -95,12 +95,15 @@ export default function PlatformAdminPage() {
           </p>
         </Link>
 
-        <div className="rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <Link
+          href="/platform-admin/companies"
+          className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40"
+        >
           <div className="text-xl font-semibold">Customer Companies</div>
           <p className="mt-2 text-sm text-slate-400">
-            Company management will be added here next.
+            Review subscriptions, employee invitations, active employees, and delete company accounts.
           </p>
-        </div>
+        </Link>
       </div>
     </main>
   );
