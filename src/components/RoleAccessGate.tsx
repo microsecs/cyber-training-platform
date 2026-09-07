@@ -3,7 +3,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppRole, defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
-import { createClient } from "@/lib/supabase/client";
 
 function isPublicPath(pathname: string) {
   return (
@@ -16,10 +15,9 @@ function isPublicPath(pathname: string) {
     pathname === "/privacy" ||
     pathname === "/terms" ||
     pathname === "/support" ||
-    pathname === "/outlook-addin" ||
-    pathname === "/gmail-addin/connect" ||
     pathname === "/consulting" ||
     pathname === "/easydesktop" ||
+    pathname === "/gmail-addin/connect" ||
     pathname.startsWith("/easydesktop/")
   );
 }
@@ -81,23 +79,6 @@ export default function RoleAccessGate({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Don't redirect while the user is already completing MFA.
-      if (pathname !== "/mfa" && pathname !== "/mfa/setup") {
-        const supabase = createClient();
-
-        const { data: factors } = await supabase.auth.mfa.listFactors();
-        const verifiedFactor = factors?.totp?.find(
-          (item: any) => item.status === "verified"
-        );
-
-        const { data: aal } =
-          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-
-        if (verifiedFactor && aal?.currentLevel !== "aal2") {
-          router.replace(`/mfa?returnTo=${encodeURIComponent(pathname)}`);
-          return;
-        }
-      }
 
       setReady(true);
     }
