@@ -10,6 +10,8 @@ import { AppRole, resolveUserAccess } from "@/lib/supabase/access";
 export default function SiteNav() {
   const pathname = usePathname();
   const isGmailConnect = pathname === "/gmail-addin/connect" || pathname.startsWith("/gmail-addin/connect/");
+  const isOutlookAddin = pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
+  const isMinimalChrome = isGmailConnect || isOutlookAddin;
   const [role, setRole] = useState<AppRole>("guest");
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,7 @@ export default function SiteNav() {
   async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = "/login";
+    window.location.href = isOutlookAddin ? "/outlook-addin" : "/login";
   }
 
   const publicLinks = [
@@ -90,7 +92,7 @@ export default function SiteNav() {
           </div>
         </Link>
 
-        {!isGmailConnect && !loading ? (
+        {!isMinimalChrome && !loading ? (
           <nav className="hidden min-w-0 items-center gap-3 whitespace-nowrap text-xs text-slate-300 lg:flex xl:gap-4 xl:text-sm">
             {links.map((link) => (
               <Link
@@ -111,7 +113,7 @@ export default function SiteNav() {
         <div className="flex shrink-0 items-center gap-2">
           {!loading && role !== "guest" ? (
             <>
-              {!isGmailConnect ? (
+              {!isMinimalChrome ? (
                 <Link
                   href="/account"
                   className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
@@ -132,7 +134,7 @@ export default function SiteNav() {
 
           {!loading && role === "guest" ? (
             <Link
-              href="/login"
+              href={isOutlookAddin ? "/login?next=/outlook-addin" : "/login"}
               className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
             >
               Sign In

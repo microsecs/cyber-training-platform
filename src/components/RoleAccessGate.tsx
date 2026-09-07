@@ -19,6 +19,8 @@ function isPublicPath(pathname: string) {
     pathname === "/consulting" ||
     pathname === "/easydesktop" ||
     pathname === "/gmail-addin/connect" ||
+    pathname === "/outlook-addin" ||
+    pathname.startsWith("/outlook-addin/") ||
     pathname.startsWith("/easydesktop/")
   );
 }

@@ -46,6 +46,18 @@ export default function AuthForm() {
 
     const access = await resolveUserAccess();
 
+    const requestedNext =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+
+    const safeNext =
+      requestedNext &&
+      requestedNext.startsWith("/") &&
+      !requestedNext.startsWith("//")
+        ? requestedNext
+        : defaultPathForRole(access.role);
+
     const { data: factorData } = await supabase.auth.mfa.listFactors();
     const verifiedFactor = factorData?.totp?.find(
       (item: any) => item.status === "verified"
@@ -56,14 +68,12 @@ export default function AuthForm() {
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
       if (aalData?.currentLevel !== "aal2") {
-        window.location.href = `/mfa?returnTo=${encodeURIComponent(
-          defaultPathForRole(access.role)
-        )}`;
+        window.location.href = `/mfa?returnTo=${encodeURIComponent(safeNext)}`;
         return;
       }
     }
 
-    window.location.href = defaultPathForRole(access.role);
+    window.location.href = safeNext;
   }
 
   return (
