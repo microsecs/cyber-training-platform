@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStripe } from "@/lib/stripe";
+import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
@@ -17,9 +17,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Production EasyDesktop checkout uses its own live Price ID.
+    // The environment variable deliberately takes precedence over the older
+    // database setting so a stale sandbox Price ID cannot override production.
     const priceId =
-      String(settings?.stripe_price_id || "").trim() ||
-      String(process.env.STRIPE_EASYDESKTOP_PRICE_ID || "").trim();
+      String(process.env.EASYDESKTOP_STRIPE_LIVE_PRICE_ID || "").trim() ||
+      String(settings?.stripe_price_id || "").trim();
 
     if (!priceId) {
       return NextResponse.json(
@@ -28,7 +31,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const stripe = getStripe();
+    const secretKey = String(
+      process.env.EASYDESKTOP_STRIPE_LIVE_SECRET_KEY || ""
+    ).trim();
+
+    if (!secretKey) {
+      return NextResponse.json(
+        { error: "EasyDesktop live Stripe secret key is not configured." },
+        { status: 500 }
+      );
+    }
+
+    if (!secretKey.startsWith("sk_live_")) {
+      return NextResponse.json(
+        { error: "EasyDesktop checkout is not configured with a live Stripe key." },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(secretKey);
     const origin = request.nextUrl.origin;
 
     const session = await stripe.checkout.sessions.create({
