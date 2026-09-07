@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveTxt } from "dns/promises";
+import { createHash } from "crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -361,6 +362,59 @@ async function technicalAnalysis(emailText: string) {
 }
 
 async function authorize(request: NextRequest) {
+  const gmailToken = request.headers.get("x-microseconds-gmail-token");
+
+  if (gmailToken) {
+    const admin = createAdminClient();
+    const tokenHash = createHash("sha256").update(gmailToken).digest("hex");
+
+    const { data: connection } = await admin
+      .from("gmail_addon_connections")
+      .select("id,user_id,company_id,role,revoked_at")
+      .eq("token_hash", tokenHash)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (!connection) {
+      return { ok: false as const, status: 401, error: "Reconnect the MicroSECONDS Gmail add-on." };
+    }
+
+    if ((connection as any).role !== "platform_admin" && (connection as any).company_id) {
+      const { data: company } = await admin
+        .from("companies")
+        .select("subscription_status,billing_exempt")
+        .eq("id", (connection as any).company_id)
+        .maybeSingle();
+
+      const active =
+        (company as any)?.billing_exempt === true ||
+        (company as any)?.subscription_status === "active" ||
+        (company as any)?.subscription_status === "trialing";
+
+      if (!active) {
+        return {
+          ok: false as const,
+          status: 403,
+          error: "Email Risk Analyzer requires an active MicroSECONDS subscription.",
+        };
+      }
+    }
+
+    await admin
+      .from("gmail_addon_connections")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("id", (connection as any).id);
+
+    return {
+      ok: true as const,
+      userId: String((connection as any).user_id),
+      role: String((connection as any).role),
+      companyId: (connection as any).company_id
+        ? String((connection as any).company_id)
+        : undefined,
+    };
+  }
+
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return { ok: false as const, status: 401, error: "Please sign in." };
 
