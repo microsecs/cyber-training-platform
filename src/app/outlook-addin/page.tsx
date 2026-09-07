@@ -60,7 +60,29 @@ export default function OutlookAddinPage() {
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [busy, setBusy] = useState(false);
+  const [analysisRunning, setAnalysisRunning] = useState(false);
+  const [analysisStage, setAnalysisStage] = useState(0);
   const [error, setError] = useState("");
+
+  const analysisSteps = [
+    "Reading email",
+    "Checking headers",
+    "Verifying sender",
+    "Checking DNS",
+    "Analyzing links",
+    "Checking attachments",
+    "Running AI analysis",
+    "Calculating score",
+  ];
+
+  useEffect(() => {
+    if (!analysisRunning) return;
+    setAnalysisStage(0);
+    const timer = window.setInterval(() => {
+      setAnalysisStage((current) => Math.min(current + 1, analysisSteps.length - 1));
+    }, 800);
+    return () => window.clearInterval(timer);
+  }, [analysisRunning]);
 
   const scoreTone = useMemo(() => {
     if (!analysis) return "";
@@ -264,6 +286,7 @@ export default function OutlookAddinPage() {
 
   async function analyze() {
     setBusy(true);
+    setAnalysisRunning(true);
     setError("");
     setAnalysis(null);
 
@@ -283,7 +306,7 @@ export default function OutlookAddinPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ emailText: messageText }),
+        body: JSON.stringify({ emailText: messageText, source: "outlook" }),
       });
 
       const result = await response.json();
@@ -296,6 +319,7 @@ export default function OutlookAddinPage() {
       setError(e?.message || "Could not analyze this message.");
     } finally {
       setBusy(false);
+      setAnalysisRunning(false);
     }
   }
 
@@ -446,6 +470,48 @@ export default function OutlookAddinPage() {
               {busy ? "Analyzing..." : "Analyze with MicroSECONDS"}
             </button>
           )}
+
+
+          {analysisRunning ? (
+            <div className="mt-5 rounded-xl border border-cyan-400/20 bg-slate-950 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white">Security analysis in progress</div>
+                <div className="text-xs font-semibold text-cyan-300">
+                  {Math.min(95, Math.round(((analysisStage + 1) / analysisSteps.length) * 100))}%
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-900">
+                <div
+                  className="h-full rounded-full bg-cyan-400 transition-all duration-700"
+                  style={{ width: `${Math.min(95, ((analysisStage + 1) / analysisSteps.length) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-3 space-y-1">
+                {analysisSteps.map((step, index) => {
+                  const complete = index < analysisStage;
+                  const active = index === analysisStage;
+                  return (
+                    <div key={step} className="flex items-center gap-2 py-1 text-xs">
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                          complete
+                            ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-300"
+                            : active
+                            ? "border-cyan-400/40 text-cyan-300"
+                            : "border-white/10 text-slate-600"
+                        }`}
+                      >
+                        {complete ? "✓" : active ? <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" /> : "·"}
+                      </span>
+                      <span className={active ? "text-cyan-100" : complete ? "text-slate-300" : "text-slate-600"}>
+                        {step}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
 
           {error ? (
             <div className="mt-4 rounded-lg border border-red-400/25 bg-red-400/10 p-3 text-sm text-red-200">

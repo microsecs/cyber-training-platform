@@ -416,7 +416,88 @@ async function authorize(request: NextRequest) {
     };
   }
 
-  return { ok: true as const, userId: user.id, role: membership.role };
+  return {
+    ok: true as const,
+    userId: user.id,
+    role: membership.role,
+    companyId: (membership as any).company_id as string,
+  };
+}
+
+
+async function checkAndRecordUsage(
+  access: { userId: string; role: string; companyId?: string },
+  source: string
+) {
+  const admin = createAdminClient();
+
+  if (access.role === "platform_admin") {
+    await admin.from("email_analyzer_usage").insert({
+      user_id: access.userId,
+      company_id: null,
+      source,
+    });
+    return { ok: true as const };
+  }
+
+  const { data: settings } = await admin
+    .from("email_analyzer_settings")
+    .select("limits_enabled,company_daily_limit,user_hourly_limit")
+    .eq("id", 1)
+    .maybeSingle();
+
+  const limitsEnabled = settings?.limits_enabled !== false;
+  const companyDailyLimit = Number(settings?.company_daily_limit || 100);
+  const userHourlyLimit = Number(settings?.user_hourly_limit || 20);
+
+  if (limitsEnabled) {
+    const now = new Date();
+    const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const { count: userHourCount } = await admin
+      .from("email_analyzer_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", access.userId)
+      .gte("created_at", hourAgo.toISOString());
+
+    if ((userHourCount || 0) >= userHourlyLimit) {
+      return {
+        ok: false as const,
+        status: 429,
+        error: `You have reached the Email Risk Analyzer hourly limit (${userHourlyLimit}). Please try again later.`,
+      };
+    }
+
+    if (access.companyId) {
+      const { count: companyDayCount } = await admin
+        .from("email_analyzer_usage")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", access.companyId)
+        .gte("created_at", dayStart.toISOString());
+
+      if ((companyDayCount || 0) >= companyDailyLimit) {
+        return {
+          ok: false as const,
+          status: 429,
+          error: `Your organization has reached today's Email Risk Analyzer limit (${companyDailyLimit}).`,
+        };
+      }
+    }
+  }
+
+  const { error } = await admin.from("email_analyzer_usage").insert({
+    user_id: access.userId,
+    company_id: access.companyId || null,
+    source,
+  });
+
+  if (error) {
+    console.error("Could not record Email Risk Analyzer usage", error);
+  }
+
+  return { ok: true as const };
 }
 
 export async function POST(request: NextRequest) {
@@ -434,6 +515,12 @@ export async function POST(request: NextRequest) {
     }
     if (emailText.length > 50000) {
       return NextResponse.json({ error: "Email text is limited to 50,000 characters." }, { status: 400 });
+    }
+
+    const source = String(body?.source || "web").slice(0, 32);
+    const usage = await checkAndRecordUsage(access as any, source);
+    if (!usage.ok) {
+      return NextResponse.json({ error: usage.error }, { status: usage.status });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;

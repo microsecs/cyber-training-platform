@@ -1,6 +1,6 @@
 "use client";
 
-import { DragEvent, FormEvent, useRef, useState } from "react";
+import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Analysis = {
@@ -25,7 +25,29 @@ export default function PhishingCheckPage() {
   const [fileBusy, setFileBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [analysisStage, setAnalysisStage] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const analysisSteps = [
+    "Reading email content",
+    "Checking email headers",
+    "Verifying sender information",
+    "Checking DNS records",
+    "Analyzing links and domains",
+    "Checking attachments",
+    "Running AI analysis",
+    "Calculating risk score",
+    "Generating recommendations",
+  ];
+
+  useEffect(() => {
+    if (!busy) return;
+    setAnalysisStage(0);
+    const timer = window.setInterval(() => {
+      setAnalysisStage((current) => Math.min(current + 1, analysisSteps.length - 1));
+    }, 850);
+    return () => window.clearInterval(timer);
+  }, [busy]);
 
   async function getToken() {
     const supabase = createClient();
@@ -92,7 +114,7 @@ export default function PhishingCheckPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ emailText }),
+        body: JSON.stringify({ emailText, source: "web" }),
       });
 
       const result = await response.json();
@@ -187,6 +209,67 @@ export default function PhishingCheckPage() {
         </div>
         </form>
       </section>
+
+
+      {busy ? (
+        <section className="mt-6 overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-900">
+          <div className="border-b border-white/10 bg-cyan-400/[0.06] px-5 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="font-semibold text-white">Analyzing your email...</div>
+                <div className="mt-1 text-xs text-slate-400">
+                  Running security checks and AI analysis.
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-cyan-300">
+                {Math.min(95, Math.round(((analysisStage + 1) / analysisSteps.length) * 100))}%
+              </div>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-950">
+              <div
+                className="h-full rounded-full bg-cyan-400 transition-all duration-700"
+                style={{ width: `${Math.min(95, ((analysisStage + 1) / analysisSteps.length) * 100)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-1 p-4 md:grid-cols-2">
+            {analysisSteps.map((step, index) => {
+              const complete = index < analysisStage;
+              const active = index === analysisStage;
+              return (
+                <div
+                  key={step}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${
+                    active ? "bg-cyan-400/10 text-cyan-100" : "text-slate-400"
+                  }`}
+                >
+                  <div
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                      complete
+                        ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-300"
+                        : active
+                        ? "border-cyan-400/40 text-cyan-300"
+                        : "border-white/10 text-slate-600"
+                    }`}
+                  >
+                    {complete ? (
+                      <span className="text-xs font-bold">✓</span>
+                    ) : active ? (
+                      <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
+                    ) : (
+                      <span className="h-2 w-2 rounded-full bg-slate-700" />
+                    )}
+                  </div>
+                  <span>{step}</span>
+                  {complete ? <span className="ml-auto text-xs text-emerald-400">Complete</span> : null}
+                  {active ? <span className="ml-auto text-xs text-cyan-300">Checking...</span> : null}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {error ? (
         <div className="mt-6 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-red-200">{error}</div>
