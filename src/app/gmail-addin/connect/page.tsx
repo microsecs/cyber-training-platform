@@ -46,6 +46,10 @@ export default function GmailAddonConnectPage() {
         Connect the MicroSECONDS Gmail add-on to your account. The add-on can then send
         the email you currently have open to the Email Risk Analyzer.
       </p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+        Gmail pairing does not require MFA setup. If your account uses MFA elsewhere,
+        those requirements remain unchanged outside this connection page.
+      </p>
 
       <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
         <h2 className="text-xl font-semibold">Generate a connection code</h2>

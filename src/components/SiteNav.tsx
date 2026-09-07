@@ -10,6 +10,8 @@ import { AppRole, resolveUserAccess } from "@/lib/supabase/access";
 export default function SiteNav() {
   const pathname = usePathname();
   const isOutlookAddin = pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
+  const isGmailConnect = pathname === "/gmail-addin/connect" || pathname.startsWith("/gmail-addin/connect/");
+  const isMinimalChrome = isOutlookAddin || isGmailConnect;
   const [role, setRole] = useState<AppRole>("guest");
   const [loading, setLoading] = useState(true);
 
@@ -108,7 +110,7 @@ export default function SiteNav() {
         <div className="flex shrink-0 gap-2">
           {!loading && role !== "guest" ? (
             <>
-              {!isOutlookAddin ? (
+              {!isMinimalChrome ? (
                 <Link
                   href="/account"
                   className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"

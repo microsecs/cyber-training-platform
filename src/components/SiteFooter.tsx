@@ -6,8 +6,10 @@ import { usePathname } from "next/navigation";
 export default function SiteFooter() {
   const pathname = usePathname();
   const isOutlookAddin = pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
+  const isGmailConnect = pathname === "/gmail-addin/connect" || pathname.startsWith("/gmail-addin/connect/");
+  const isMinimalChrome = isOutlookAddin || isGmailConnect;
 
-  if (isOutlookAddin) {
+  if (isMinimalChrome) {
     return (
       <footer className="mt-auto border-t border-white/10 bg-slate-950/95">
         <div className="mx-auto max-w-7xl px-5 py-4 text-center text-xs text-slate-600">
