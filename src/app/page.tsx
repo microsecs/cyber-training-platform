@@ -135,32 +135,55 @@ export default async function Home() {
       </section>
 
       <section className="border-b border-white/10 bg-slate-950/35">
-        <div className="mx-auto max-w-7xl px-4 py-4 md:px-5">
-          <div className="flex items-start gap-3 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.04] px-4 py-3.5">
-            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </div>
-            <div>
-              <div className="font-semibold text-white">
-                Exclusive Email Risk Analyzer
+        <div className="mx-auto max-w-7xl px-4 py-7 md:px-5 md:py-8">
+          <div className="relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-[linear-gradient(135deg,rgba(34,211,238,0.11),rgba(15,23,42,0.92)_48%,rgba(59,130,246,0.08))] p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)] md:p-6">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl" />
+            <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-950/20">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-7 w-7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </div>
+                <div className="max-w-4xl">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-cyan-300/30 bg-cyan-400/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
+                      Exclusive
+                    </span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      Outlook • Gmail • Web
+                    </span>
+                  </div>
+                  <h2 className="mt-2 text-xl font-bold tracking-tight text-white md:text-2xl">
+                    Email Risk Analyzer
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-300 md:text-base">
+                    Analyze suspicious emails before you trust them. MicroSECONDS evaluates phishing and scam indicators,
+                    sender and authentication issues, suspicious links, unusual language, and other warning signs, then
+                    provides a clear risk assessment and recommended next steps.
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Use it on the web or directly inside Microsoft Outlook and Gmail with our add-ins—ideal for businesses
+                    using Microsoft 365 or Google Workspace.
+                  </p>
+                </div>
               </div>
-              <p className="mt-1 text-sm leading-5 text-slate-400">
-                Active subscribers can evaluate suspicious emails for phishing and scam risk,
-                including a clear risk score and recommended next steps. An Outlook add-in is
-                also available so users can analyze an email directly from Outlook.
-              </p>
+              <Link
+                href="/phishing-check"
+                className="shrink-0 rounded-lg bg-cyan-400 px-5 py-3 text-center text-sm font-semibold text-slate-950 hover:bg-cyan-300 md:min-w-48"
+              >
+                Try the Email Risk Analyzer
+              </Link>
             </div>
           </div>
         </div>
