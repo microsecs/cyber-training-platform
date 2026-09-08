@@ -8,7 +8,10 @@ export default function SiteFooter() {
   const isOutlookAddin =
     pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
   const isGmailConnect =
-    pathname === "/gmail-addin/connect" || pathname.startsWith("/gmail-addin/connect/");
+    pathname === "/gmail-addin/connect" ||
+    pathname.startsWith("/gmail-addin/connect/") ||
+    pathname === "/gmail-addin/oauth/authorize" ||
+    pathname.startsWith("/gmail-addin/oauth/authorize/");
   const isMinimalChrome = isOutlookAddin || isGmailConnect;
 
   if (isMinimalChrome) {

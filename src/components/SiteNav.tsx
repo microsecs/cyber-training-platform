@@ -9,7 +9,11 @@ import { AppRole, resolveUserAccess } from "@/lib/supabase/access";
 
 export default function SiteNav() {
   const pathname = usePathname();
-  const isGmailConnect = pathname === "/gmail-addin/connect" || pathname.startsWith("/gmail-addin/connect/");
+  const isGmailConnect =
+    pathname === "/gmail-addin/connect" ||
+    pathname.startsWith("/gmail-addin/connect/") ||
+    pathname === "/gmail-addin/oauth/authorize" ||
+    pathname.startsWith("/gmail-addin/oauth/authorize/");
   const isOutlookAddin = pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
   const isMinimalChrome = isGmailConnect || isOutlookAddin;
   const [role, setRole] = useState<AppRole>("guest");
