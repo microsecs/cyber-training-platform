@@ -178,12 +178,6 @@ export default async function Home() {
                   </p>
                 </div>
               </div>
-              <Link
-                href="/phishing-check"
-                className="shrink-0 rounded-lg bg-cyan-400 px-5 py-3 text-center text-sm font-semibold text-slate-950 hover:bg-cyan-300 md:min-w-48"
-              >
-                Try the Email Risk Analyzer
-              </Link>
             </div>
           </div>
         </div>
@@ -215,6 +209,7 @@ export default async function Home() {
                 <span>✓ Unlimited employees</span>
                 <span>✓ Quizzes & completion tracking</span>
                 <span>✓ Multiple security training topics</span>
+                <span>✓ Email Risk Analyzer</span>
               </div>
             </div>
 
