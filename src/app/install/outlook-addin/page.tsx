@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function OutlookAddinInstallPage() {
@@ -45,7 +46,7 @@ export default function OutlookAddinInstallPage() {
               Open Outlook on the web
             </a>
             <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
-              <img src="/outlook-install/step-1.png" alt="Outlook on the web showing the signed-in mailbox and outlook.office.com address" className="h-auto w-full" />
+              <Image src="/outlook-install/step-1.png" alt="Outlook on the web showing the signed-in mailbox and outlook.office.com address" width={1123} height={417} className="h-auto w-full" />
             </div>
           </div>
 
@@ -60,7 +61,7 @@ export default function OutlookAddinInstallPage() {
               Open Outlook Add-In Sideloading
             </a>
             <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
-              <img src="/outlook-install/step-2.png" alt="Add-Ins for Outlook with My add-ins selected" className="h-auto w-full" />
+              <Image src="/outlook-install/step-2.png" alt="Add-Ins for Outlook with My add-ins selected" width={903} height={525} className="h-auto w-full" />
             </div>
           </div>
 
@@ -74,24 +75,41 @@ export default function OutlookAddinInstallPage() {
               <p>Select <b className="text-white">Install</b> and accept Microsoft&apos;s prompts.</p>
             </div>
             <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
-              <img src="/outlook-install/step-3.png" alt="Custom Addins section showing Add a custom add-in and Add from File" className="h-auto w-full" />
+              <Image src="/outlook-install/step-3.png" alt="Custom Addins section showing Add a custom add-in and Add from File" width={1052} height={546} className="h-auto w-full" />
             </div>
           </div>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-slate-950 p-5">
             <h3 className="text-lg font-semibold text-white">4. Confirm installation and analyze an email</h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              Close the Add-Ins dialog, refresh Outlook on the web, and open an email. Look for
-              <b className="text-white"> MicroSECONDS Email Analyzer</b> in the Outlook toolbar/action
-              area or under <b className="text-white">Apps / More apps</b>. You can pin it to keep it visible.
+              Close the Add-Ins dialog, refresh Outlook, and open an email.
             </p>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
-              Use that <b className="text-white">Email Analyzer</b> button whenever you want to check
-              an email. It opens the MicroSECONDS panel for the message you currently have open.
-              Sign in to MicroSECONDS if prompted, then select <b className="text-white">Analyze with MicroSECONDS</b>.
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-slate-900 p-4">
+                <div className="font-semibold text-white">Outlook on the web / New Outlook</div>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Open an email, then select <b className="text-white">Apps</b> or
+                  <b className="text-white"> More apps</b>. Choose
+                  <b className="text-white"> MicroSECONDS Email Analyzer</b>. You can pin it so the
+                  analyzer button stays visible on the main message toolbar.
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-900 p-4">
+                <div className="font-semibold text-white">Classic Outlook / Outlook for Mac</div>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Open an email and look for <b className="text-white">Analyze with MicroSECONDS</b>
+                  in the message toolbar or add-ins area.
+                </p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-300">
+              In every supported Outlook version, use the <b className="text-white">Analyze with MicroSECONDS</b>
+              button whenever you want to check the email you currently have open. If you are not already
+              signed in, MicroSECONDS will open a secure sign-in window. Outlook may first display a small
+              permission prompt; select <b className="text-white">Allow</b> to continue.
             </p>
             <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
-              <img src="/outlook-install/step-4.png" alt="Outlook toolbar showing the Analyze with MicroSECONDS button" className="h-auto w-full" />
+              <Image src="/outlook-install/step-4.png" alt="Outlook toolbar showing the Analyze with MicroSECONDS button" width={1157} height={501} className="h-auto w-full" />
             </div>
           </div>
         </section>

@@ -60,7 +60,7 @@ export default function OutlookAuthDialogPage() {
         onLoad={officeLoaded}
       />
       <main className="min-h-screen bg-slate-950 p-6 text-white">
-        <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-slate-900 px-6 pb-5 pt-6">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
             MicroSECONDS
           </div>
