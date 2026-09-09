@@ -58,6 +58,8 @@ export default function OutlookAddinPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
+  const [dialogAuthStatus, setDialogAuthStatus] = useState("");
+  const [dialogAccessToken, setDialogAccessToken] = useState<string | null>(null);
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [subscriptionNotice, setSubscriptionNotice] = useState<SubscriptionNotice | null>(null);
@@ -274,15 +276,20 @@ export default function OutlookAddinPage() {
                 if (message.type !== "microseconds-auth-success") return;
 
                 completed = true;
-                const supabase = createClient();
-                const { error: sessionError } = await supabase.auth.setSession({
-                  access_token: message.access_token,
-                  refresh_token: message.refresh_token,
-                });
-                if (sessionError) throw sessionError;
+                setDialogAuthStatus("Authentication received from login window.");
+                setDialogAccessToken(message.access_token);
+                setSignedIn(true);
+                setNeedsMfa(false);
+
+                try {
+                  const supabase = createClient();
+                  await supabase.auth.setSession({
+                    access_token: message.access_token,
+                    refresh_token: message.refresh_token,
+                  });
+                } catch {}
 
                 dialog.close();
-                await refreshAuthState();
               } catch (e: any) {
                 setError(e?.message || "Could not complete sign in.");
               } finally {
@@ -368,9 +375,12 @@ export default function OutlookAddinPage() {
     setSubscriptionNotice(null);
 
     try {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
+      let token = dialogAccessToken;
+      if (!token) {
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        token = data.session?.access_token || null;
+      }
 
       if (!token) {
         setSignedIn(false);
@@ -689,6 +699,12 @@ export default function OutlookAddinPage() {
                   Contact your organization&apos;s MicroSECONDS owner or administrator to restore access.
                 </div>
               )}
+            </div>
+          ) : null}
+
+          {dialogAuthStatus ? (
+            <div className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm font-semibold text-emerald-200">
+              ✓ {dialogAuthStatus}
             </div>
           ) : null}
 

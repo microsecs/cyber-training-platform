@@ -29,7 +29,8 @@ export default function OutlookAuthDialogPage() {
         type: "microseconds-auth-success",
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-      })
+      }),
+      { targetOrigin: window.location.origin }
     );
   }
 
