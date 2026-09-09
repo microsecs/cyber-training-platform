@@ -195,6 +195,20 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  // Capture company users before deleting company-scoped rows.
+  const { data: companyMemberships, error: companyMembershipError } = await admin
+    .from("memberships")
+    .select("user_id")
+    .eq("company_id", companyId);
+
+  if (companyMembershipError) {
+    return NextResponse.json({ error: companyMembershipError.message }, { status: 500 });
+  }
+
+  const companyUserIds = Array.from(
+    new Set((companyMemberships || []).map((row: any) => row.user_id).filter(Boolean))
+  ) as string[];
+
   const { error: deleteError } = await admin.rpc("platform_delete_company", {
     target_company_id: companyId,
   });
@@ -210,8 +224,40 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  // Remove Auth accounts only when they are now truly orphaned. This prevents
+  // deleted companies from leaving reusable logins behind, while protecting a
+  // user who legitimately belongs to another company or is a platform admin.
+  const authCleanupWarnings: string[] = [];
+
+  for (const userId of companyUserIds) {
+    const [{ data: remainingMembership }, { data: platformAdmin }] = await Promise.all([
+      admin
+        .from("memberships")
+        .select("company_id")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle(),
+      admin
+        .from("platform_admins")
+        .select("user_id")
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ]);
+
+    if (!remainingMembership && !platformAdmin) {
+      const { error: authDeleteError } = await admin.auth.admin.deleteUser(userId);
+      if (authDeleteError) {
+        console.error("Could not remove orphaned Auth user", userId, authDeleteError);
+        authCleanupWarnings.push(userId);
+      }
+    }
+  }
+
   return NextResponse.json({
     ok: true,
-    message: `${company.name} was deleted.`,
+    message:
+      authCleanupWarnings.length === 0
+        ? `${company.name} and its orphaned login accounts were deleted.`
+        : `${company.name} was deleted, but ${authCleanupWarnings.length} orphaned login account(s) could not be removed.`,
   });
 }

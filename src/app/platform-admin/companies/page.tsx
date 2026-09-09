@@ -314,7 +314,8 @@ export default function PlatformCompaniesPage() {
             <p className="mt-3 text-sm leading-6 text-slate-400">
               This permanently removes the company and its company-scoped invitations,
               memberships, assignments, analyzer records, and other company data.
-              Supabase Auth user accounts are not deleted.
+              Login accounts that no longer belong to any company are also removed so the
+              same email address can be used for a clean future signup.
             </p>
 
             <p className="mt-5 text-sm text-slate-300">

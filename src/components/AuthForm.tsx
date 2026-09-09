@@ -27,17 +27,43 @@ export default function AuthForm() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { company_name: company },
-          emailRedirectTo: `${window.location.origin}/account`,
-        },
-      });
+      try {
+        const prepareResponse = await fetch("/api/auth/company-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, company }),
+        });
 
-      if (error) setMessage(error.message);
-      else setMessage("Account created. Check your email if confirmation is enabled.");
+        const prepareResult = await prepareResponse.json();
+
+        if (!prepareResponse.ok) {
+          setMessage(prepareResult.error || "Could not prepare company signup.");
+          setBusy(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { company_name: company },
+            emailRedirectTo: `${window.location.origin}/account`,
+          },
+        });
+
+        if (error) {
+          setMessage(error.message);
+        } else if (data.session) {
+          // If email confirmation is disabled in Supabase, do not leave a new
+          // company owner sitting on the signup page with an active session.
+          window.location.href = "/account";
+          return;
+        } else {
+          setMessage("Account created. Check your email to confirm your account before signing in.");
+        }
+      } catch (error: any) {
+        setMessage(error?.message || "Could not create company account.");
+      }
 
       setBusy(false);
       return;
@@ -52,6 +78,15 @@ export default function AuthForm() {
     }
 
     const access = await resolveUserAccess();
+
+    if (access.role === "authenticated") {
+      await supabase.auth.signOut();
+      setMessage(
+        "This login is not connected to an active company. Choose Create Company Account to start a new company, or contact MicroSECONDS support."
+      );
+      setBusy(false);
+      return;
+    }
 
     const requestedNext =
       typeof window !== "undefined"
