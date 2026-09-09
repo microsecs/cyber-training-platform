@@ -238,6 +238,75 @@ export default function OutlookAddinPage() {
     }
   }
 
+  async function signInWithOfficeDialog() {
+    setBusy(true);
+    setError("");
+
+    try {
+      if (
+        typeof Office === "undefined" ||
+        !Office.context?.ui ||
+        typeof Office.context.ui.displayDialogAsync !== "function"
+      ) {
+        throw new Error("Secure sign-in is not available in this Outlook client.");
+      }
+
+      const dialogUrl = `${window.location.origin}/outlook-addin/auth-dialog`;
+
+      Office.context.ui.displayDialogAsync(
+        dialogUrl,
+        { height: 65, width: 40, displayInIframe: false },
+        (result: any) => {
+          if (result.status !== Office.AsyncResultStatus.Succeeded) {
+            setBusy(false);
+            setError(result.error?.message || "Could not open the MicroSECONDS sign-in window.");
+            return;
+          }
+
+          const dialog = result.value;
+          let completed = false;
+
+          dialog.addEventHandler(
+            Office.EventType.DialogMessageReceived,
+            async (arg: any) => {
+              try {
+                const message = JSON.parse(arg.message || "{}");
+                if (message.type !== "microseconds-auth-success") return;
+
+                completed = true;
+                const supabase = createClient();
+                const { error: sessionError } = await supabase.auth.setSession({
+                  access_token: message.access_token,
+                  refresh_token: message.refresh_token,
+                });
+                if (sessionError) throw sessionError;
+
+                dialog.close();
+                await refreshAuthState();
+              } catch (e: any) {
+                setError(e?.message || "Could not complete sign in.");
+              } finally {
+                setBusy(false);
+              }
+            }
+          );
+
+          dialog.addEventHandler(
+            Office.EventType.DialogEventReceived,
+            () => {
+              if (!completed) {
+                setBusy(false);
+              }
+            }
+          );
+        }
+      );
+    } catch (e: any) {
+      setBusy(false);
+      setError(e?.message || "Could not sign in.");
+    }
+  }
+
   async function signIn(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -432,7 +501,22 @@ export default function OutlookAddinPage() {
           </div>
 
           {!signedIn ? (
-            <form onSubmit={signIn} className="mt-5 space-y-3">
+            <div className="mt-5 space-y-3">
+              <div className="text-sm font-semibold">Sign in to MicroSECONDS</div>
+              <button
+                type="button"
+                onClick={signInWithOfficeDialog}
+                disabled={busy}
+                className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
+              >
+                {busy ? "Opening sign in..." : "Sign In"}
+              </button>
+              <div className="text-center text-[11px] leading-5 text-slate-500">
+                Secure sign-in window for Outlook on the web, New Outlook, classic Outlook, and Outlook for Mac.
+              </div>
+              <details className="rounded-lg border border-white/10 bg-slate-950 p-3">
+                <summary className="cursor-pointer text-xs text-slate-500">Legacy sign-in fallback</summary>
+<form onSubmit={signIn} className="mt-3 space-y-3">
               <div className="text-sm font-semibold">Sign in to MicroSECONDS</div>
               <input
                 type="email"
@@ -457,6 +541,8 @@ export default function OutlookAddinPage() {
                 {busy ? "Signing in..." : "Sign In"}
               </button>
             </form>
+              </details>
+            </div>
           ) : needsMfa ? (
             <form onSubmit={verifyMfa} className="mt-5 space-y-3">
               <div className="text-sm font-semibold">Authenticator verification</div>
