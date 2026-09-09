@@ -96,6 +96,16 @@ export default function PlatformAdminPage() {
         </Link>
 
         <Link
+          href="/platform-admin/outlook-addin"
+          className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40"
+        >
+          <div className="text-xl font-semibold">Outlook Add-in Download</div>
+          <p className="mt-2 text-sm text-slate-400">
+            Upload and replace the Outlook add-in manifest offered to users.
+          </p>
+        </Link>
+
+        <Link
           href="/platform-admin/companies"
           className="rounded-2xl border border-white/10 bg-slate-900 p-6 hover:border-cyan-400/40"
         >

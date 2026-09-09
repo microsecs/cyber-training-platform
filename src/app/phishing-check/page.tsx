@@ -164,10 +164,78 @@ export default function PhishingCheckPage() {
       <div className="text-sm font-medium text-cyan-300">MicroSECONDS Security Tools</div>
       <h1 className="mt-1 text-4xl font-bold">Email Risk Analyzer</h1>
       <p className="mt-3 max-w-3xl text-slate-400">
-        Paste a suspicious email below. MicroSECONDS will examine common phishing indicators and use AI to evaluate the message&apos;s context, requests, links, impersonation attempts, and social-engineering language.
+        Analyze suspicious email for phishing indicators, impersonation attempts, risky links, social-engineering language, and other warning signs.
       </p>
 
+      <section className="mt-7 rounded-2xl border border-cyan-400/20 bg-slate-900 p-6">
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+          The easiest way to analyze email
+        </div>
+        <h2 className="mt-2 text-2xl font-bold text-white">
+          Analyze directly from Outlook or Gmail
+        </h2>
+        <p className="mt-3 max-w-4xl leading-7 text-slate-300">
+          Install the MicroSECONDS Email Analyzer add-in and analyze the message you are viewing
+          directly from your inbox. There is no need to save, import, copy, or paste the email into
+          this page. The manual file upload and paste options below remain available when you need them.
+        </p>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-lg font-bold text-blue-300">
+                O
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Outlook Add-in</h3>
+                <div className="text-xs text-emerald-300">Available now</div>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-400">
+              Use Email Analyzer from Outlook so the currently selected message can be analyzed
+              without exporting it or pasting its contents into the web analyzer.
+            </p>
+            <a
+              href="/outlook-addin"
+              className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+            >
+              Install Outlook Add-in
+            </a>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-slate-950 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-400/20 bg-red-400/10 text-lg font-bold text-red-300">
+                M
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-semibold text-white">Gmail Add-in</h3>
+                  <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                    Coming Soon
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500">Google Workspace / Gmail</div>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-400">
+              The Gmail add-in will let users analyze the message currently open in Gmail without
+              copying or importing the email. Marketplace availability is coming soon.
+            </p>
+            <div className="mt-5 inline-flex cursor-not-allowed rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-slate-500">
+              Gmail Installation Coming Soon
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="mt-7 rounded-2xl border border-white/10 bg-slate-900 p-6">
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold text-white">Manual Email Analysis</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Prefer not to use an add-in? Import an Outlook or .eml file, or paste the email below.
+          </p>
+        </div>
         <div
           onDragEnter={(e) => { e.preventDefault(); setDragging(true); }}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
