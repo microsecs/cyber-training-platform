@@ -22,7 +22,16 @@ function CardIcon({ kind }: { kind: string }) {
 export default async function Home() {
   const settings = await getHomepageSettings();
   const stats = settings.stats.filter((stat) => stat.enabled);
-  const ctaIsExternal = /^https?:\/\//i.test(settings.ctaUrl);
+
+  // Homepage settings may still contain the older /login URL in Supabase.
+  // Any homepage CTA that points to login should open directly on
+  // Create Company Account, while normal Sign In links remain unchanged.
+  const subscribeCtaUrl =
+    settings.ctaUrl === "/login" || settings.ctaUrl.startsWith("/login?")
+      ? "/login?mode=signup"
+      : settings.ctaUrl;
+
+  const ctaIsExternal = /^https?:\/\//i.test(subscribeCtaUrl);
 
   return (
     <main>
@@ -41,7 +50,7 @@ export default async function Home() {
             </p>
             <div className="mt-4 flex flex-wrap gap-2.5">
               <a
-                href={settings.ctaUrl}
+                href={subscribeCtaUrl}
                 target={ctaIsExternal ? "_blank" : undefined}
                 rel={ctaIsExternal ? "noreferrer" : undefined}
                 className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
@@ -218,7 +227,7 @@ export default async function Home() {
               <div className="mt-2 text-sm font-medium text-slate-300">{settings.subscriptionPeriod}</div>
               <div className="mt-1 text-xs text-slate-500">{settings.subscriptionFinePrint}</div>
               <a
-                href={settings.ctaUrl}
+                href={subscribeCtaUrl}
                 target={ctaIsExternal ? "_blank" : undefined}
                 rel={ctaIsExternal ? "noreferrer" : undefined}
                 className="mt-5 rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
