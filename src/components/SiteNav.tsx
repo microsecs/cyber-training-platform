@@ -114,37 +114,41 @@ export default function SiteNav() {
           </nav>
         ) : null}
 
-        <div className="flex shrink-0 items-center gap-2">
-          {!loading && role !== "guest" ? (
-            <>
-              {!isMinimalChrome ? (
-                <Link
-                  href="/account"
-                  className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
-                >
-                  Account
-                </Link>
-              ) : null}
+        {!isOutlookAddin ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {!loading && role !== "guest" ? (
+              <>
+                {!isMinimalChrome ? (
+                  <Link
+                    href="/account"
+                    className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/5"
+                  >
+                    Account
+                  </Link>
+                ) : null}
 
-              <button
-                type="button"
-                onClick={signOut}
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : null}
+
+            {!loading && role === "guest" ? (
+              <Link
+                href="/login"
                 className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
               >
-                Sign Out
-              </button>
-            </>
-          ) : null}
-
-          {!loading && role === "guest" ? (
-            <Link
-              href={isOutlookAddin ? "/login?next=/outlook-addin" : "/login"}
-              className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-            >
-              Sign In
-            </Link>
-          ) : null}
-        </div>
+                Sign In
+              </Link>
+            ) : null}
+          </div>
+        ) : (
+          <div className="shrink-0" />
+        )}
       </div>
     </header>
   );

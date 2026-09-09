@@ -341,6 +341,27 @@ export default function OutlookAddinPage() {
     }
   }
 
+  async function signOutOfAnalyzer() {
+    setBusy(true);
+    setError("");
+
+    try {
+      setDialogAccessToken(null);
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      setSignedIn(false);
+      setNeedsMfa(false);
+      setFactorId("");
+      setMfaCode("");
+      setAnalysis(null);
+      setSubscriptionNotice(null);
+    } catch (e: any) {
+      setError(e?.message || "Could not sign out.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function analyze() {
     setBusy(true);
     setIsAnalyzing(true);
@@ -453,11 +474,23 @@ export default function OutlookAddinPage() {
       <main className="min-h-screen bg-slate-950 p-4 text-white">
       <div className="mx-auto max-w-xl">
         <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-              MicroSECONDS
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                MicroSECONDS
+              </div>
+              <h1 className="mt-1 text-2xl font-bold">Email Risk Analyzer</h1>
             </div>
-            <h1 className="mt-1 text-2xl font-bold">Email Risk Analyzer</h1>
+            {signedIn ? (
+              <button
+                type="button"
+                onClick={signOutOfAnalyzer}
+                disabled={busy}
+                className="shrink-0 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-cyan-400/40 hover:text-cyan-300 disabled:opacity-50"
+              >
+                Sign Out
+              </button>
+            ) : null}
           </div>
           <p className="mt-2 text-sm leading-6 text-slate-400">
             Analyze the Outlook message you currently have open.
