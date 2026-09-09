@@ -102,5 +102,5 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   subscriptionPeriod: "per month · unlimited employees included",
   subscriptionFinePrint: "No per-employee training fee.",
   ctaLabel: "Subscribe & Start Training",
-  ctaUrl: "/login",
+  ctaUrl: "/login?mode=signup",
 };

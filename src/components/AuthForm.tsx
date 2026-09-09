@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
 
@@ -11,6 +11,13 @@ export default function AuthForm() {
   const [company, setCompany] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const requestedMode = new URLSearchParams(window.location.search).get("mode");
+    if (requestedMode === "signup") {
+      setMode("signup");
+    }
+  }, []);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
