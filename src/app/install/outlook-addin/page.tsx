@@ -7,9 +7,17 @@ export default function OutlookAddinInstallPage() {
         <div className="text-sm font-medium text-cyan-300">MicroSECONDS Email Analyzer</div>
         <h1 className="mt-1 text-4xl font-bold">Install the Outlook Add-in</h1>
         <p className="mt-3 max-w-3xl leading-7 text-slate-400">
-          Install MicroSECONDS Email Analyzer in Outlook to analyze the email you are viewing directly
-          from your inbox. You do not need to save the message, upload a file, or copy and paste it.
+          Install MicroSECONDS Email Analyzer once, then analyze suspicious messages directly from
+          Outlook without saving, uploading, copying, or pasting the email.
         </p>
+        <div className="mt-6 rounded-xl border border-amber-400/30 bg-amber-400/10 p-5">
+          <div className="font-semibold text-amber-200">Important: install through Outlook on the web</div>
+          <p className="mt-2 text-sm leading-6 text-amber-100/80">
+            Sign in to your Microsoft 365 / Office 365 email account in a web browser first.
+            Microsoft currently handles custom XML add-in installation through the Add-Ins for Outlook
+            dialog on the web. Install the add-in into the same mailbox where you want to use it.
+          </p>
+        </div>
 
         <section className="mt-7 rounded-2xl border border-cyan-400/20 bg-slate-900 p-6">
           <h2 className="text-2xl font-semibold">Download the add-in</h2>
@@ -25,15 +33,67 @@ export default function OutlookAddinInstallPage() {
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6">
           <h2 className="text-2xl font-semibold">Installation instructions</h2>
-          <ol className="mt-5 space-y-4 text-sm leading-6 text-slate-300">
-            <li><b className="text-white">1. Download the manifest.</b> Click the button above and save the XML file.</li>
-            <li><b className="text-white">2. Open Outlook.</b> Open the add-ins management screen for your Outlook account.</li>
-            <li><b className="text-white">3. Add a custom add-in.</b> Choose the option to install an add-in from a file and select the downloaded XML manifest.</li>
-            <li><b className="text-white">4. Confirm installation.</b> Accept Outlook&apos;s prompt to install the custom add-in.</li>
-            <li><b className="text-white">5. Open an email.</b> Select MicroSECONDS Email Analyzer from Outlook&apos;s add-ins/apps menu.</li>
-            <li><b className="text-white">6. Sign in.</b> Use your MicroSECONDS account and complete MFA if your account requires it.</li>
-            <li><b className="text-white">7. Analyze.</b> Click <b className="text-white">Analyze with MicroSECONDS</b> to analyze the currently open message.</li>
-          </ol>
+
+          <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
+            <h3 className="text-lg font-semibold text-white">1. Sign in to Office 365 email on the web</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Open Outlook on the web and sign in to the Microsoft 365 / Office 365 mailbox where you
+              want MicroSECONDS Email Analyzer installed.
+            </p>
+            <a href="https://outlook.office.com/mail/" target="_blank" rel="noreferrer"
+               className="mt-4 inline-flex rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:border-cyan-400/40">
+              Open Outlook on the web
+            </a>
+            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
+              Screenshot: signed-in Outlook on the web mailbox
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-white/10 bg-slate-950 p-5">
+            <h3 className="text-lg font-semibold text-white">2. Open Microsoft&apos;s Outlook Add-In Sideloading page</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Keep the correct mailbox signed in, then use Microsoft&apos;s sideloading link. It opens
+              Outlook on the web and loads the Add-Ins for Outlook dialog.
+            </p>
+            <a href="https://aka.ms/olksideload" target="_blank" rel="noreferrer"
+               className="mt-4 inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-slate-200">
+              Open Outlook Add-In Sideloading
+            </a>
+            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
+              Screenshot: Add-Ins for Outlook dialog with My add-ins selected
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-white/10 bg-slate-950 p-5">
+            <h3 className="text-lg font-semibold text-white">3. Add the MicroSECONDS XML file</h3>
+            <div className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+              <p>Select <b className="text-white">My add-ins</b>.</p>
+              <p>Scroll to <b className="text-white">Custom Addins</b>.</p>
+              <p>Select <b className="text-white">Add a custom add-in → Add from File</b>.</p>
+              <p>Select the MicroSECONDS XML file you downloaded above.</p>
+              <p>Select <b className="text-white">Install</b> and accept Microsoft&apos;s prompts.</p>
+            </div>
+            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
+              Screenshot: Custom Addins → Add a custom add-in → Add from File
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-white/10 bg-slate-950 p-5">
+            <h3 className="text-lg font-semibold text-white">4. Confirm installation and analyze an email</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Close the Add-Ins dialog, refresh Outlook on the web, and open an email. Look for
+              <b className="text-white"> MicroSECONDS Email Analyzer</b> in the Outlook toolbar/action
+              area or under <b className="text-white">Apps / More apps</b>. You can pin it to keep it visible.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Use that <b className="text-white">Email Analyzer</b> button whenever you want to check
+              an email. It opens the MicroSECONDS panel for the message you currently have open.
+              Sign in to MicroSECONDS if prompted, then select <b className="text-white">Analyze with MicroSECONDS</b>.
+            </p>
+            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
+              Screenshot: MicroSECONDS Email Analyzer button visible on an open Outlook message
+            </div>
+          </div>
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900 p-6">
