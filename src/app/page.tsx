@@ -138,7 +138,7 @@ export default async function Home() {
         <div className="mx-auto max-w-7xl px-4 py-7 md:px-5 md:py-8">
           <div className="relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-[linear-gradient(135deg,rgba(34,211,238,0.11),rgba(15,23,42,0.92)_48%,rgba(59,130,246,0.08))] p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)] md:p-6">
             <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl" />
-            <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex flex-col gap-5">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-950/20">
                   <svg
@@ -155,7 +155,7 @@ export default async function Home() {
                     <path d="m9 12 2 2 4-4" />
                   </svg>
                 </div>
-                <div className="max-w-4xl">
+                <div className="w-full">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full border border-cyan-300/30 bg-cyan-400/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
                       Exclusive
