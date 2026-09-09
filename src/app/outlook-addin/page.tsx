@@ -55,10 +55,7 @@ export default function OutlookAddinPage() {
   const [signedIn, setSignedIn] = useState(false);
   const [needsMfa, setNeedsMfa] = useState(false);
   const [factorId, setFactorId] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
-  const [dialogAuthStatus, setDialogAuthStatus] = useState("");
   const [dialogAccessToken, setDialogAccessToken] = useState<string | null>(null);
 
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -276,7 +273,6 @@ export default function OutlookAddinPage() {
                 if (message.type !== "microseconds-auth-success") return;
 
                 completed = true;
-                setDialogAuthStatus("Authentication received from login window.");
                 setDialogAccessToken(message.access_token);
                 setSignedIn(true);
                 setNeedsMfa(false);
@@ -311,28 +307,6 @@ export default function OutlookAddinPage() {
     } catch (e: any) {
       setBusy(false);
       setError(e?.message || "Could not sign in.");
-    }
-  }
-
-  async function signIn(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-
-    try {
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-      setPassword("");
-      await refreshAuthState();
-    } catch (e: any) {
-      setError(e?.message || "Could not sign in.");
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -513,6 +487,10 @@ export default function OutlookAddinPage() {
           {!signedIn ? (
             <div className="mt-5 space-y-3">
               <div className="text-sm font-semibold">Sign in to MicroSECONDS</div>
+              <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-[11px] leading-5 text-slate-400">
+                Outlook may first ask permission to open the MicroSECONDS sign-in window.
+                Select <b className="text-white">Allow</b> to continue.
+              </div>
               <button
                 type="button"
                 onClick={signInWithOfficeDialog}
@@ -522,36 +500,8 @@ export default function OutlookAddinPage() {
                 {busy ? "Opening sign in..." : "Sign In"}
               </button>
               <div className="text-center text-[11px] leading-5 text-slate-500">
-                Secure sign-in window for Outlook on the web, New Outlook, classic Outlook, and Outlook for Mac.
+                MicroSECONDS uses a secure sign-in window in Outlook.
               </div>
-              <details className="rounded-lg border border-white/10 bg-slate-950 p-3">
-                <summary className="cursor-pointer text-xs text-slate-500">Legacy sign-in fallback</summary>
-<form onSubmit={signIn} className="mt-3 space-y-3">
-              <div className="text-sm font-semibold">Sign in to MicroSECONDS</div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-3"
-              />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-3"
-              />
-              <button
-                disabled={busy}
-                className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
-              >
-                {busy ? "Signing in..." : "Sign In"}
-              </button>
-            </form>
-              </details>
             </div>
           ) : needsMfa ? (
             <form onSubmit={verifyMfa} className="mt-5 space-y-3">
@@ -699,12 +649,6 @@ export default function OutlookAddinPage() {
                   Contact your organization&apos;s MicroSECONDS owner or administrator to restore access.
                 </div>
               )}
-            </div>
-          ) : null}
-
-          {dialogAuthStatus ? (
-            <div className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-3 text-sm font-semibold text-emerald-200">
-              ✓ {dialogAuthStatus}
             </div>
           ) : null}
 

@@ -66,7 +66,7 @@ export default function OutlookAuthDialogPage() {
           </div>
           <h1 className="mt-1 text-2xl font-bold">Sign in to Email Analyzer</h1>
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Sign in here. When authentication succeeds, this window will close and return you to Outlook.
+            Sign in to your MicroSECONDS account. When sign-in succeeds, this window will close and return you to the email you were analyzing.
           </p>
 
           {!ready ? (
