@@ -37,30 +37,30 @@ export default function OutlookAddinInstallPage() {
           <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
             <h3 className="text-lg font-semibold text-white">1. Sign in to Office 365 email on the web</h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              Open Outlook on the web and sign in to the Microsoft 365 / Office 365 mailbox where you
-              want MicroSECONDS Email Analyzer installed.
+              Go to <b className="text-white">outlook.office.com</b> and sign in to the Microsoft 365 / Office 365
+              mailbox where you want MicroSECONDS Email Analyzer installed.
             </p>
-            <a href="https://outlook.office.com/mail/" target="_blank" rel="noreferrer"
+            <a href="https://outlook.office.com" target="_blank" rel="noreferrer"
                className="mt-4 inline-flex rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:border-cyan-400/40">
               Open Outlook on the web
             </a>
-            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
-              Screenshot: signed-in Outlook on the web mailbox
+            <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
+              <img src="/outlook-install/step-1.png" alt="Outlook on the web showing the signed-in mailbox and outlook.office.com address" className="h-auto w-full" />
             </div>
           </div>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-slate-950 p-5">
             <h3 className="text-lg font-semibold text-white">2. Open Microsoft&apos;s Outlook Add-In Sideloading page</h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              Keep the correct mailbox signed in, then use Microsoft&apos;s sideloading link. It opens
-              Outlook on the web and loads the Add-Ins for Outlook dialog.
+              Keep the correct mailbox signed in, then go to <b className="text-white">aka.ms/olksideload</b>.
+              Microsoft will open the Add-Ins for Outlook dialog for that mailbox.
             </p>
             <a href="https://aka.ms/olksideload" target="_blank" rel="noreferrer"
                className="mt-4 inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-slate-200">
               Open Outlook Add-In Sideloading
             </a>
-            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
-              Screenshot: Add-Ins for Outlook dialog with My add-ins selected
+            <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
+              <img src="/outlook-install/step-2.png" alt="Add-Ins for Outlook with My add-ins selected" className="h-auto w-full" />
             </div>
           </div>
 
@@ -73,8 +73,8 @@ export default function OutlookAddinInstallPage() {
               <p>Select the MicroSECONDS XML file you downloaded above.</p>
               <p>Select <b className="text-white">Install</b> and accept Microsoft&apos;s prompts.</p>
             </div>
-            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
-              Screenshot: Custom Addins → Add a custom add-in → Add from File
+            <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
+              <img src="/outlook-install/step-3.png" alt="Custom Addins section showing Add a custom add-in and Add from File" className="h-auto w-full" />
             </div>
           </div>
 
@@ -90,8 +90,8 @@ export default function OutlookAddinInstallPage() {
               an email. It opens the MicroSECONDS panel for the message you currently have open.
               Sign in to MicroSECONDS if prompted, then select <b className="text-white">Analyze with MicroSECONDS</b>.
             </p>
-            <div className="mt-4 rounded-lg border border-dashed border-cyan-400/30 p-8 text-center text-sm text-slate-500">
-              Screenshot: MicroSECONDS Email Analyzer button visible on an open Outlook message
+            <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
+              <img src="/outlook-install/step-4.png" alt="Outlook toolbar showing the Analyze with MicroSECONDS button" className="h-auto w-full" />
             </div>
           </div>
         </section>
