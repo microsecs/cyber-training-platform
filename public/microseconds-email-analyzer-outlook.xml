@@ -17,7 +17,7 @@
  <Hosts><Host Name="Mailbox"/></Hosts>
  <Requirements><Sets><Set Name="Mailbox" MinVersion="1.8"/></Sets></Requirements>
  <FormSettings><Form xsi:type="ItemRead"><DesktopSettings>
-  <SourceLocation DefaultValue="https://microseconds.com/outlook-addin/taskpane"/>
+  <SourceLocation DefaultValue="https://microseconds.com/outlook-addin"/>
   <RequestedHeight>450</RequestedHeight>
  </DesktopSettings></Form></FormSettings>
  <Permissions>ReadItem</Permissions>
@@ -44,8 +44,8 @@
     <bt:Image id="Icon.80" DefaultValue="https://microseconds.com/api/outlook-addin/icon?size=80"/>
    </bt:Images>
    <bt:Urls>
-    <bt:Url id="Commands.Url" DefaultValue="https://microseconds.com/outlook-addin/taskpane"/>
-    <bt:Url id="Taskpane.Url" DefaultValue="https://microseconds.com/outlook-addin/taskpane"/>
+    <bt:Url id="Commands.Url" DefaultValue="https://microseconds.com/outlook-addin"/>
+    <bt:Url id="Taskpane.Url" DefaultValue="https://microseconds.com/outlook-addin"/>
    </bt:Urls>
    <bt:ShortStrings><bt:String id="Group.Label" DefaultValue="MicroSECONDS"/><bt:String id="Button.Label" DefaultValue="Email Analyzer"/></bt:ShortStrings>
    <bt:LongStrings><bt:String id="Button.Description" DefaultValue="Analyze this email with MicroSECONDS Email Analyzer."/></bt:LongStrings>

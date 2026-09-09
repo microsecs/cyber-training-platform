@@ -196,7 +196,7 @@ export default function PhishingCheckPage() {
               without exporting it or pasting its contents into the web analyzer.
             </p>
             <a
-              href="/outlook-addin"
+              href="/install/outlook-addin"
               className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
             >
               Install Outlook Add-in
