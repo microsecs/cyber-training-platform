@@ -6,7 +6,7 @@ export default function OutlookAddinInstallPage() {
       <div className="mx-auto max-w-4xl">
         <div className="text-sm font-medium text-cyan-300">MicroSECONDS Email Analyzer</div>
         <h1 className="mt-1 text-4xl font-bold">Install the Outlook Add-in</h1>
-        <p className="mt-3 max-w-3xl leading-7 text-slate-400">
+        <p className="mt-3 w-full leading-7 text-slate-400">
           Install MicroSECONDS Email Analyzer once, then analyze suspicious messages directly from
           Outlook without saving, uploading, copying, or pasting the email.
         </p>
@@ -56,7 +56,7 @@ export default function OutlookAddinInstallPage() {
               Microsoft will open the Add-Ins for Outlook dialog for that mailbox.
             </p>
             <a href="https://aka.ms/olksideload" target="_blank" rel="noreferrer"
-               className="mt-4 inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-slate-200">
+               className="mt-4 inline-flex rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:border-cyan-400/40">
               Open Outlook Add-In Sideloading
             </a>
             <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white">
