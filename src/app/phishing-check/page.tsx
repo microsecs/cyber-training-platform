@@ -211,20 +211,25 @@ export default function PhishingCheckPage() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-semibold text-white">Gmail Add-in</h3>
-                  <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                    Coming Soon
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300">
+                    Available now
                   </span>
                 </div>
                 <div className="text-xs text-slate-500">Google Workspace / Gmail</div>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-400">
-              The Gmail add-in will let users analyze the message currently open in Gmail without
-              copying or importing the email. Marketplace availability is coming soon.
+              Use Email Analyzer directly from Gmail to analyze the message currently open without
+              copying, importing, or pasting the email.
             </p>
-            <div className="mt-5 inline-flex cursor-not-allowed rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-slate-500">
-              Gmail Installation Coming Soon
-            </div>
+            <a
+              href="https://gsuite.google.com/marketplace/app/foo/473446506987"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+            >
+              Install Gmail Add-in
+            </a>
           </div>
         </div>
       </section>
