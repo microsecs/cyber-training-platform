@@ -100,15 +100,27 @@ export default function OutlookAddinPage() {
 
   async function refreshAuthState() {
     const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-
-    if (!session) {
+    const { data, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      setDialogAccessToken(null);
       setSignedIn(false);
       setNeedsMfa(false);
       return;
     }
 
+    const session = data.session;
+
+    if (!session) {
+      setDialogAccessToken(null);
+      setSignedIn(false);
+      setNeedsMfa(false);
+      return;
+    }
+
+    // Always adopt Supabase's current access token. Supabase automatically
+    // refreshes the session when possible, so this prevents the task pane
+    // from continuing to use the original short-lived popup token.
+    setDialogAccessToken(session.access_token);
     setSignedIn(true);
 
     const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -189,6 +201,25 @@ export default function OutlookAddinPage() {
       setReading(false);
     }
   }
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.access_token) {
+        setDialogAccessToken(session.access_token);
+        setSignedIn(true);
+      } else {
+        setDialogAccessToken(null);
+        setSignedIn(false);
+        setNeedsMfa(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -273,18 +304,28 @@ export default function OutlookAddinPage() {
                 if (message.type !== "microseconds-auth-success") return;
 
                 completed = true;
-                setDialogAccessToken(message.access_token);
-                setSignedIn(true);
-                setNeedsMfa(false);
 
                 try {
                   const supabase = createClient();
-                  await supabase.auth.setSession({
-                    access_token: message.access_token,
-                    refresh_token: message.refresh_token,
-                  });
-                } catch {}
+                  const { data: sessionData, error: setSessionError } =
+                    await supabase.auth.setSession({
+                      access_token: message.access_token,
+                      refresh_token: message.refresh_token,
+                    });
 
+                  if (setSessionError) throw setSessionError;
+
+                  setDialogAccessToken(
+                    sessionData.session?.access_token || message.access_token
+                  );
+                } catch {
+                  // Keep the popup token as a fallback for clients that do not
+                  // persist web storage reliably.
+                  setDialogAccessToken(message.access_token);
+                }
+
+                setSignedIn(true);
+                setNeedsMfa(false);
                 dialog.close();
               } catch (e: any) {
                 setError(e?.message || "Could not complete sign in.");
@@ -370,30 +411,66 @@ export default function OutlookAddinPage() {
     setSubscriptionNotice(null);
 
     try {
-      let token = dialogAccessToken;
-      if (!token) {
-        const supabase = createClient();
-        const { data } = await supabase.auth.getSession();
-        token = data.session?.access_token || null;
+      const supabase = createClient();
+
+      async function currentAccessToken() {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (!sessionError && data.session?.access_token) {
+          setDialogAccessToken(data.session.access_token);
+          setSignedIn(true);
+          return data.session.access_token;
+        }
+
+        // Fallback for an Outlook client that has the token in this task-pane
+        // runtime but cannot restore Supabase browser storage.
+        return dialogAccessToken;
       }
+
+      async function sendAnalysisRequest(token: string) {
+        return fetch("/api/phishing-check", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ emailText: messageText }),
+        });
+      }
+
+      let token = await currentAccessToken();
 
       if (!token) {
         setSignedIn(false);
         throw new Error("Sign in to MicroSECONDS before analyzing this message.");
       }
 
-      const response = await fetch("/api/phishing-check", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ emailText: messageText }),
-      });
+      let response = await sendAnalysisRequest(token);
+
+      // Access tokens are intentionally short-lived. If the API says this one
+      // has expired, silently use the Supabase refresh token to obtain a new
+      // access token and retry the analysis once.
+      if (response.status === 401) {
+        const { data: refreshed, error: refreshError } =
+          await supabase.auth.refreshSession();
+
+        if (!refreshError && refreshed.session?.access_token) {
+          token = refreshed.session.access_token;
+          setDialogAccessToken(token);
+          setSignedIn(true);
+          response = await sendAnalysisRequest(token);
+        }
+      }
 
       const result = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setDialogAccessToken(null);
+          setSignedIn(false);
+          throw new Error(
+            "Your MicroSECONDS sign-in session has ended. Please sign in again."
+          );
+        }
         if (result?.code === "subscription_required") {
           setSubscriptionNotice({
             role: result.role,
