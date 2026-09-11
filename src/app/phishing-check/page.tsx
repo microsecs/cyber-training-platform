@@ -181,55 +181,48 @@ export default function PhishingCheckPage() {
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-slate-950 p-5">
+          <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-950 p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-400/10 text-lg font-bold text-blue-300">
                 O
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Outlook Add-in</h3>
-                <div className="text-xs text-emerald-300">Available now</div>
-              </div>
+              <h3 className="text-lg font-semibold text-white">Outlook Add-in</h3>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-400">
               Use Email Analyzer from Outlook so the currently selected message can be analyzed
               without exporting it or pasting its contents into the web analyzer.
             </p>
-            <a
-              href="/install/outlook-addin"
-              className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-            >
-              Install Outlook Add-in
-            </a>
+            <div className="mt-auto pt-5">
+              <a
+                href="/install/outlook-addin"
+                className="inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+              >
+                Install Outlook Add-in
+              </a>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-slate-950 p-5">
+          <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-950 p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-400/20 bg-red-400/10 text-lg font-bold text-red-300">
-                M
+                G
               </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-lg font-semibold text-white">Gmail Add-in</h3>
-                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300">
-                    Available now
-                  </span>
-                </div>
-                <div className="text-xs text-slate-500">Google Workspace / Gmail</div>
-              </div>
+              <h3 className="text-lg font-semibold text-white">Gmail Add-in</h3>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-400">
               Use Email Analyzer directly from Gmail to analyze the message currently open without
               copying, importing, or pasting the email.
             </p>
-            <a
-              href="https://gsuite.google.com/marketplace/app/foo/473446506987"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-            >
-              Install Gmail Add-in
-            </a>
+            <div className="mt-auto pt-5">
+              <a
+                href="https://gsuite.google.com/marketplace/app/foo/473446506987"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+              >
+                Install Gmail Add-in
+              </a>
+            </div>
           </div>
         </div>
       </section>
