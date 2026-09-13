@@ -17,42 +17,91 @@ export default function AcceptInvitePage() {
       const params = new URLSearchParams(window.location.search);
       const tokenHash = params.get("token_hash");
       const type = params.get("type");
+      const code = params.get("code");
 
-      if (!tokenHash || (type !== "invite" && type !== "magiclink")) {
-        setMessage(
-          "This invitation link is missing its verification token. Ask the administrator to send a fresh invitation."
-        );
+      // New MicroSECONDS invitation/reminder links come directly here with
+      // token_hash, which lets this page verify the invitation itself.
+      if (tokenHash && (type === "invite" || type === "magiclink")) {
+        // Prevent a previously logged-in owner/admin session from contaminating
+        // the employee invite flow.
+        await supabase.auth.signOut({ scope: "local" });
+
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type as "invite" | "magiclink",
+        });
+
+        if (error || !data.session) {
+          setMessage(
+            error?.message ||
+              "This invitation could not be verified. Ask the administrator to send a fresh invitation."
+          );
+          return;
+        }
+
+        setReady(true);
+        setMessage("");
+        window.history.replaceState({}, document.title, window.location.pathname);
         return;
       }
 
-      // Prevent a previously logged-in owner/admin session from contaminating
-      // the employee invite flow.
-      await supabase.auth.signOut({ scope: "local" });
+      // Support PKCE-style redirects if Supabase returns an authorization code.
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-      const { data, error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: type as "invite" | "magiclink",
-      });
+        if (!error && data.session) {
+          setReady(true);
+          setMessage("");
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+      }
 
-      if (error || !data.session) {
-        setMessage(
-          error?.message ||
-            "This invitation could not be verified. Ask the administrator to send a fresh invitation."
-        );
+      // Backward compatibility for invitation links already emailed before this
+      // fix. Older Supabase action links can return the verified session in the
+      // URL hash rather than returning token_hash to this page.
+      const hashParams = new URLSearchParams(
+        window.location.hash.startsWith("#")
+          ? window.location.hash.slice(1)
+          : window.location.hash
+      );
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+
+      if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!error && data.session) {
+          setReady(true);
+          setMessage("");
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+      }
+
+      // Some clients may have already processed the Supabase redirect before
+      // this component runs. Only accept that session as an invitation session
+      // when it carries our invitation metadata.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const existingSession = sessionData.session;
+      const invitationId =
+        existingSession?.user?.user_metadata?.invitation_id ||
+        existingSession?.user?.user_metadata?.invited_company_id;
+
+      if (existingSession && invitationId) {
+        setReady(true);
+        setMessage("");
+        window.history.replaceState({}, document.title, window.location.pathname);
         return;
       }
 
-      setReady(true);
-      setMessage("");
-
-      // Remove token from address bar after verification.
-      window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname
+      setMessage(
+        "This invitation link is missing its verification token. Ask the administrator to send a fresh invitation."
       );
     }
-
     initializeInvite();
   }, []);
 

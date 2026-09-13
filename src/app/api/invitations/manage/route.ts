@@ -39,9 +39,14 @@ async function sendReminder({
     },
   });
 
-  if (linkError || !linkData?.properties?.action_link) {
+  if (linkError || !linkData?.properties?.hashed_token) {
     throw new Error(linkError?.message || `Could not generate a reminder link for ${email}`);
   }
+
+  const reminderUrl =
+    `${origin}/accept-invite?token_hash=${encodeURIComponent(
+      linkData.properties.hashed_token
+    )}&type=magiclink`;
 
   const { error: emailError } = await resend.emails.send({
     from: FROM_EMAIL,
@@ -52,7 +57,7 @@ async function sendReminder({
       <h1 style="font-size:28px;line-height:1.2;margin:10px 0 18px">Your training invitation is waiting</h1>
       <p style="font-size:16px;line-height:1.6">${companyName} previously invited you to join its MicroSECONDS cybersecurity training account.</p>
       <p style="font-size:16px;line-height:1.6">Use the button below to activate your account and begin your assigned training.</p>
-      <p style="margin:28px 0"><a href="${linkData.properties.action_link}" style="display:inline-block;background:#22d3ee;color:#082f49;text-decoration:none;padding:13px 20px;border-radius:8px;font-weight:bold">Accept Invitation</a></p>
+      <p style="margin:28px 0"><a href="${reminderUrl}" style="display:inline-block;background:#22d3ee;color:#082f49;text-decoration:none;padding:13px 20px;border-radius:8px;font-weight:bold">Accept Invitation</a></p>
       <p style="font-size:13px;color:#64748b">If you already completed your registration, you can ignore this reminder.</p>
       <p style="margin-top:28px;font-size:13px;color:#64748b">MicroSECONDS Training<br />Cybersecurity Awareness Training</p>
     </div>`,

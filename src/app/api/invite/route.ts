@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
 
     if (
       linkError ||
-      !linkData?.properties?.action_link
+      !linkData?.properties?.hashed_token
     ) {
       await admin
         .from("invitations")
@@ -221,6 +221,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // We send the user directly to our accept-invite page with Supabase's
+    // hashed verification token. Sending properties.action_link would first
+    // consume the token at Supabase and then redirect back to our page without
+    // token_hash, which is what caused the "missing verification token" error.
+    const invitationUrl =
+      `${origin}/accept-invite?token_hash=${encodeURIComponent(
+        linkData.properties.hashed_token
+      )}&type=invite`;
 
     const apiKey =
       process.env.RESEND_API_KEY;
@@ -287,7 +296,7 @@ export async function POST(request: NextRequest) {
 
             <p style="margin:28px 0">
               <a
-                href="${linkData.properties.action_link}"
+                href="${invitationUrl}"
                 style="display:inline-block;background:#22d3ee;color:#082f49;text-decoration:none;padding:13px 20px;border-radius:8px;font-weight:bold"
               >
                 Accept Invitation
