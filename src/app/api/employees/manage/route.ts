@@ -134,8 +134,24 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!remainingMemberships?.length) {
-        await admin.from("profiles").delete().eq("id", targetUserId);
-        await admin.auth.admin.deleteUser(targetUserId);
+        // Remove the Auth account when possible. A later re-invite is also
+        // supported if an account survives because another record still
+        // references it.
+        const { error: profileDeleteError } = await admin
+          .from("profiles")
+          .delete()
+          .eq("id", targetUserId);
+
+        if (profileDeleteError) {
+          console.warn("Could not delete employee profile:", profileDeleteError.message);
+        }
+
+        const { error: authDeleteError } =
+          await admin.auth.admin.deleteUser(targetUserId);
+
+        if (authDeleteError) {
+          console.warn("Could not delete employee auth user:", authDeleteError.message);
+        }
       }
     }
 

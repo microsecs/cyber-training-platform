@@ -184,9 +184,16 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       request.nextUrl.origin;
 
+    // If this email already has a MicroSECONDS/Supabase account (for example,
+    // an employee who was previously removed), Supabase will reject a second
+    // "invite" link with "user already registered". In that case we send a
+    // magic-link invitation to the existing account instead. New users still
+    // receive a normal invite link and create their password as before.
+    const linkType = existingProfile ? "magiclink" : "invite";
+
     const { data: linkData, error: linkError } =
       await admin.auth.admin.generateLink({
-        type: "invite",
+        type: linkType,
         email,
         options: {
           redirectTo: `${origin}/accept-invite`,
@@ -229,7 +236,7 @@ export async function POST(request: NextRequest) {
     const invitationUrl =
       `${origin}/accept-invite?token_hash=${encodeURIComponent(
         linkData.properties.hashed_token
-      )}&type=invite`;
+      )}&type=${linkType}`;
 
     const apiKey =
       process.env.RESEND_API_KEY;

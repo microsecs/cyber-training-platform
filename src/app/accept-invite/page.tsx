@@ -39,6 +39,38 @@ export default function AcceptInvitePage() {
           return;
         }
 
+        // Re-invited employees who already have an account arrive through a
+        // magic link. They do not need to create another password; restore the
+        // company membership immediately and send them to their dashboard.
+        if (type === "magiclink") {
+          const accessToken = data.session.access_token;
+
+          const response = await fetch("/api/accept-invite", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            setMessage(
+              result.error ||
+                "Could not restore your company membership. Ask the administrator to send a fresh invitation."
+            );
+            return;
+          }
+
+          setMessage("Invitation accepted. Opening your training dashboard...");
+          window.history.replaceState({}, document.title, window.location.pathname);
+
+          window.setTimeout(() => {
+            window.location.href = "/employee";
+          }, 500);
+          return;
+        }
+
         setReady(true);
         setMessage("");
         window.history.replaceState({}, document.title, window.location.pathname);
