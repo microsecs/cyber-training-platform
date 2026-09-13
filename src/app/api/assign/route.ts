@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserCompanySubscriptionAccess } from "@/lib/subscriptionServer";
+import { Resend } from "resend";
 
 export async function POST(req: NextRequest) {
   try {
@@ -167,6 +168,7 @@ export async function POST(req: NextRequest) {
     }
 
     let activeInsertedCount = 0;
+    let insertedActiveAssignments: Array<{ id: string; user_id: string }> = [];
     if (assignableUserIds.length) {
       const rows = assignableUserIds.map((userId) => ({
         company_id: membership.company_id,
@@ -188,7 +190,126 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: insertError.message }, { status: 400 });
       }
 
-      activeInsertedCount = inserted?.length ?? 0;
+      insertedActiveAssignments = inserted ?? [];
+      activeInsertedCount = insertedActiveAssignments.length;
+    }
+
+    // Send an immediate notification to each active employee whose assignment
+    // was just created. Email delivery is intentionally non-fatal: the training
+    // assignment remains saved even if Resend has a temporary delivery problem.
+    let assignmentEmailsSent = 0;
+    let assignmentEmailFailures = 0;
+
+    if (insertedActiveAssignments.length > 0) {
+      const apiKey = process.env.RESEND_API_KEY;
+
+      if (!apiKey) {
+        console.warn(
+          "Training assignments were created, but RESEND_API_KEY is missing so assignment emails were not sent."
+        );
+        assignmentEmailFailures = insertedActiveAssignments.length;
+      } else {
+        const resend = new Resend(apiKey);
+        const assignedUserIds = insertedActiveAssignments.map(
+          (assignment) => assignment.user_id
+        );
+
+        const [{ data: profiles }, { data: course }, { data: company }] =
+          await Promise.all([
+            admin
+              .from("profiles")
+              .select("id,email,full_name")
+              .in("id", assignedUserIds),
+            admin
+              .from("courses")
+              .select("id,title")
+              .eq("id", courseId)
+              .maybeSingle(),
+            admin
+              .from("companies")
+              .select("id,name")
+              .eq("id", membership.company_id)
+              .maybeSingle(),
+          ]);
+
+        const profileById = new Map(
+          (profiles ?? []).map((profile: any) => [profile.id, profile])
+        );
+
+        const appUrl =
+          process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          "https://microseconds.com";
+
+        const fromEmail =
+          process.env.RESEND_FROM_EMAIL ||
+          "MicroSECONDS Training <training@microseconds.com>";
+
+        const courseTitle = course?.title || "Cybersecurity Training";
+        const companyName = company?.name || "Your company";
+        const dueText = dueDate
+          ? new Date(`${dueDate}T00:00:00`).toLocaleDateString("en-US")
+          : null;
+
+        for (const assignment of insertedActiveAssignments) {
+          const profile: any = profileById.get(assignment.user_id);
+
+          if (!profile?.email) {
+            assignmentEmailFailures += 1;
+            console.warn(
+              `Training assignment ${assignment.id} has no employee email address.`
+            );
+            continue;
+          }
+
+          const employeeName = profile.full_name || "there";
+
+          const { error: emailError } = await resend.emails.send({
+            from: fromEmail,
+            to: profile.email,
+            subject: `New training assigned: ${courseTitle}`,
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#111827;line-height:1.55">
+                <h2 style="margin-bottom:8px;">New Cybersecurity Training Assigned</h2>
+                <p>Hello ${employeeName},</p>
+                <p>
+                  ${companyName} has assigned you
+                  <strong>${courseTitle}</strong> in MicroSECONDS Training.
+                </p>
+                ${
+                  dueText
+                    ? `<p><strong>Due date:</strong> ${dueText}</p>`
+                    : ""
+                }
+                <p style="margin:24px 0;">
+                  <a href="${appUrl}/employee"
+                     style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">
+                    Open Training
+                  </a>
+                </p>
+                <p>
+                  Sign in to MicroSECONDS to watch the training and complete any
+                  required quiz.
+                </p>
+                <p style="margin-top:28px;color:#6b7280;font-size:13px;">
+                  MicroSECONDS Training<br />
+                  Employee Security Training
+                </p>
+              </div>
+            `,
+          });
+
+          if (emailError) {
+            assignmentEmailFailures += 1;
+            console.error(
+              `Could not send assignment email to ${profile.email}:`,
+              emailError.message
+            );
+          } else {
+            assignmentEmailsSent += 1;
+          }
+        }
+      }
     }
 
     let pendingInsertedCount = 0;
@@ -233,6 +354,8 @@ export async function POST(req: NextRequest) {
       pendingCount: pendingInsertedCount,
       skippedActive: Math.max(0, skippedActive),
       remindersEnabled: effectiveRemindersEnabled,
+      assignmentEmailsSent,
+      assignmentEmailFailures,
     });
   } catch (error: any) {
     return NextResponse.json(
