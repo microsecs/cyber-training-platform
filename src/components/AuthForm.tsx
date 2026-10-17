@@ -120,7 +120,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[540px] rounded-[20px] border border-slate-700/70 bg-[#111827] p-5 shadow-xl sm:p-7">
+    <div className="mx-auto w-full max-w-[520px] rounded-[20px] border border-slate-700/70 bg-[#111827] p-5 shadow-xl sm:p-7">
       <div className="mb-5 border-b border-slate-700/70 pb-4 text-center">
         <Image src="/microseconds-logo.png" alt="MicroSECONDS" width={835} height={109} priority className="mx-auto h-auto w-full max-w-[265px] object-contain" />
         <div className="mt-2 text-sm font-bold tracking-[0.25em] text-teal-300">TRAINING</div>
