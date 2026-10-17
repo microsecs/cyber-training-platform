@@ -5,6 +5,7 @@ import {
   subscriptionIdFromInvoice,
   syncStripeSubscription,
 } from "@/lib/stripeSubscriptionSync";
+import { sendSubscriptionEmail } from "@/lib/subscriptionEmails";
 import { recordEasyDesktopPurchase } from "@/lib/easydesktopPurchase";
 
 export const runtime = "nodejs";
@@ -64,6 +65,9 @@ export async function POST(request: NextRequest) {
         if (subscriptionId) {
           const subscription = await retrieveSubscription(subscriptionId);
           await syncStripeSubscription(subscription);
+          if (session.mode === "subscription" && ["active", "trialing"].includes(subscription.status)) {
+            await sendSubscriptionEmail(subscription, "activated", event.id);
+          }
         }
         break;
       }
