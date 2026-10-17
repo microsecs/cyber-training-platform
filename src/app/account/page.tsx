@@ -251,9 +251,9 @@ export default function AccountPage() {
         </div>
       </section>
 
-      <MfaSettings />
-
       {canManageBilling && <BillingSection />}
+
+      <MfaSettings />
     </main>
   );
 }

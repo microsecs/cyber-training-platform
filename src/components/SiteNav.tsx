@@ -47,9 +47,11 @@ export default function SiteNav() {
 
   const publicLinks = [
     { href: "/", label: "Home" },
-    { href: "/consulting", label: "IT Consulting" },
+    { href: "/employee-security-training", label: "Training" },
+    { href: "/monitoring", label: "Monitoring" },
     { href: "/easydesktop", label: "EasyDesktop" },
-    { href: "/support", label: "Support" },
+    { href: "/consulting", label: "Consulting" },
+    { href: "/contact", label: "Contact" },
   ];
 
   const roleLinks =
@@ -81,8 +83,8 @@ export default function SiteNav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" className="group min-w-0 shrink" aria-label="MicroSECONDS Training home">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <Link href="/" className="group min-w-0 shrink" aria-label="MicroSECONDS home">
           <Image
             src="/microseconds-logo.png"
             alt="MicroSECONDS"
@@ -92,12 +94,12 @@ export default function SiteNav() {
             className="h-7 w-auto max-w-[150px] object-contain sm:h-8 sm:max-w-[210px] lg:h-8 lg:max-w-[220px] xl:h-9 xl:max-w-[240px]"
           />
           <div className="mt-1 hidden text-xs font-medium tracking-wide text-slate-400 sm:block lg:text-sm">
-            Employee Security Training
+            Training • Monitoring • IT Solutions
           </div>
         </Link>
 
         {!isMinimalChrome && !loading ? (
-          <nav className="hidden min-w-0 items-center gap-3 whitespace-nowrap text-xs text-slate-300 lg:flex xl:gap-4 xl:text-sm">
+          <nav className="order-3 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-300 sm:text-sm xl:order-none xl:w-auto xl:flex-1">
             {links.map((link) => (
               <Link
                 key={link.href}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppRole, defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
 import { createClient } from "@/lib/supabase/client";
@@ -17,6 +17,8 @@ function isPublicPath(pathname: string) {
     pathname === "/terms" ||
     pathname === "/support" ||
     pathname === "/consulting" ||
+    pathname === "/monitoring" ||
+    pathname === "/employee-security-training" ||
     pathname === "/easydesktop" ||
     pathname === "/gmail-addin/connect" ||
     pathname === "/gmail-addin/oauth/authorize" ||
@@ -59,14 +61,11 @@ function isAllowed(pathname: string, role: AppRole) {
 export default function RoleAccessGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
 
     async function check() {
       if (isPublicPath(pathname)) {
-        if (!cancelled) setReady(true);
         return;
       }
 
@@ -104,10 +103,8 @@ export default function RoleAccessGate({ children }: { children: ReactNode }) {
         }
       }
 
-      setReady(true);
     }
 
-    setReady(false);
     check();
 
     return () => {
@@ -115,13 +112,7 @@ export default function RoleAccessGate({ children }: { children: ReactNode }) {
     };
   }, [pathname, router]);
 
-  if (!ready) {
-    return (
-      <main className="mx-auto max-w-7xl px-6 py-12 text-slate-400">
-        Checking access...
-      </main>
-    );
-  }
-
+  // Always render the same tree during SSR and the browser's first render.
+  // Access checks run after hydration and redirect protected routes when needed.
   return <>{children}</>;
 }

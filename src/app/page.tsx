@@ -1,241 +1,91 @@
 import Link from "next/link";
-import { getHomepageSettings } from "@/lib/homepage-settings";
 
-export const dynamic = "force-dynamic";
-
-function CardIcon({ kind }: { kind: string }) {
-  const props = { className: "h-5 w-5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
-  const k = kind.toLowerCase();
-
-  if (k.includes("loss") || k.includes("compromise") || k.includes("business email") || k.includes("dollar") || k.includes("$")) {
-    return <svg {...props}><circle cx="12" cy="12" r="9"/><path d="M16 8.5c-.7-.7-1.8-1.1-3-1.1-1.7 0-3 .8-3 2s1.1 1.8 3.1 2.2c2 .4 3.1 1 3.1 2.3 0 1.4-1.4 2.4-3.3 2.4-1.4 0-2.7-.5-3.5-1.3"/><path d="M12.8 5.5v13"/></svg>;
-  }
-  if (k.includes("link") || k.includes("url")) {
-    return <svg {...props}><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"/></svg>;
-  }
-  if (k.includes("complaint") || k.includes("report")) {
-    return <svg {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.33 1.84.56 2.8.69A2 2 0 0 1 22 16.92z"/></svg>;
-  }
-  return <svg {...props}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/><path d="M18 3v4"/><path d="M16 5h4"/></svg>;
+function ProductVideo({ src, label }: { src?: string; label: string }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+      <div className="aspect-video bg-[radial-gradient(circle_at_50%_35%,rgba(34,211,238,0.13),transparent_40%),linear-gradient(145deg,rgba(15,23,42,1),rgba(2,6,23,1))]">
+        {src ? (
+          <video className="h-full w-full object-cover" controls preload="metadata" playsInline>
+            <source src={src} />
+            Your browser does not support embedded video.
+          </video>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-2xl text-cyan-300">▶</div>
+            <div className="mt-4 text-lg font-bold">{label}</div>
+            <div className="mt-1 text-sm text-slate-400">Video coming soon</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-export default async function Home() {
-  const settings = await getHomepageSettings();
-  const stats = settings.stats.filter((stat) => stat.enabled);
-
-  // Homepage settings may still contain the older /login URL in Supabase.
-  // Any homepage CTA that points to login should open directly on
-  // Create Company Account, while normal Sign In links remain unchanged.
-  const subscribeCtaUrl =
-    settings.ctaUrl === "/login" || settings.ctaUrl.startsWith("/login?")
-      ? "/login?mode=signup"
-      : settings.ctaUrl;
-
-  const ctaIsExternal = /^https?:\/\//i.test(subscribeCtaUrl);
+export default function Home() {
+  const trainingVideo = process.env.NEXT_PUBLIC_TRAINING_PROMO_VIDEO || "";
+  const monitoringVideo = process.env.NEXT_PUBLIC_MONITORING_PROMO_VIDEO || "";
 
   return (
     <main>
       <section className="relative overflow-hidden border-b border-white/10">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.12),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(59,130,246,0.10),transparent_30%)]" />
-        <div className="relative mx-auto grid max-w-7xl gap-4 px-4 py-5 md:px-5 md:py-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch lg:py-7">
-          <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:p-5">
-            <div className="mb-2 inline-flex w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-xs font-medium text-cyan-300">
-              {settings.heroBadge}
-            </div>
-            <h1 className="max-w-3xl text-3xl font-bold leading-[1.06] tracking-tight md:text-4xl lg:text-[2.65rem]">
-              {settings.heroTitle}
-            </h1>
-            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-              {settings.heroBody}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2.5">
-              <a
-                href={subscribeCtaUrl}
-                target={ctaIsExternal ? "_blank" : undefined}
-                rel={ctaIsExternal ? "noreferrer" : undefined}
-                className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-              >
-                {settings.ctaLabel}
-              </a>
-              <Link
-                href="/login"
-                className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5"
-              >
-                Existing Customer Sign In
-              </Link>
-            </div>
-
-            <div className="mt-auto grid grid-cols-3 gap-2 border-t border-white/10 pt-3.5">
-              <div>
-                <div className="text-lg font-black tracking-tight text-cyan-300">{settings.experienceValue}</div>
-                <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.experienceLabel}</div>
-              </div>
-              <div>
-                <div className="text-lg font-black tracking-tight text-cyan-300">{settings.subscriptionValue}</div>
-                <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.subscriptionLabel}</div>
-              </div>
-              <div>
-                <div className="text-lg font-black tracking-tight text-cyan-300">{settings.subscriptionPrice}</div>
-                <div className="mt-0.5 text-xs leading-4 text-slate-400">{settings.subscriptionPeriod}</div>
-              </div>
-            </div>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(34,211,238,0.15),transparent_30%),radial-gradient(circle_at_82%_25%,rgba(59,130,246,0.12),transparent_32%)]" />
+        <div className="relative mx-auto max-w-[88rem] px-4 py-10 text-center sm:px-5 md:py-12 lg:px-6">
+          <div className="mx-auto inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-sm font-semibold text-cyan-300">Practical cybersecurity for real businesses</div>
+          <h1 className="mx-auto mt-4 max-w-5xl text-4xl font-black tracking-tight md:text-6xl">Train Your People. <span className="text-cyan-300">Monitor Your Accounts.</span></h1>
+          <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">Practical cybersecurity solutions from MicroSECONDS.</p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link href="/employee-security-training" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300">Explore Training</Link>
+            <Link href="/monitoring" className="rounded-lg border border-white/15 px-5 py-3 font-semibold hover:bg-white/5">Explore Monitoring</Link>
           </div>
+        </div>
+      </section>
 
-          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-            {settings.playbackUrl ? (
-              <video
-                key={settings.playbackUrl}
-                controls
-                playsInline
-                preload="metadata"
-                className="aspect-video w-full bg-black object-contain"
-              >
-                <source src={settings.playbackUrl} />
-                Your browser does not support HTML5 video.
-              </video>
-            ) : (
-              <div className="flex aspect-video items-center justify-center bg-slate-950 px-8 text-center">
-                <div>
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-xl text-cyan-300">▶</div>
-                  <div className="mt-4 text-lg font-semibold">Homepage video</div>
-                  <p className="mt-1 text-sm text-slate-400">Add your promotional video from Platform Admin.</p>
-                </div>
-              </div>
-            )}
-            <div className="border-t border-white/10 px-4 py-2.5 md:px-5">
-              <div className="font-semibold">{settings.videoTitle}</div>
-              <div className="mt-0.5 text-xs text-slate-400 md:text-sm">A short introduction to practical employee cybersecurity awareness.</div>
+      <section id="training" className="border-b border-white/10 bg-slate-900/40">
+        <div className="mx-auto grid max-w-[88rem] gap-7 px-4 py-9 sm:px-5 md:py-11 lg:px-6 lg:grid-cols-2 lg:items-center">
+          <ProductVideo src={trainingVideo} label="MicroSECONDS Training" />
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">MicroSECONDS Training</div>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Employee Security Training Made Simple.</h2>
+            <p className="mt-3 leading-7 text-slate-300">Train unlimited employees for one flat subscription. Assign lessons, optionally quiz employees, track completion and help your workforce recognize real-world cybersecurity threats.</p>
+            <p className="mt-3 font-semibold text-slate-200">Phishing • Passwords • Remote Work • Public Wi-Fi • Data Security • More</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/employee-security-training" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300">Learn More</Link>
+              <Link href="/login" className="rounded-lg border border-white/15 px-5 py-3 font-semibold hover:bg-white/5">Training Login</Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-white/10 bg-slate-900/55">
-        <div className="mx-auto max-w-7xl px-4 py-8 md:px-5 md:py-9">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">{settings.statsEyebrow}</div>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{settings.statsHeading}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-400 md:text-base">{settings.statsBody}</p>
-          </div>
-
-          {stats.length ? (
-            <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {stats.map((stat) => (
-                <article key={stat.id} className="flex min-h-[205px] flex-col rounded-2xl border border-white/10 bg-slate-950/75 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="text-2xl font-black tracking-tight text-cyan-300 md:text-3xl">{stat.value}</div>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
-                      <CardIcon kind={`${stat.label} ${stat.detail ?? ""}`} />
-                    </div>
-                  </div>
-                  <h3 className="mt-3 font-semibold leading-snug">{stat.label}</h3>
-                  {stat.detail ? <p className="mt-2 text-sm leading-5 text-slate-400">{stat.detail}</p> : null}
-                  <div className="mt-auto pt-4 text-xs text-slate-500">
-                    Source: {stat.sourceUrl ? (
-                      <a href={stat.sourceUrl} target="_blank" rel="noreferrer" className="text-slate-300 underline decoration-white/20 underline-offset-4 hover:text-cyan-300">{stat.source}</a>
-                    ) : <span className="text-slate-300">{stat.source}</span>}
-                    {stat.sourceDate ? ` · ${stat.sourceDate}` : ""}
-                  </div>
-                </article>
-              ))}
+      <section id="monitoring" className="border-b border-white/10">
+        <div className="mx-auto grid max-w-[88rem] gap-7 px-4 py-9 sm:px-5 md:py-11 lg:px-6 lg:grid-cols-2 lg:items-center">
+          <div className="lg:order-1">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">MicroSECONDS Monitoring</div>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Monitor Every Client. From One Place.</h2>
+            <p className="mt-3 leading-7 text-slate-300">Monitor Microsoft 365 and Google Workspace sign-ins across multiple customer tenants. Identify suspicious activity, investigate incidents and get alerted when something deserves attention.</p>
+            <p className="mt-3 font-semibold text-slate-200">Built for IT Consultants • MSPs • Internal IT Teams</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/monitoring" className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300">Explore Monitoring</Link>
+              <span className="rounded-lg border border-white/10 px-5 py-3 font-semibold text-slate-500">Monitoring Login — Coming Soon</span>
             </div>
-          ) : null}
+          </div>
+          <div className="lg:order-2"><ProductVideo src={monitoringVideo} label="MicroSECONDS Monitoring" /></div>
         </div>
       </section>
 
-      <section className="border-b border-white/10 bg-slate-950/35">
-        <div className="mx-auto max-w-7xl px-4 py-7 md:px-5 md:py-8">
-          <div className="relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-[linear-gradient(135deg,rgba(34,211,238,0.11),rgba(15,23,42,0.92)_48%,rgba(59,130,246,0.08))] p-5 shadow-[0_0_35px_rgba(34,211,238,0.08)] md:p-6">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl" />
-            <div className="relative flex flex-col gap-5">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-950/20">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-7 w-7"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                </div>
-                <div className="w-full">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border border-cyan-300/30 bg-cyan-400/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
-                      Exclusive
-                    </span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                      Outlook • Gmail • Web
-                    </span>
-                  </div>
-                  <h2 className="mt-2 text-xl font-bold tracking-tight text-white md:text-2xl">
-                    Email Risk Analyzer
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-300 md:text-base">
-                    Analyze suspicious emails before you trust them. MicroSECONDS evaluates phishing and scam indicators,
-                    sender and authentication issues, suspicious links, unusual language, and other warning signs, then
-                    provides a clear risk assessment and recommended next steps.
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Use it on the web or directly inside Microsoft Outlook and Gmail with our add-ins—ideal for businesses
-                    using Microsoft 365 or Google Workspace.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="border-b border-white/10 bg-slate-900/40">
+        <div className="mx-auto max-w-6xl px-4 py-11 text-center sm:px-5 md:py-12 lg:px-6">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Built From Real-World IT Experience</div>
+          <h2 className="mt-2 text-3xl font-bold">40+ Years Working With Business Technology.</h2>
+          <p className="mx-auto mt-2 max-w-3xl leading-7 text-slate-400">MicroSECONDS Training and Monitoring are designed around the security problems businesses and IT professionals actually encounter.</p>
         </div>
       </section>
 
-      <section className="border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-4 py-7 md:px-5 md:py-8">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">What the training covers</div>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Practical cybersecurity training for everyday employees</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300 md:text-base md:leading-7">
-              MicroSECONDS training focuses on the real-world situations employees face every day: recognizing phishing emails and suspicious links, creating and protecting strong passwords, using multi-factor authentication, working safely from home or on public Wi-Fi, and handling company and customer data responsibly. Lessons are designed to be clear, practical, and easy to apply without requiring a technical background.
-            </p>
-            <p className="mt-3 text-sm leading-6 text-slate-400 md:text-base">
-              Additional classes can cover emerging threats and other security topics as your organization’s training needs evolve.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section id="subscribe" className="bg-slate-900/45">
-        <div className="mx-auto max-w-7xl px-4 py-8 md:px-5 md:py-9">
-          <div className="grid overflow-hidden rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] lg:grid-cols-[1.35fr_0.65fr]">
-            <div className="p-5 md:p-6 lg:p-7">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">{settings.pricingEyebrow}</div>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">{settings.pricingHeading}</h2>
-              <p className="mt-3 max-w-3xl leading-7 text-slate-300">{settings.pricingBody}</p>
-              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
-                <span>✓ Unlimited employees</span>
-                <span>✓ Quizzes & completion tracking</span>
-                <span>✓ Multiple security training topics</span>
-                <span>✓ Email Risk Analyzer</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-center border-t border-white/10 bg-slate-950/55 p-5 text-center md:p-6 lg:border-l lg:border-t-0">
-              <div className="text-3xl font-black tracking-tight text-cyan-300">{settings.subscriptionPrice}</div>
-              <div className="mt-2 text-sm font-medium text-slate-300">{settings.subscriptionPeriod}</div>
-              <div className="mt-1 text-xs text-slate-500">{settings.subscriptionFinePrint}</div>
-              <a
-                href={subscribeCtaUrl}
-                target={ctaIsExternal ? "_blank" : undefined}
-                rel={ctaIsExternal ? "noreferrer" : undefined}
-                className="mt-5 rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
-              >
-                {settings.ctaLabel}
-              </a>
-              <Link href="/login" className="mt-3 text-sm text-slate-400 hover:text-cyan-300">Already subscribed? Sign in</Link>
-            </div>
+      <section>
+        <div className="mx-auto max-w-[88rem] px-4 py-8 sm:px-5 md:py-9 lg:px-6">
+          <div className="text-center"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">More from MicroSECONDS</div></div>
+          <div className="mx-auto mt-4 grid max-w-5xl gap-4 md:grid-cols-2">
+            <Link href="/easydesktop" className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 transition hover:border-cyan-300/30 hover:bg-slate-900"><h3 className="text-xl font-bold">EasyDesktop</h3><p className="mt-2 text-sm leading-6 text-slate-400">Making everyday computing easier.</p><div className="mt-3 font-semibold text-cyan-300">Learn More →</div></Link>
+            <Link href="/consulting" className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 transition hover:border-cyan-300/30 hover:bg-slate-900"><h3 className="text-xl font-bold">IT Consulting</h3><p className="mt-2 text-sm leading-6 text-slate-400">Experienced hands-on IT services when you need them.</p><div className="mt-3 font-semibold text-cyan-300">Learn More →</div></Link>
           </div>
         </div>
       </section>

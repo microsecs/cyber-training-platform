@@ -2,6 +2,7 @@
 
 import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import SubscriptionGate from "@/components/SubscriptionGate";
 
 type SubscriptionNotice = {
   role?: string;
@@ -23,7 +24,7 @@ type Analysis = {
   }>;
 };
 
-export default function PhishingCheckPage() {
+function PhishingCheckContent() {
   const [emailText, setEmailText] = useState("");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [busy, setBusy] = useState(false);
@@ -461,5 +462,13 @@ export default function PhishingCheckPage() {
         Email Risk Analyzer is an aid, not a guarantee that an email is safe or malicious. When in doubt, do not use links, attachments, phone numbers, or reply addresses in the suspicious message. Verify the request through a known contact method or contact your IT department. Submitted email text is analyzed for this request and is not intentionally saved by MicroSECONDS.
       </div>
     </main>
+  );
+}
+
+export default function PhishingCheckPage() {
+  return (
+    <SubscriptionGate>
+      <PhishingCheckContent />
+    </SubscriptionGate>
   );
 }
