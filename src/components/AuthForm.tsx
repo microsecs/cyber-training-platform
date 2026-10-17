@@ -120,12 +120,12 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[575px] rounded-[20px] border border-slate-700/70 bg-[#111827] p-8 shadow-xl sm:p-10">
-      <div className="mb-9 border-b border-slate-700/70 pb-8 text-center">
-        <Image src="/microseconds-logo.png" alt="MicroSECONDS" width={835} height={109} priority className="mx-auto h-auto w-full max-w-[310px] object-contain" />
+    <div className="mx-auto w-full max-w-[575px] rounded-[20px] border border-slate-700/70 bg-[#111827] p-5 shadow-xl sm:p-7">
+      <div className="mb-5 border-b border-slate-700/70 pb-4 text-center">
+        <Image src="/microseconds-logo.png" alt="MicroSECONDS" width={835} height={109} priority className="mx-auto h-auto w-full max-w-[265px] object-contain" />
         <div className="mt-2 text-sm font-bold tracking-[0.25em] text-teal-300">TRAINING</div>
       </div>
-      <div className="mb-6 flex rounded-lg bg-slate-950 p-1">
+      <div className="mb-4 flex rounded-lg bg-slate-950 p-1">
         <button
           type="button"
           onClick={() => {
@@ -153,65 +153,65 @@ export default function AuthForm() {
         </button>
       </div>
 
-      <h1 className="text-3xl font-bold">
+      <h1 className="text-2xl font-bold">
         {mode === "signin" ? "Welcome back" : "Create your account"}
       </h1>
 
-      <p className="mt-2 text-base text-slate-400">
+      <p className="mt-1 text-sm text-slate-400">
         {mode === "signin"
           ? "Sign in to your MicroSECONDS Training account."
           : "This will become the primary administrator account for your company."}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         {mode === "signup" ? (
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-200">Company name</label>
+            <label className="mb-1 block text-sm font-semibold text-slate-200">Company name</label>
             <input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-3 outline-none focus:border-teal-400/60"
+              className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-2.5 outline-none focus:border-teal-400/60"
               placeholder="ABC Plumbing"
             />
           </div>
         ) : null}
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-200">Email</label>
+          <label className="mb-1 block text-sm font-semibold text-slate-200">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-3 outline-none focus:border-teal-400/60"
+            className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-2.5 outline-none focus:border-teal-400/60"
             placeholder="you@company.com"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-200">Password</label>
+          <label className="mb-1 block text-sm font-semibold text-slate-200">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-3 outline-none focus:border-teal-400/60"
+            className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-2.5 outline-none focus:border-teal-400/60"
             placeholder="Minimum 6 characters"
           />
         </div>
 
         <button
           disabled={busy}
-          className="w-full rounded-xl bg-teal-300 px-4 py-3 font-bold text-slate-950 hover:bg-teal-200 disabled:opacity-60"
+          className="w-full rounded-xl bg-teal-300 px-4 py-2.5 font-bold text-slate-950 hover:bg-teal-200 disabled:opacity-60"
         >
           {busy ? "Working..." : mode === "signin" ? "Sign In" : "Create Account"}
         </button>
       </form>
 
       {mode === "signin" ? (
-        <div className="mt-4 text-center">
+        <div className="mt-3 text-center">
           <a href="/forgot-password" className="text-sm text-cyan-300 hover:text-cyan-200">
             Forgot Password?
           </a>

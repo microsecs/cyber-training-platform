@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#080f1e] px-5 py-10">
+    <main className="flex min-h-screen items-center justify-center bg-[#080f1e] px-4 py-4 sm:py-6">
       {!showReset ? (
         <div>
           <AuthForm />
