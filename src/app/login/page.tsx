@@ -33,7 +33,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#080f1e] px-4 py-4 sm:py-6">
       {!showReset ? (
-        <div className="w-full max-w-[625px]">
+        <div className="w-full max-w-[575px]">
           <AuthForm />
         </div>
       ) : (
