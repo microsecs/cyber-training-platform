@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 export default function SiteFooter() {
   const pathname = usePathname();
+  if (pathname === "/login") return null;
   const isOutlookAddin =
     pathname === "/outlook-addin" || pathname.startsWith("/outlook-addin/");
   const isGmailConnect =

@@ -9,6 +9,7 @@ import { AppRole, resolveUserAccess } from "@/lib/supabase/access";
 
 export default function SiteNav() {
   const pathname = usePathname();
+  const isLoginScreen = pathname === "/login";
   const isGmailConnect =
     pathname === "/gmail-addin/connect" ||
     pathname.startsWith("/gmail-addin/connect/") ||
@@ -80,6 +81,8 @@ export default function SiteNav() {
     role === "guest"
       ? publicLinks
       : [...roleLinks, { href: "/support", label: "Support" }];
+
+  if (isLoginScreen) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">

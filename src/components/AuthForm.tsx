@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { defaultPathForRole, resolveUserAccess } from "@/lib/supabase/access";
 
@@ -119,7 +120,11 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-slate-900 p-7">
+    <div className="mx-auto w-full max-w-[575px] rounded-[20px] border border-slate-700/70 bg-[#111827] p-8 shadow-xl sm:p-10">
+      <div className="mb-9 border-b border-slate-700/70 pb-8 text-center">
+        <Image src="/microseconds-logo.png" alt="MicroSECONDS" width={835} height={109} priority className="mx-auto h-auto w-full max-w-[310px] object-contain" />
+        <div className="mt-2 text-sm font-bold tracking-[0.25em] text-teal-300">TRAINING</div>
+      </div>
       <div className="mb-6 flex rounded-lg bg-slate-950 p-1">
         <button
           type="button"
@@ -148,11 +153,11 @@ export default function AuthForm() {
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold">
+      <h1 className="text-3xl font-bold">
         {mode === "signin" ? "Welcome back" : "Create your account"}
       </h1>
 
-      <p className="mt-2 text-sm text-slate-400">
+      <p className="mt-2 text-base text-slate-400">
         {mode === "signin"
           ? "Sign in to your MicroSECONDS Training account."
           : "This will become the primary administrator account for your company."}
@@ -161,45 +166,45 @@ export default function AuthForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {mode === "signup" ? (
           <div>
-            <label className="mb-2 block text-sm text-slate-300">Company name</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-200">Company name</label>
             <input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               required
-              className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400/50"
+              className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-3 outline-none focus:border-teal-400/60"
               placeholder="ABC Plumbing"
             />
           </div>
         ) : null}
 
         <div>
-          <label className="mb-2 block text-sm text-slate-300">Email</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-200">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400/50"
+            className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-3 outline-none focus:border-teal-400/60"
             placeholder="you@company.com"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-slate-300">Password</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-200">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400/50"
+            className="w-full rounded-xl border border-slate-700 bg-[#0c1625] px-4 py-3 outline-none focus:border-teal-400/60"
             placeholder="Minimum 6 characters"
           />
         </div>
 
         <button
           disabled={busy}
-          className="w-full rounded-lg bg-cyan-400 px-4 py-3 font-semibold text-slate-950 disabled:opacity-60"
+          className="w-full rounded-xl bg-teal-300 px-4 py-3 font-bold text-slate-950 hover:bg-teal-200 disabled:opacity-60"
         >
           {busy ? "Working..." : mode === "signin" ? "Sign In" : "Create Account"}
         </button>
