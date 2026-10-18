@@ -102,7 +102,7 @@ function AssignTrainingPageContent() {
     [employees]
   );
 
-  if (loading) return <main className="p-10">Loading...</main>;
+  if (loading) return <main className="mx-auto max-w-5xl px-6 py-10"><p className="text-center">Loading...</p></main>;
   if (!company || company.role === "employee") {
     return <main className="p-10">Admin access required.</main>;
   }
