@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const message = text(body.message, 5000);
     if (!name || !email || !subject || !message ||
         name.length > 120 || email.length > 254 || subject.length > 180 ||
-        message.length > 5000 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+        message.length > 5000 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Please complete all fields with a valid email address." }, { status: 400 });
     }
 
