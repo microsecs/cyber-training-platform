@@ -79,26 +79,26 @@ export default function SupportPage() {
                 <span className="mb-2 block">Name</span>
                 <input required maxLength={120} autoComplete="name" value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+                  className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/50" />
               </label>
               <label className="block text-slate-300">
                 <span className="mb-2 block">Email</span>
                 <input required type="email" maxLength={254} autoComplete="email" value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+                  className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/50" />
               </label>
             </div>
             <label className="block text-slate-300">
               <span className="mb-2 block">Subject</span>
               <input required maxLength={180} value={subject}
                 onChange={(event) => setSubject(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+                className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/50" />
             </label>
             <label className="block text-slate-300">
               <span className="mb-2 block">How can we help?</span>
               <textarea required rows={6} maxLength={5000} value={message}
                 onChange={(event) => setMessage(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+                className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/50" />
             </label>
             <div className="absolute -left-[9999px]" aria-hidden="true">
               <label htmlFor="support-website">Leave this field empty</label>
@@ -107,7 +107,7 @@ export default function SupportPage() {
             </div>
             {feedback && <p role="status" className={failed ? "text-red-300" : "text-emerald-300"}>{feedback}</p>}
             <button type="submit" disabled={sending}
-              className="rounded-lg bg-sky-500 px-5 py-3 font-semibold text-white transition-colors hover:bg-sky-400 disabled:cursor-wait disabled:opacity-60">
+              className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:cursor-wait disabled:opacity-60">
               {sending ? "Sending..." : "Submit Support Request"}
             </button>
           </form>
