@@ -40,8 +40,6 @@ export default function SupportPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to send your request.");
       setFeedback("Your support request has been sent. We'll get back to you by email.");
-      setSubject("");
-      setMessage("");
     } catch (error) {
       setFailed(true);
       setFeedback(error instanceof Error ? error.message : "Unable to send your request.");
