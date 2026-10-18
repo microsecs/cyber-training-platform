@@ -87,7 +87,7 @@ export default function SiteNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" className="group min-w-0 shrink" aria-label="MicroSECONDS home">
+        <Link href="/" className="group min-w-0 shrink-0" aria-label="MicroSECONDS home">
           <Image
             src="/microseconds-logo.png"
             alt="MicroSECONDS"
@@ -101,9 +101,9 @@ export default function SiteNav() {
           </div>
         </Link>
 
-        {!isMinimalChrome && !loading ? (
-          <nav className="order-3 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-300 sm:text-sm xl:order-none xl:w-auto xl:flex-1">
-            {links.map((link) => (
+        {!isMinimalChrome ? (
+          <nav className="order-3 flex min-h-9 w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-300 sm:text-sm xl:order-none xl:w-auto xl:flex-1">
+            {(!loading ? links : []).map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
