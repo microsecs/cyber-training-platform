@@ -68,7 +68,7 @@ export default function SupportPage() {
           Need help with your computer or your MicroSECONDS account? Contact us or, when directed by a MicroSECONDS technician, start a remote-support session below.
         </p>
 
-        <section className="mt-8 rounded-xl border border-white/10 bg-slate-950 p-6">
+        <section className="mt-8 rounded-xl bg-slate-900 p-6">
           <h2 className="text-2xl font-semibold text-white">Contact Support</h2>
           <p className="mt-3 text-slate-300">
             Tell us what you need help with and include any error messages or relevant details.
