@@ -62,47 +62,31 @@ export async function POST(request: NextRequest) {
     const safeEmail = escapeHtml(email);
     const safeSubject = escapeHtml(subject);
     const safeMessage = escapeHtml(message).replace(/\\r?\\n/g, "<br />");
+    // Keep colors and backgrounds at the email client's defaults so light/dark
+    // appearance follows the recipient's own mail application settings.
     const html = `
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="supported-color-schemes" content="dark" />
-  <style>:root { color-scheme: dark; supported-color-schemes: dark; }</style>
-</head>
-<body style="margin:0;padding:0;background-color:#080f1f;color:#f8fafc;font-family:Arial,Helvetica,sans-serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#080f1f" style="width:100%;background-color:#080f1f;">
-    <tr><td align="center" style="padding:24px 12px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" bgcolor="#111a2b" style="width:100%;max-width:600px;background-color:#111a2b;border:1px solid #2b3951;border-collapse:separate;border-spacing:0;">
-        <tr><td bgcolor="#101827" style="background-color:#101827;padding:24px 28px;border-bottom:3px solid #22d3ee;">
-          <div style="font-size:24px;line-height:30px;font-weight:700;color:#ffffff;">MicroSECONDS</div>
-          <div style="font-size:12px;line-height:20px;font-weight:700;letter-spacing:3px;color:#67e8f9;">TRAINING SUPPORT</div>
-        </td></tr>
-        <tr><td bgcolor="#111a2b" style="background-color:#111a2b;padding:26px 28px;color:#f8fafc;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#93c5fd;">NEW SUPPORT REQUEST</div>
-          <h1 style="font-size:23px;line-height:30px;font-weight:700;margin:12px 0 22px;color:#ffffff;">${safeSubject}</h1>
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#172338" style="width:100%;background-color:#172338;border-collapse:collapse;">
-            <tr>
-              <td bgcolor="#172338" style="width:96px;padding:12px;color:#a9bbd3;font-size:13px;border-bottom:1px solid #334155;">Name</td>
-              <td bgcolor="#172338" style="padding:12px;color:#ffffff;font-size:14px;border-bottom:1px solid #334155;">${safeName}</td>
-            </tr>
-            <tr>
-              <td bgcolor="#172338" style="padding:12px;color:#a9bbd3;font-size:13px;border-bottom:1px solid #334155;">Email</td>
-              <td bgcolor="#172338" style="padding:12px;color:#ffffff;font-size:14px;border-bottom:1px solid #334155;word-break:break-word;"><a href="mailto:${safeEmail}" style="color:#67e8f9;text-decoration:underline;">${safeEmail}</a></td>
-            </tr>
-            <tr>
-              <td bgcolor="#172338" style="padding:12px;color:#a9bbd3;font-size:13px;">Submitted</td>
-              <td bgcolor="#172338" style="padding:12px;color:#ffffff;font-size:14px;">${escapeHtml(submittedAt)}</td>
-            </tr>
-          </table>
-          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#93c5fd;margin:26px 0 10px;">MESSAGE</div>
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#172338" style="width:100%;background-color:#172338;border:1px solid #334155;">
-            <tr><td bgcolor="#172338" style="padding:18px;color:#ffffff;font-size:15px;line-height:24px;word-break:break-word;">${safeMessage}</td></tr>
-          </table>
-        </td></tr>
-        <tr><td bgcolor="#101827" style="background-color:#101827;padding:16px 28px;border-top:1px solid #334155;color:#a9bbd3;font-size:12px;line-height:18px;">MicroSECONDS Computer Consulting &middot; Employee Security Training</td></tr>
+<head><meta charset="utf-8" /></head>
+<body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;border-collapse:collapse;">
+    <tr><td style="padding:12px 0 18px;border-bottom:1px solid #999999;">
+      <strong style="font-size:22px;">MicroSECONDS</strong><br />
+      <span style="font-size:12px;letter-spacing:2px;">TRAINING SUPPORT</span>
+    </td></tr>
+    <tr><td style="padding:20px 0 8px;">
+      <div style="font-size:12px;font-weight:bold;">NEW SUPPORT REQUEST</div>
+      <h2 style="margin:8px 0 18px;font-size:20px;">${safeSubject}</h2>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+        <tr><td style="padding:7px 12px 7px 0;width:95px;vertical-align:top;"><strong>Name</strong></td><td style="padding:7px 0;">${safeName}</td></tr>
+        <tr><td style="padding:7px 12px 7px 0;vertical-align:top;"><strong>Email</strong></td><td style="padding:7px 0;"><a href="mailto:${safeEmail}">${safeEmail}</a></td></tr>
+        <tr><td style="padding:7px 12px 7px 0;vertical-align:top;"><strong>Submitted</strong></td><td style="padding:7px 0;">${escapeHtml(submittedAt)}</td></tr>
       </table>
+      <h3 style="font-size:14px;margin:24px 0 8px;">Message</h3>
+      <div style="padding:12px 0;border-top:1px solid #999999;overflow-wrap:anywhere;">${safeMessage}</div>
+    </td></tr>
+    <tr><td style="padding:14px 0;border-top:1px solid #999999;font-size:12px;">
+      MicroSECONDS Computer Consulting &middot; Employee Security Training
     </td></tr>
   </table>
 </body>
