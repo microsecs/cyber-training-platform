@@ -43,6 +43,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
   }
 
+  const { data: watchProgress, error: watchError } = await s
+    .from("video_watch_progress")
+    .select("unlocked")
+    .eq("assignment_id", assignmentId)
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+  if (watchError || !watchProgress?.unlocked) {
+    return NextResponse.json({ error: "Watch the entire training video before completing this assignment." }, { status: 403 });
+  }
+
   const course = Array.isArray(assignment.courses)
     ? assignment.courses[0]
     : assignment.courses;

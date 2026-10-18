@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,53 @@ export default function CoursePage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [videoUnlocked, setVideoUnlocked] = useState(false);
+  const [watchedSeconds, setWatchedSeconds] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const furthestPosition = useRef(0);
+  const lastReportedPosition = useRef(0);
+  const reporting = useRef(false);
+  const videoUnlockedRef = useRef(false);
+
+  async function reportVideoProgress(force = false) {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0 || reporting.current || videoUnlockedRef.current) return;
+    const position = Math.min(video.currentTime, video.duration);
+    if (!force && position - lastReportedPosition.current < 3) return;
+    if (position < lastReportedPosition.current) return;
+    reporting.current = true;
+    try {
+      const supabase = createClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const response = await fetch("/api/video-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ assignmentId, position, duration: video.duration }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        lastReportedPosition.current = position;
+        setWatchedSeconds(result.watchedSeconds || 0);
+        if (result.unlocked) {
+          videoUnlockedRef.current = true;
+          setVideoUnlocked(true);
+        }
+      }
+    } finally {
+      reporting.current = false;
+    }
+  }
+
+  function preventSkipping() {
+    const video = videoRef.current;
+    if (!video || videoUnlockedRef.current) return;
+    if (video.currentTime > furthestPosition.current + 1.5) {
+      video.currentTime = furthestPosition.current;
+    }
+  }
+
 
   useEffect(() => {
     const supabase = createClient();
@@ -41,6 +88,21 @@ export default function CoursePage() {
       }
 
       setAssignment(data);
+      if (data.status === "completed") {
+        setVideoUnlocked(true);
+        videoUnlockedRef.current = true;
+      } else {
+        const { data: progress } = await supabase.from("video_watch_progress")
+          .select("watched_seconds,unlocked,last_position")
+          .eq("assignment_id", assignmentId).eq("user_id", userData.user.id).maybeSingle();
+        if (progress) {
+          setWatchedSeconds(progress.watched_seconds || 0);
+          setVideoUnlocked(!!progress.unlocked);
+          videoUnlockedRef.current = !!progress.unlocked;
+          furthestPosition.current = progress.last_position || 0;
+          lastReportedPosition.current = progress.last_position || 0;
+        }
+      }
 
       if (data.status === "not_started") {
         await supabase
@@ -205,7 +267,22 @@ export default function CoursePage() {
       <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6">
         {videoUrl ? (
           <video
+            ref={videoRef}
             controls
+            onLoadedMetadata={() => {
+              const video = videoRef.current;
+              if (video && furthestPosition.current > 0) video.currentTime = Math.min(furthestPosition.current, video.duration);
+            }}
+            onTimeUpdate={() => {
+              const video = videoRef.current;
+              if (!video) return;
+              if (video.currentTime <= furthestPosition.current + 1.5) {
+                furthestPosition.current = Math.max(furthestPosition.current, video.currentTime);
+                if (!video.paused) void reportVideoProgress();
+              } else preventSkipping();
+            }}
+            onSeeking={preventSkipping}
+            onEnded={() => void reportVideoProgress(true)}
             src={videoUrl}
             className="aspect-video w-full rounded-xl bg-black"
           />
@@ -215,6 +292,12 @@ export default function CoursePage() {
           </div>
         )}
 
+        {assignment.status !== "completed" && (
+          <p className="mt-3 text-sm text-slate-300" aria-live="polite">
+            {videoUnlocked ? "Video completed — your quiz or completion button is unlocked." :
+              `Watch the entire video to unlock the next step. ${Math.floor(watchedSeconds / 60)}:${String(Math.floor(watchedSeconds % 60)).padStart(2, "0")} of playback recorded.`}
+          </p>
+        )}
         <div className="mt-4 text-sm text-slate-500">
           Estimated duration: {course?.duration_minutes ?? "—"} minutes
         </div>
@@ -251,7 +334,8 @@ export default function CoursePage() {
             Score {passingScore}% or higher to complete this course.
           </p>
 
-          <div className="mt-6 space-y-7">
+          {!videoUnlocked && <p className="mt-4 text-cyan-300">🔒 Finish watching the video to unlock the quiz.</p>}
+          {videoUnlocked && <div className="mt-6 space-y-7">
             {quiz.map((question: any, index: number) => (
               <div key={index}>
                 <div className="font-medium">
@@ -283,11 +367,11 @@ export default function CoursePage() {
                 </div>
               </div>
             ))}
-          </div>
+          </div>}
 
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || !videoUnlocked}
             onClick={submitQuiz}
             className="mt-7 rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50"
           >
@@ -301,13 +385,12 @@ export default function CoursePage() {
           </h2>
 
           <p className="mt-2 text-sm text-slate-400">
-            No quiz is required for this assignment. After reviewing the training,
-            mark it complete below.
+            No quiz is required for this assignment. Watch the entire video to unlock completion.
           </p>
 
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || !videoUnlocked}
             onClick={() => completeTraining()}
             className="mt-6 rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50"
           >

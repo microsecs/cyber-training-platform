@@ -20,3 +20,16 @@ button,
 a {
   transition: 160ms ease;
 }
+
+/* Consistent interaction cues throughout the application. */
+button:not(:disabled),
+a[href],
+[role="button"]:not([aria-disabled="true"]),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+summary { cursor: pointer; }
+button:disabled,
+[role="button"][aria-disabled="true"],
+input[type="button"]:disabled,
+input[type="submit"]:disabled { cursor: not-allowed; }
