@@ -96,7 +96,7 @@ export default function SiteNav() {
             priority
             className="h-7 w-auto max-w-[150px] object-contain sm:h-8 sm:max-w-[210px] lg:h-8 lg:max-w-[220px] xl:h-9 xl:max-w-[240px]"
           />
-          <div className="mt-1 text-center text-[10px] font-bold tracking-[0.22em] text-sky-400 sm:text-xs">
+          <div className="mt-1 text-center text-[10px] font-bold tracking-[0.22em] text-cyan-300 sm:text-xs">
             TRAINING
           </div>
         </Link>
