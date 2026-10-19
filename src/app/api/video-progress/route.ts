@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
   const credit = existing ? (delta > 6 ? 0 : Math.min(delta, elapsed)) : 0;
   const watched = Number(existing?.watched_seconds || 0) + credit;
   const actualDuration = existing?.duration_seconds || duration;
-  const unlocked = watched >= Math.max(0, actualDuration - 3);
+  // Heartbeats can lose several seconds to request latency and rounding.
+  // Require reaching the actual end AND having watched nearly all the video;
+  // a small tolerance prevents an honest full viewing from getting stuck.
+  const reachedEnd = position >= actualDuration - 0.75;
+  const allowedReportingGap = Math.min(15, Math.max(3, actualDuration * 0.025));
+  const unlocked = reachedEnd && watched >= actualDuration - allowedReportingGap;
   const { error } = await admin.from("video_watch_progress").upsert({
     assignment_id: assignmentId, user_id: auth.user.id,
     watched_seconds: watched, last_position: delta > 6 ? previous : position,
