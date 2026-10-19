@@ -178,7 +178,7 @@ function PhishingCheckContent() {
         <p className="mt-3 max-w-4xl leading-7 text-slate-300">
           Install the MicroSECONDS Email Analyzer add-in and analyze the message you are viewing
           directly from your inbox. There is no need to save, import, copy, or paste the email into
-          this page. The manual file upload and paste options below remain available when you need them.
+          this page.
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -227,79 +227,6 @@ function PhishingCheckContent() {
           </div>
         </div>
       </section>
-
-      <section className="mt-7 rounded-2xl border border-white/10 bg-slate-900 p-6">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold text-white">Manual Email Analysis</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Prefer not to use an add-in? Import an Outlook or .eml file, or paste the email below.
-          </p>
-        </div>
-        <div
-          onDragEnter={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={(e) => { e.preventDefault(); setDragging(false); }}
-          onDrop={handleDrop}
-          className={`rounded-2xl border-2 border-dashed px-6 py-10 text-center transition ${
-            dragging ? "border-cyan-300 bg-cyan-400/10" : "border-white/15 bg-slate-950"
-          }`}
-        >
-          <div className="text-xl font-semibold text-white">Drag an Outlook email here</div>
-          <p className="mt-2 text-sm text-slate-400">Or choose an email file from your computer.</p>
-          <p className="mt-1 text-xs text-slate-500">Supported: .msg and .eml • Maximum 15 MB</p>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".msg,.eml,message/rfc822,application/vnd.ms-outlook"
-            className="hidden"
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (file) await importEmailFile(file);
-              event.currentTarget.value = "";
-            }}
-          />
-          <button
-            type="button"
-            disabled={fileBusy}
-            onClick={() => fileInput.current?.click()}
-            className="mt-5 rounded-xl border border-white/15 px-5 py-3 font-semibold text-white hover:border-cyan-400/40 hover:text-cyan-300 disabled:opacity-50"
-          >
-            {fileBusy ? "Reading Email..." : "Choose Email File"}
-          </button>
-          {fileName ? <div className="mt-4 text-sm text-emerald-300">Loaded: {fileName}</div> : null}
-        </div>
-
-        <div className="my-6 flex items-center gap-4 text-xs uppercase tracking-[0.18em] text-slate-600">
-          <div className="h-px flex-1 bg-white/10" />Or paste the email<div className="h-px flex-1 bg-white/10" />
-        </div>
-
-        <form onSubmit={analyze}>
-        <label className="block text-sm font-semibold text-slate-200">
-          Paste the email
-        </label>
-        <p className="mt-1 text-xs leading-5 text-slate-500">
-          For a stronger analysis, paste the complete raw email including headers when available. Do not paste passwords or other secrets.
-        </p>
-        <textarea
-          required
-          maxLength={50000}
-          value={emailText}
-          onChange={(e) => setEmailText(e.target.value)}
-          placeholder={"Paste the sender, subject, message, links, and headers here..."}
-          className="mt-4 min-h-[330px] w-full rounded-xl border border-white/10 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-200 outline-none focus:border-cyan-400/50"
-        />
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-slate-500">{emailText.length.toLocaleString()} / 50,000 characters</span>
-          <button
-            disabled={busy || emailText.trim().length < 20}
-            className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {busy ? "Analyzing..." : "Analyze Email"}
-          </button>
-        </div>
-        </form>
-      </section>
-
 
       {busy ? (
         <section className="mt-6 overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-900">
