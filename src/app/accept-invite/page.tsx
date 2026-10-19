@@ -71,6 +71,12 @@ export default function AcceptInvitePage() {
           return;
         }
 
+        // Verify the session survived storage before exposing password setup.
+        const { data: stored } = await supabase.auth.getSession();
+        if (!stored.session) {
+          setMessage("Invitation verified, but your sign-in session could not be saved. Please open a fresh invitation link in the same browser.");
+          return;
+        }
         setReady(true);
         setMessage("");
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -154,6 +160,19 @@ export default function AcceptInvitePage() {
     setMessage("");
 
     const supabase = createClient();
+
+    // Confirm the session still exists at the moment the user submits.
+    // Refresh it if needed rather than attempting an unauthenticated update.
+    let { data: current } = await supabase.auth.getSession();
+    if (!current.session) {
+      const refreshed = await supabase.auth.refreshSession();
+      current = refreshed.data;
+    }
+    if (!current.session) {
+      setMessage("Your invitation sign-in session is no longer available. Please request a new invitation and complete setup in the same browser.");
+      setBusy(false);
+      return;
+    }
 
     const { error: passwordError } = await supabase.auth.updateUser({
       password,

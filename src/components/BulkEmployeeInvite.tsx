@@ -31,6 +31,7 @@ export default function BulkEmployeeInvite({
     useState(false);
   const [message, setMessage] =
     useState("");
+  const [results, setResults] = useState<Array<{ email: string; status: string; detail: string }>>([]);
 
   async function chooseFile(
     event: ChangeEvent<HTMLInputElement>
@@ -69,6 +70,7 @@ export default function BulkEmployeeInvite({
 
     setBusy(true);
     setMessage("");
+    setResults([]);
 
     const supabase =
       createClient();
@@ -90,6 +92,7 @@ export default function BulkEmployeeInvite({
     let sent = 0;
     let skipped = 0;
     let failed = 0;
+    const outcomes: Array<{ email: string; status: string; detail: string }> = [];
 
     for (
       const email of emails
@@ -115,6 +118,7 @@ export default function BulkEmployeeInvite({
 
         if (response.ok) {
           sent++;
+          outcomes.push({ email, status: "Sent", detail: "Invitation request accepted" });
           continue;
         }
 
@@ -133,14 +137,18 @@ export default function BulkEmployeeInvite({
           )
         ) {
           skipped++;
+          outcomes.push({ email, status: "Skipped", detail: result.error || "Already invited" });
         } else {
           failed++;
+          outcomes.push({ email, status: "Failed", detail: result.error || `HTTP ${response.status}` });
         }
-      } catch {
+      } catch (error) {
         failed++;
+        outcomes.push({ email, status: "Failed", detail: error instanceof Error ? error.message : "Network error" });
       }
     }
 
+    setResults(outcomes);
     setMessage(
       `Bulk invite complete: ${sent} sent, ${skipped} skipped, ${failed} failed.`
     );
@@ -222,6 +230,17 @@ export default function BulkEmployeeInvite({
           ? "Sending Invitations..."
           : `Send ${emails.length || ""} Invitations`}
       </button>
+
+      {results.length > 0 && (
+        <div className="mt-4 max-h-64 overflow-auto rounded-lg border border-white/10 bg-slate-950 p-3 text-sm">
+          {results.map((item) => (
+            <div key={item.email} className="border-b border-white/10 py-2 last:border-0">
+              <span className="font-semibold">{item.status}</span> — {item.email}
+              <div className="text-xs text-slate-400">{item.detail}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {message ? (
         <div className="mt-4 rounded-lg border border-white/10 bg-slate-950 p-3 text-sm text-slate-300">
