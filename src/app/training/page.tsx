@@ -219,7 +219,7 @@ export default function TrainingPage() {
       </h1>
 
       <p className="mt-2 text-slate-400">
-        Preview the actual training content your employees will receive. Company administrators can assign courses, while only the platform owner can edit them.
+        Preview the actual training content your employees will receive.
       </p>
 
       {!hasSubscriptionAccess ? (

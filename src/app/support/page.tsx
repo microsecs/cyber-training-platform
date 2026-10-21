@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SupportSettings = {
   support_email: string;
@@ -21,6 +21,8 @@ export default function SupportPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [website, setWebsite] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const attachmentInput = useRef<HTMLInputElement>(null);
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [failed, setFailed] = useState(false);
@@ -28,18 +30,27 @@ export default function SupportPage() {
   async function submitSupport(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (sending) return;
+    if (attachment && attachment.size > 8 * 1024 * 1024) {
+      setFailed(true);
+      setFeedback("The attachment must be 8 MB or smaller.");
+      return;
+    }
     setSending(true);
     setFeedback("");
     setFailed(false);
     try {
+      const formData = new FormData();
+      for (const [key, value] of Object.entries({ name, email, subject, message, website })) formData.append(key, value);
+      if (attachment) formData.append("attachment", attachment);
       const response = await fetch("/api/support-request", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, subject, message, website }),
+        body: formData,
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to send your request.");
       setFeedback("Your support request has been sent. We'll get back to you by email.");
+      setAttachment(null);
+      if (attachmentInput.current) attachmentInput.current.value = "";
     } catch (error) {
       setFailed(true);
       setFeedback(error instanceof Error ? error.message : "Unable to send your request.");
@@ -97,6 +108,14 @@ export default function SupportPage() {
               <textarea required rows={6} maxLength={5000} value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/50" />
+            </label>
+            <label className="block text-slate-300">
+              <span className="mb-2 block">Attach a file (optional)</span>
+              <input ref={attachmentInput} type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.txt,.log,.docx"
+                onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+                className="block w-full cursor-pointer rounded-lg border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-300 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-cyan-400 file:px-3 file:py-2 file:font-semibold file:text-slate-950 hover:file:bg-cyan-300" />
+              <span className="mt-2 block text-sm text-slate-400">PDF, image, text, log, or Word (.docx). Maximum 8 MB. Do not attach passwords or sensitive personal information.</span>
             </label>
             <div className="absolute -left-[9999px]" aria-hidden="true">
               <label htmlFor="support-website">Leave this field empty</label>

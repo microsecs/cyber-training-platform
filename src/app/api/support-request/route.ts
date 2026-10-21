@@ -19,7 +19,27 @@ function escapeHtml(value: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().includes("multipart/form-data")) {
+      return NextResponse.json({ error: "Invalid request format." }, { status: 415 });
+    }
+    const form = await request.formData();
+    const body = Object.fromEntries(["name", "email", "subject", "message", "website"].map(key => [key, form.get(key)]));
+    const upload = form.get("attachment");
+    let attachment: { filename: string; content: Buffer } | undefined;
+    if (upload instanceof File && upload.size > 0) {
+      const MAX_FILE_BYTES = 8 * 1024 * 1024;
+      const allowed = new Set(["pdf", "png", "jpg", "jpeg", "txt", "log", "docx"]);
+      const extension = upload.name.split(".").pop()?.toLowerCase() || "";
+      if (!allowed.has(extension)) {
+        return NextResponse.json({ error: "Unsupported attachment type. Use PDF, PNG, JPG, TXT, LOG, or DOCX." }, { status: 400 });
+      }
+      if (upload.size > MAX_FILE_BYTES) {
+        return NextResponse.json({ error: "Attachment must be 8 MB or smaller." }, { status: 413 });
+      }
+      const filename = upload.name.replace(/[^a-zA-Z0-9._ -]/g, "_").slice(0, 120) || `attachment.${extension}`;
+      attachment = { filename, content: Buffer.from(await upload.arrayBuffer()) };
+    }
     if (body.website) return NextResponse.json({ ok: true });
     const name = text(body.name, 120);
     const email = text(body.email, 254);
@@ -109,6 +129,7 @@ export async function POST(request: NextRequest) {
       subject: `[MicroSECONDS Training Support] ${subject.replace(/[\\r\\n]/g, " ")}`,
       html,
       text: plainText,
+      ...(attachment ? { attachments: [attachment] } : {}),
     });
     if (error) {
       console.error("Support request delivery failed", error);
